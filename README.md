@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Курсовая по вебу 3 курс 5 семестр
 
-## Getting Started
+Проект: Учебный калькулятор и визуализатор алгоритмов дискретной математики и сетей
 
-First, run the development server:
+### Кратко:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+* Веб-приложение для пошаговой визуализации алгоритмов (графы, кратчайшие пути, транспортные задачи, базовая
+  NN-propagation)
+* Алгоритмы выполняются на клиенте; фронт формирует протокол шагов (`steps[]`), воспроизводит/объясняет шаги, анимирует и даёт перемотку
+* Бэкенд — минимальный Node.js-сервис для логина и хранения графов (и при необходимости вспомогательных функций)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Что планируется
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+* **Графы**: BFS, DFS, Дейкстра, минимальный остов ...
+* **Транспортные задачи**: метод минимальной стоимости ...
+* **Нейросети**: визуализация распространения сигнала в маленькой MLP (без обучения) ...
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Набросок архитектуры
 
-## Learn More
+* **frontend/** — Next.js + React + Tailwind + Pixi.js + Graphology (Canvas/WebGL; редактор графов, анимации, степпер) + Redux
+  Toolkit; вычисление алгоритмов и симуляция шагов в Web Worker.
+* **backend/** — Node.js (auth + хранение графов, минимальная БД/API).
 
-To learn more about Next.js, take a look at the following resources:
+### Технический минимум
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Сборка: Next.js Turbopack
+* Стейт-менеджер: Redux Toolkit
+* Компонентная библиотека: MUI
+* Web API: **Canvas/WebGL**; плюс **Web Worker** для вычислений на клиенте
+* Тесты: Jest + React Testing Library; e2e: Playwright; coverage ≥ 80% (цель для CI)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Технические решения
 
-## Deploy on Vercel
+Детальные технические решения и архитектурные решения вынесены
+в [ADR (Architecture Decision Records)](./docs/adr/README.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Backend Developer Quickstart
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* **Требования**
+
+  * Node.js 20+, Docker Desktop (для Compose), Git.
+
+* **Запуск**
+
+  * Запустить PostgreSQL: `docker compose up -d postgres`
+  * Запустить приложение: `npm install && npm run dev`
+
+* **Тесты**
+
+  * `npm test`
+
+* **Полезные эндпоинты**
+
+  * Health check: `http://localhost:3000/health`
+  * API docs (если будут подключены): `http://localhost:3000/docs`
