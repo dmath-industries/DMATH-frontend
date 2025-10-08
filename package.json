@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
-    "build:css": "tailwindcss -i ./src/app/globals.css -o ./dist/output.css --watch"
+    "build:css": "tailwindcss -i ./src/app/globals.css -o ./dist/output.css --watch",
+    "test": "jest",
+    "test:cov": "jest --coverage --passWithNoTests",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -16,10 +20,12 @@
     "@mui/icons-material": "^7.3.2",
     "@mui/material": "^7.3.2",
     "@reduxjs/toolkit": "^2.9.0",
+    "d3-force": "^3.0.0",
     "graphology": "^0.26.0",
     "graphology-layout-forceatlas2": "^0.10.1",
     "lucide-react": "^0.544.0",
     "pixi-viewport": "^6.0.3",
+    "pixi.js": "^8.13.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-redux": "^9.2.0"
