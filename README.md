@@ -49,7 +49,25 @@
 
   * `npm test`
 
+
 * **Полезные эндпоинты**
 
   * Health check: `http://localhost:3000/health`
   * API docs (если будут подключены): `http://localhost:3000/docs`
+
+  ## Полезные команды
+
+Установка pre-commit на локальный проект(после установки всех зависимостей):
+```bash
+$ cd <root_dir>/
+$ pre-commit install
+> pre-commit installed at .git/hooks/pre-commit
+```
+Запуск проверок вручную:
+```shell
+$ pre-commit
+```
+Установка гитхуков репозитория на проверку описания коммитов и наименования веток:
+```shell
+$ git config --local core.hooksPath .githooks/
+```

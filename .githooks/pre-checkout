@@ -1,0 +1,29 @@
+#!/bin/sh
+
+BRANCH_TYPE="(feature|task|release|hotfix|bug)"
+VALID_NAME="feature/DMATH-63"
+
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+regex_pattern="^($BRANCH_TYPE/[[:alpha:]]+-[[:digit:]]+)"
+
+EXCLUDE_BRANCHES="
+  (main|develop)
+"
+
+export PRE_CHECKOUT=true
+
+if [[ ! "$BRANCH_NAME" =~ $regex_pattern && ! "$EXCLUDE_BRANCHES" =~ "$BRANCH_NAME" ]]; then
+    echo "-----------------------------------"
+    echo "Error: Invalid branch name format."
+    echo "Your branch name: '$BRANCH_NAME'"
+    echo "Expected format: '$BRANCH_TYPE/{TASK_ID}'"
+    echo "Example: $VALID_NAME"
+    echo "-----------------------------------"
+    git switch --quiet -
+    BRANCH=$(git branch --show-current)
+    echo "Returned back on $BRANCH"
+    exit 1
+fi
+
+exit 0

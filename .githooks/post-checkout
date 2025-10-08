@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ ! -z $PRE_CHECKOUT ] && $PRE_CHECKOUT
+then
+    exit 0
+fi
+
+.githooks/pre-checkout
