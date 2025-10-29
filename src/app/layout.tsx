@@ -1,20 +1,24 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { Providers } from "./providers";
+import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "DMATH - Mathematical Graph Visualization",
-  description: "Interactive mathematical graph visualization and analysis tool",
+  title: "DMath - Graph Visualizer",
+  description: "Учебный калькулятор и визуализатор алгоритмов дискретной математики",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DMath",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#171717",
 };
 
 export default function RootLayout({
@@ -24,10 +28,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className="antialiased">
+        <Providers>
+          <Header />
+          {children}
+        </Providers>
       </body>
     </html>
   );
