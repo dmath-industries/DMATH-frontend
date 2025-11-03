@@ -566,7 +566,7 @@ describe('Renderer', () => {
       ];
 
       states.forEach((state, index) => {
-        const [source, target] = pairs[index]!;
+        const [source, target] = pairs[index]! as [string, string];
         model.addEdge({
           id: `edge${index}`,
           source,
