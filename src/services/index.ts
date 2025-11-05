@@ -14,9 +14,9 @@ export { ViewportAdapter } from './renderer/ViewportAdapter';
 export type { ViewportConfig, ViewportState } from './renderer/ViewportAdapter';
 
 // Step services - управление шагами алгоритма (Task 9)
-// export { StepController } from './steps/StepController';
-// export type { StepControllerConfig } from './steps/StepController';
-// export { Applier } from './steps/Applier';
+export { StepController } from './steps/StepController';
+export type { StepControllerConfig } from './steps/StepController';
+export { Applier } from './steps/Applier';
 
 // Other services - работа с Web Worker (Task 10)
 // export { WorkerClient } from './WorkerClient';
