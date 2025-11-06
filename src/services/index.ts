@@ -19,5 +19,5 @@ export type { StepControllerConfig } from './steps/StepController';
 export { Applier } from './steps/Applier';
 
 // Other services - работа с Web Worker (Task 10)
-// export { WorkerClient } from './WorkerClient';
-// export type { WorkerEventHandler } from './WorkerClient';
+export { WorkerClient } from './WorkerClient';
+export type { WorkerEventHandler } from './WorkerClient';
