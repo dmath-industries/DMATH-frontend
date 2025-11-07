@@ -15,7 +15,7 @@ import type {
   Step,
 } from '@/types';
 
-// import { RobertsFloresStepGenerator } from '@/algorithms/roberts-flores'; // Task 11
+import { RobertsFloresStepGenerator } from '@/algorithms/roberts-flores/steps';
 
 interface ExecutionState {
   requestId: string;
@@ -89,9 +89,8 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
 
     switch (name) {
       case 'roberts-flores': {
-        // const generator = new RobertsFloresStepGenerator(); // Task 11
-        // steps = generator.generateSteps(graphDTO, params); // Task 11
-        steps = []; // Placeholder until Task 11
+        const generator = new RobertsFloresStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
         break;
       }
 
