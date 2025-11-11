@@ -1,0 +1,88 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main  
+  workflow_dispatch: 
+
+jobs:
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+        run: |
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd $DEPLOY_PATH && DEPLOY_BRANCH=$DEPLOY_BRANCH bash -s" << 'SCRIPT_END'
+            set -e
+            
+            echo "🚀 Starting deployment on server..."
+            echo "📁 Working directory: $(pwd)"
+            echo "🌿 Branch: ${DEPLOY_BRANCH:-main}"
+            
+            # Используем скрипт деплоя, если он существует, иначе выполняем команды напрямую
+            if [ -f scripts/deploy.sh ]; then
+              echo "✅ Deploy script found! Using scripts/deploy.sh"
+              echo "📝 DEPLOY_BRANCH=${DEPLOY_BRANCH:-main}"
+              chmod +x scripts/deploy.sh
+              export DEPLOY_BRANCH=${DEPLOY_BRANCH:-main}
+              bash scripts/deploy.sh
+            else
+              echo "⚠️ Deploy script not found, using inline commands..."
+              echo "📥 Pulling latest changes..."
+              git fetch origin
+              git reset --hard origin/${DEPLOY_BRANCH:-main}
+              
+              echo "🛑 Stopping containers..."
+              docker-compose -f docker-compose.nginx.yml down || true
+              
+              echo "🔨 Building Docker images..."
+              docker-compose -f docker-compose.nginx.yml build --no-cache
+              
+              echo "▶️ Starting containers..."
+              docker-compose -f docker-compose.nginx.yml up -d
+              
+              echo "🧹 Cleaning up old images..."
+              docker image prune -f
+              
+              echo "✅ Checking container status..."
+              docker-compose -f docker-compose.nginx.yml ps
+            fi
+          SCRIPT_END
+      
+      - name: Verify deployment
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
+        run: |
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd $DEPLOY_PATH && bash -s" << 'SCRIPT_END'
+            set -e
+            echo "🔍 Verifying deployment..."
+            sleep 15
+            docker-compose -f docker-compose.nginx.yml ps
+            echo "📋 Recent logs:"
+            docker-compose -f docker-compose.nginx.yml logs --tail=30 nextjs
+          SCRIPT_END
+
