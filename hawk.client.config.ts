@@ -1,17 +1,19 @@
-import HawkCatcher from '@hawk.so/javascript';
+import HawkCatcher, { type HawkJavaScriptEvent } from '@hawk.so/javascript';
 
 if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_HAWK_TOKEN) {
   const hawk = new HawkCatcher({
     token: process.env.NEXT_PUBLIC_HAWK_TOKEN,
     release: process.env.NEXT_PUBLIC_HAWK_RELEASE,
     consoleTracking: true,
-    beforeSend(event: any) {
+    beforeSend(event: HawkJavaScriptEvent) {
       if (process.env.NODE_ENV === 'development') {
         console.log('Hawk event:', event);
       }
       
-      if (event.url) {
-        const url = event.url.toLowerCase();
+      const eventWithProps = event as HawkJavaScriptEvent & { url?: string; message?: string };
+      
+      if (eventWithProps.url) {
+        const url = eventWithProps.url.toLowerCase();
         if (
           url.includes('extensions/') ||
           url.startsWith('chrome://') ||
@@ -21,7 +23,7 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_HAWK_TOKEN) {
         }
       }
       
-      if (event.message) {
+      if (eventWithProps.message) {
         const ignoredErrors = [
           'top.GLOBALS',
           'originalCreateNotification',
@@ -34,7 +36,7 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_HAWK_TOKEN) {
           'conduitPage',
         ];
         
-        if (ignoredErrors.some((err) => event.message?.includes(err))) {
+        if (ignoredErrors.some((err) => eventWithProps.message?.includes(err))) {
           return false;
         }
       }
@@ -44,7 +46,8 @@ if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_HAWK_TOKEN) {
   });
   
   if (typeof window !== 'undefined') {
-    (window as any).hawk = hawk;
+    const windowWithHawk = window as typeof window & { hawk?: HawkCatcher };
+    windowWithHawk.hawk = hawk;
   }
 } else if (typeof window !== 'undefined') {
   console.warn('Hawk token not configured. Error monitoring is disabled.');
