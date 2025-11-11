@@ -1,6 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -10,39 +8,98 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# Testing
 /coverage
+/playwright-report
+/test-results
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Production
 /build
+/dist
 
-# misc
-.DS_Store
-*.pem
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
 
-# debug
+# Environment
+.env*
+!.env.example
+
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# OS
+.DS_Store
+*.pem
+Thumbs.db
 
 # IDE
 .idea/
 .vscode/
+.cursor/
+*.swp
+*.swo
+*~
+
+# Sentry
+.sentryclirc
+
+# PWA
+/public/sw.js
+/public/workbox-*.js
+/public/fallback-*.js
+/public/sw.js.map
+/public/workbox-*.js.map
+
+# Vercel
+.vercel
+
+# Git hooks
+.husky/_/
 
 # Logs
+logs
 *.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.parcel-cache
+
+# Temporary folders
+tmp/
+temp/
+public/fallback-*.js
