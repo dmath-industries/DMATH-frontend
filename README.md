@@ -34,6 +34,26 @@
 Детальные технические решения и архитектурные решения вынесены
 в [ADR (Architecture Decision Records)](./docs/adr/README.md).
 
+### Деплой
+
+Подробные инструкции по деплою приложения доступны в [DEPLOY.md](./docs/DEPLOY.md).
+
+**Быстрый старт:**
+
+```bash
+# Только Next.js (порт 3000)
+docker-compose up -d
+
+# С Nginx (порт 80)
+docker-compose -f docker-compose.nginx.yml up -d
+```
+
+**Автоматический деплой (CI/CD):**
+
+Настроен автоматический деплой через GitHub Actions. При push в ветку `main` автоматически запускается деплой на сервер.
+
+Подробная инструкция по настройке: [CI_CD.md](./docs/CI_CD.md)
+
 ### Backend Developer Quickstart
 
 * **Требования**
