@@ -9,8 +9,11 @@ class Logger {
   private hawk: HawkCatcher | null = null;
 
   constructor() {
-    if (typeof window !== 'undefined' && (window as any).hawk) {
-      this.hawk = (window as any).hawk;
+    if (typeof window !== 'undefined') {
+      const windowWithHawk = window as typeof window & { hawk?: HawkCatcher };
+      if (windowWithHawk.hawk) {
+        this.hawk = windowWithHawk.hawk;
+      }
     }
   }
 
@@ -30,6 +33,7 @@ class Logger {
     
     if (this.hawk) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.hawk.send(message, context as any);
       } catch (err) {
         console.warn('Failed to send warning to Hawk:', err);
@@ -44,8 +48,10 @@ class Logger {
     if (this.hawk) {
       try {
         if (error) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.hawk.send(error, { message, ...context } as any);
         } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           this.hawk.send(message, context as any);
         }
       } catch (err) {
