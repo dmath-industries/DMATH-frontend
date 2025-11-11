@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphModel, Renderer, ViewportAdapter } from '@/services';
 
