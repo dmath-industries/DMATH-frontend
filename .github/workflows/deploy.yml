@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - master
+      - deploy
   workflow_dispatch:
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
             
             echo "🚀 Starting deployment on server..."
             echo "📁 Deploy path: $DEPLOY_PATH"
-            echo "🌿 Branch: ${DEPLOY_BRANCH:-master}"
+            echo "🌿 Branch: ${DEPLOY_BRANCH:-deploy}"
             
             # Expand ~ to home directory if needed
             DEPLOY_PATH="${DEPLOY_PATH/#\~/$HOME}"
@@ -77,15 +77,15 @@ jobs:
             # Используем скрипт деплоя, если он существует, иначе выполняем команды напрямую
             if [ -f scripts/deploy.sh ]; then
               echo "✅ Deploy script found! Using scripts/deploy.sh"
-              echo "📝 DEPLOY_BRANCH=${DEPLOY_BRANCH:-master}"
+              echo "📝 DEPLOY_BRANCH=${DEPLOY_BRANCH:-deploy}"
               chmod +x scripts/deploy.sh
-              export DEPLOY_BRANCH=${DEPLOY_BRANCH:-master}
+              export DEPLOY_BRANCH=${DEPLOY_BRANCH:-deploy}
               bash scripts/deploy.sh
             else
               echo "⚠️ Deploy script not found, using inline commands..."
               echo "📥 Pulling latest changes..."
               git fetch origin
-              git reset --hard origin/${DEPLOY_BRANCH:-master}
+              git reset --hard origin/${DEPLOY_BRANCH:-deploy}
               
               echo "🛑 Stopping containers..."
               docker-compose -f docker-compose.nginx.yml down || true
