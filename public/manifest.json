@@ -1,0 +1,21 @@
+{
+  "name": "DMath Graph Visualizer",
+  "short_name": "DMath",
+  "description": "Учебный калькулятор и визуализатор алгоритмов дискретной математики",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#171717",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/images/svg/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities"],
+  "screenshots": []
+}
+
