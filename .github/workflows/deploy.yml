@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - deploy
+      - master
   workflow_dispatch:
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
           GIT_REPO: ${{ secrets.GIT_REPO }}
           GITHUB_REPO: ${{ github.repository }}
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH DEPLOY_BRANCH=$DEPLOY_BRANCH GIT_REPO=$GIT_REPO GITHUB_REPO=$GITHUB_REPO bash -s" << 'SCRIPT_END'
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH DEPLOY_BRANCH=$DEPLOY_BRANCH GIT_REPO=$GIT_REPO GITHUB_REPO=$GITHUB_REPO sh -s" << 'SCRIPT_END'
             set -e
             
             echo "🚀 Starting deployment on server..."
@@ -88,27 +88,7 @@ jobs:
               echo "📝 DEPLOY_BRANCH=${DEPLOY_BRANCH:-deploy}"
               chmod +x scripts/deploy.sh
               export DEPLOY_BRANCH=${DEPLOY_BRANCH:-deploy}
-              bash scripts/deploy.sh
-            else
-              echo "⚠️ Deploy script not found, using inline commands..."
-              echo "📥 Pulling latest changes..."
-              git fetch origin
-              git reset --hard origin/${DEPLOY_BRANCH:-deploy}
-              
-              echo "🛑 Stopping containers..."
-              docker-compose -f docker-compose.nginx.yml down || true
-              
-              echo "🔨 Building Docker images..."
-              docker-compose -f docker-compose.nginx.yml build --no-cache
-              
-              echo "▶️ Starting containers..."
-              docker-compose -f docker-compose.nginx.yml up -d
-              
-              echo "🧹 Cleaning up old images..."
-              docker image prune -f
-              
-              echo "✅ Checking container status..."
-              docker-compose -f docker-compose.nginx.yml ps
+              sh scripts/deploy.sh
             fi
           SCRIPT_END
 
@@ -119,7 +99,7 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH bash -s" << 'SCRIPT_END'
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH sh -s" << 'SCRIPT_END'
             set -e
             echo "🔍 Verifying deployment..."
             
@@ -128,7 +108,7 @@ jobs:
             
             cd "$DEPLOY_PATH"
             sleep 15
-            docker-compose -f docker-compose.nginx.yml ps
+            docker compose -f docker-compose.nginx.yml ps
             echo "📋 Recent logs:"
-            docker-compose -f docker-compose.nginx.yml logs --tail=30 nextjs
+            docker compose -f docker-compose.nginx.yml logs --tail=30 nextjs
           SCRIPT_END
