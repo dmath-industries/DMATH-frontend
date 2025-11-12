@@ -2,40 +2,13 @@
 
 set -e
 
-echo "🚀 Starting deployment..."
-
-BRANCH="${DEPLOY_BRANCH:-master}"
-
-echo "📁 Working directory: $(pwd)"
-echo "🌿 Branch: $BRANCH"
-
-echo "📥 Pulling latest changes from Git..."
 git fetch origin
-git reset --hard origin/$BRANCH
+git reset --hard origin/master
 
-echo "🛑 Stopping existing containers..."
 docker compose -f docker-compose.nginx.yml down || true
-
-echo "🧹 Cleaning up old images..."
+docker compose -f docker-compose.nginx.yml build --no-cache
+docker compose -f docker-compose.nginx.yml up -d
 docker image prune -f || true
 
-echo "🔨 Building Docker images..."
-docker compose -f docker-compose.nginx.yml build --no-cache
-
-echo "▶️ Starting containers..."
-docker compose -f docker-compose.nginx.yml up -d
-
-echo "⏳ Waiting for containers to start..."
-sleep 10
-
-echo "✅ Checking container status..."
+sleep 5
 docker compose -f docker-compose.nginx.yml ps
-
-echo "🏥 Checking health status..."
-docker compose -f docker-compose.nginx.yml ps --filter "health=healthy" || echo "⚠️ Some containers may still be starting..."
-
-echo "📋 Recent logs:"
-docker compose -f docker-compose.nginx.yml logs --tail=20 nextjs
-
-echo "🎉 Deployment completed successfully!"
-
