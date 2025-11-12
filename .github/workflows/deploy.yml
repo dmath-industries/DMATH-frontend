@@ -65,8 +65,16 @@ jobs:
               fi
               
               if [ -n "$REPO_URL" ]; then
+                # Add GitHub to known_hosts if cloning from GitHub
+                if echo "$REPO_URL" | grep -q "github.com"; then
+                  echo "🔑 Adding GitHub to known_hosts..."
+                  mkdir -p ~/.ssh
+                  ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+                fi
+                
                 git clone "$REPO_URL" "$DEPLOY_PATH" || {
-                  echo "⚠️ Failed to clone. If directory is not empty, continuing anyway..."
+                  echo "❌ Failed to clone repository. Error details above."
+                  exit 1
                 }
               fi
             fi
