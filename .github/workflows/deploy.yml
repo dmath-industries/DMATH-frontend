@@ -32,13 +32,47 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
           DEPLOY_BRANCH: ${{ github.ref_name }}
+          GIT_REPO: ${{ secrets.GIT_REPO }}
+          GITHUB_REPO: ${{ github.repository }}
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd $DEPLOY_PATH && DEPLOY_BRANCH=$DEPLOY_BRANCH bash -s" << 'SCRIPT_END'
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH DEPLOY_BRANCH=$DEPLOY_BRANCH GIT_REPO=$GIT_REPO GITHUB_REPO=$GITHUB_REPO bash -s" << 'SCRIPT_END'
             set -e
             
             echo "🚀 Starting deployment on server..."
-            echo "📁 Working directory: $(pwd)"
+            echo "📁 Deploy path: $DEPLOY_PATH"
             echo "🌿 Branch: ${DEPLOY_BRANCH:-master}"
+            
+            # Expand ~ to home directory if needed
+            DEPLOY_PATH="${DEPLOY_PATH/#\~/$HOME}"
+            
+            # Create directory if it doesn't exist
+            if [ ! -d "$DEPLOY_PATH" ]; then
+              echo "📂 Creating deploy directory: $DEPLOY_PATH"
+              mkdir -p "$DEPLOY_PATH"
+            fi
+            
+            # Check if it's a git repository, if not, clone it
+            if [ ! -d "$DEPLOY_PATH/.git" ]; then
+              echo "📥 Cloning repository to $DEPLOY_PATH"
+              # Use GIT_REPO secret if set, otherwise construct from GITHUB_REPO
+              if [ -n "$GIT_REPO" ]; then
+                REPO_URL="$GIT_REPO"
+              elif [ -n "$GITHUB_REPO" ]; then
+                REPO_URL="git@github.com:${GITHUB_REPO}.git"
+              else
+                echo "⚠️ Neither GIT_REPO nor GITHUB_REPO is set, skipping clone."
+                REPO_URL=""
+              fi
+              
+              if [ -n "$REPO_URL" ]; then
+                git clone "$REPO_URL" "$DEPLOY_PATH" || {
+                  echo "⚠️ Failed to clone. If directory is not empty, continuing anyway..."
+                }
+              fi
+            fi
+            
+            cd "$DEPLOY_PATH"
+            echo "📁 Working directory: $(pwd)"
             
             # Используем скрипт деплоя, если он существует, иначе выполняем команды напрямую
             if [ -f scripts/deploy.sh ]; then
@@ -77,9 +111,14 @@ jobs:
           SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
         run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd $DEPLOY_PATH && bash -s" << 'SCRIPT_END'
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH bash -s" << 'SCRIPT_END'
             set -e
             echo "🔍 Verifying deployment..."
+            
+            # Expand ~ to home directory if needed
+            DEPLOY_PATH="${DEPLOY_PATH/#\~/$HOME}"
+            
+            cd "$DEPLOY_PATH"
             sleep 15
             docker-compose -f docker-compose.nginx.yml ps
             echo "📋 Recent logs:"
