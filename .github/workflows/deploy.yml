@@ -8,107 +8,29 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Production Server
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add server to known hosts
-        run: |
+      - run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy to server
+      - run: |
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << 'EOF'
+            cd /root/DMATH-frontend
+            git fetch origin
+            git reset --hard origin/master
+            docker compose -f docker-compose.nginx.yml down || true
+            docker compose -f docker-compose.nginx.yml build --no-cache
+            docker compose -f docker-compose.nginx.yml up -d
+            docker image prune -f || true
+          EOF
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
-          DEPLOY_BRANCH: ${{ github.ref_name }}
-          GIT_REPO: ${{ secrets.GIT_REPO }}
-          GITHUB_REPO: ${{ github.repository }}
-        run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH DEPLOY_BRANCH=$DEPLOY_BRANCH GIT_REPO=$GIT_REPO GITHUB_REPO=$GITHUB_REPO sh -s" << 'SCRIPT_END'
-            set -e
-            
-            echo "🚀 Starting deployment on server..."
-            echo "📁 Deploy path: $DEPLOY_PATH"
-            echo "🌿 Branch: ${DEPLOY_BRANCH:-deploy}"
-            
-            # Expand ~ to home directory if needed
-            DEPLOY_PATH="${DEPLOY_PATH/#\~/$HOME}"
-            
-            # Create directory if it doesn't exist
-            if [ ! -d "$DEPLOY_PATH" ]; then
-              echo "📂 Creating deploy directory: $DEPLOY_PATH"
-              mkdir -p "$DEPLOY_PATH"
-            fi
-            
-            # Check if it's a git repository, if not, clone it
-            if [ ! -d "$DEPLOY_PATH/.git" ]; then
-              echo "📥 Cloning repository to $DEPLOY_PATH"
-              # Use GIT_REPO secret if set, otherwise construct from GITHUB_REPO
-              if [ -n "$GIT_REPO" ]; then
-                REPO_URL="$GIT_REPO"
-              elif [ -n "$GITHUB_REPO" ]; then
-                REPO_URL="git@github.com:${GITHUB_REPO}.git"
-              else
-                echo "⚠️ Neither GIT_REPO nor GITHUB_REPO is set, skipping clone."
-                REPO_URL=""
-              fi
-              
-              if [ -n "$REPO_URL" ]; then
-                # Add GitHub to known_hosts if cloning from GitHub
-                if echo "$REPO_URL" | grep -q "github.com"; then
-                  echo "🔑 Adding GitHub to known_hosts..."
-                  mkdir -p ~/.ssh
-                  ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null || true
-                fi
-                
-                git clone "$REPO_URL" "$DEPLOY_PATH" || {
-                  echo "❌ Failed to clone repository. Error details above."
-                  exit 1
-                }
-              fi
-            fi
-            
-            cd "$DEPLOY_PATH"
-            echo "📁 Working directory: $(pwd)"
-            
-            # Используем скрипт деплоя, если он существует, иначе выполняем команды напрямую
-            if [ -f scripts/deploy.sh ]; then
-              echo "✅ Deploy script found! Using scripts/deploy.sh"
-              echo "📝 DEPLOY_BRANCH=${DEPLOY_BRANCH:-deploy}"
-              chmod +x scripts/deploy.sh
-              export DEPLOY_BRANCH=${DEPLOY_BRANCH:-deploy}
-              sh scripts/deploy.sh
-            fi
-          SCRIPT_END
-
-      - name: Verify deployment
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '~/dmath-frontend' }}
-        run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "DEPLOY_PATH=$DEPLOY_PATH sh -s" << 'SCRIPT_END'
-            set -e
-            echo "🔍 Verifying deployment..."
-            
-            # Expand ~ to home directory if needed
-            DEPLOY_PATH="${DEPLOY_PATH/#\~/$HOME}"
-            
-            cd "$DEPLOY_PATH"
-            sleep 15
-            docker compose -f docker-compose.nginx.yml ps
-            echo "📋 Recent logs:"
-            docker compose -f docker-compose.nginx.yml logs --tail=30 nextjs
-          SCRIPT_END
