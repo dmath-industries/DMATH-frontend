@@ -4,6 +4,7 @@
  */
 
 import Graph from 'graphology';
+import { graphDTOToGraphology } from '@/services/graph/GraphUtils';
 import type {
   GraphDTO,
   Step,
@@ -28,10 +29,11 @@ export class RobertsFloresStepGenerator {
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
-    this.edgeIdMap.clear();
 
-    // Построить graphology граф из DTO
-    this.graph = this.buildGraph(graphDTO);
+    // Конвертировать GraphDTO в graphology граф
+    const { graph, edgeIdMap } = graphDTOToGraphology(graphDTO, true);
+    this.graph = graph;
+    this.edgeIdMap = edgeIdMap;
 
     const totalNodes = this.graph.order;
     if (totalNodes === 0) {
@@ -128,31 +130,6 @@ export class RobertsFloresStepGenerator {
     }
   }
 
-  /**
-   * Построить graphology граф из GraphDTO
-   */
-  private buildGraph(graphDTO: GraphDTO): Graph {
-    const graph = new Graph({ type: 'directed' });
-
-    // Добавить узлы
-    for (const node of graphDTO.nodes) {
-      graph.addNode(node.id);
-    }
-
-    // Добавить рёбра и создать маппинг для поиска ID
-    for (const edge of graphDTO.edges) {
-      graph.addEdge(edge.source, edge.target);
-      this.edgeIdMap.set(`${edge.source}-${edge.target}`, edge.id);
-
-      // Если ребро не направленное, добавить обратное
-      if (!edge.directed) {
-        graph.addEdge(edge.target, edge.source);
-        this.edgeIdMap.set(`${edge.target}-${edge.source}`, edge.id);
-      }
-    }
-
-    return graph;
-  }
 
   /**
    * Получить ID ребра по source и target
