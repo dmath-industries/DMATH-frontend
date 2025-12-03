@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, TextField, Button, Typography } from '@mui/material';
 
 interface GraphMatrixInputProps {
   onSubmit: (matrix: string) => void;
@@ -13,23 +14,55 @@ export function GraphMatrixInput({ onSubmit, placeholder }: GraphMatrixInputProp
   };
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-neutral-400">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {placeholder || 'Задайте матрицу смежности. Используйте запятую в качестве разделителя'}
-      </p>
-      <textarea
+      </Typography>
+      <TextField
+        multiline
+        rows={8}
         value={matrixText}
         onChange={(e) => setMatrixText(e.target.value)}
-        className="w-full h-48 bg-neutral-900 border border-neutral-600 rounded-lg p-4 font-mono text-sm text-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        placeholder="0,1,0,1,0&#10;1,0,1,1,0&#10;0,1,0,0,1"
+        placeholder="0,1,0,1,0\n1,0,1,1,0\n0,1,0,0,1"
+        fullWidth
+        sx={{
+          bgcolor: 'rgba(23, 23, 23, 0.8)',
+          '& .MuiOutlinedInput-root': {
+            fontFamily: 'monospace',
+            fontSize: '0.875rem',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(115, 115, 115, 0.5)',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(115, 115, 115, 0.7)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'primary.main',
+            },
+          },
+        }}
       />
-      <button
+      <Button
+        variant="contained"
         onClick={handleSubmit}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-medium py-2.5 px-6 rounded-lg transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40"
+        fullWidth
+        sx={{
+          py: 1.5,
+          background: 'linear-gradient(90deg, #9333ea 0%, #a855f7 100%)',
+          '&:hover': {
+            background: 'linear-gradient(90deg, #7e22ce 0%, #9333ea 100%)',
+          },
+          fontWeight: 500,
+          textTransform: 'none',
+          boxShadow: '0 4px 14px rgba(147, 51, 234, 0.2)',
+          '&:hover': {
+            boxShadow: '0 6px 20px rgba(147, 51, 234, 0.4)',
+          },
+        }}
       >
         Отправить
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 }
 
