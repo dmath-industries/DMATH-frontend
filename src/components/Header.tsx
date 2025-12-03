@@ -102,20 +102,21 @@ const Header = () => {
                 )}
               />
             </div>
-          <div
-            className={cn(
-              'menu-dropdown',
-              isMenuOpen ? 'menu-dropdown-open' : 'menu-dropdown-closed'
-            )}
-          >
-            <nav className="flex flex-col py-2">
-              <Link href="/algorithms" onClick={closeMenu} className="menu-item">
-                Алгоритмы
-              </Link>
-              <Link href="/history" onClick={closeMenu} className="menu-item">
-                История
-              </Link>
-            </nav>
+            <div
+              className={cn(
+                'menu-dropdown',
+                isMenuOpen ? 'menu-dropdown-open' : 'menu-dropdown-closed'
+              )}
+            >
+              <nav className="flex flex-col py-2">
+                <Link href="/algorithms" onClick={closeMenu} className="menu-item">
+                  Алгоритмы
+                </Link>
+                <Link href="/history" onClick={closeMenu} className="menu-item">
+                  История
+                </Link>
+              </nav>
+            </div>
           </div>
         </div>
       </div>
