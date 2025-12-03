@@ -107,17 +107,17 @@ function RobertsFloresContent() {
 
   return (
     <>
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-        <h3 className="text-base font-semibold text-neutral-200 mb-3">Ввод матрицы смежности</h3>
+      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
+        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">Ввод матрицы смежности</h3>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
           placeholder="Введите матрицу смежности построчно, используя запятую как разделитель между элементами"
         />
       </div>
 
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-        <h3 className="text-base font-semibold text-neutral-200 mb-3">О алгоритме</h3>
-        <div className="text-sm text-neutral-300 space-y-2 leading-relaxed">
+      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
+        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">О алгоритме</h3>
+        <div className="text-xs sm:text-sm text-neutral-300 space-y-2 leading-relaxed">
           <p>
             <strong className="text-white">Алгоритм Робертса-Флореса</strong> — это метод поиска всех 
             гамильтоновых циклов в графе с использованием обхода с возвратом (backtracking).
@@ -134,9 +134,9 @@ function RobertsFloresContent() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
-        <h3 className="text-base font-semibold text-blue-200 mb-3">Как использовать</h3>
-        <ol className="text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
+      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-500/30">
+        <h3 className="text-sm sm:text-base font-semibold text-blue-200 mb-2 sm:mb-3">Как использовать</h3>
+        <ol className="text-xs sm:text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
           <li>Введите матрицу смежности графа (используйте запятые как разделители)</li>
           <li>Нажмите "Отправить" чтобы построить граф</li>
           <li>Нажмите "Запустить" чтобы выполнить алгоритм</li>
