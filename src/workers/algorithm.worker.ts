@@ -16,6 +16,7 @@ import type {
 } from '@/types';
 
 import { RobertsFloresStepGenerator } from '@/algorithms/roberts-flores/steps';
+import { FordBellmanStepGenerator } from '@/algorithms/ford-bellman/steps';
 
 interface ExecutionState {
   requestId: string;
@@ -90,6 +91,12 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
     switch (name) {
       case 'roberts-flores': {
         const generator = new RobertsFloresStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
+
+      case 'ford-bellman': {
+        const generator = new FordBellmanStepGenerator();
         steps = generator.generateSteps(graphDTO, params);
         break;
       }
