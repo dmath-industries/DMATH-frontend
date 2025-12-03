@@ -32,7 +32,7 @@ module.exports = {
       displayName: 'jsdom',
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      testMatch: ['<rootDir>/src/**/*.browser.test.ts?(x)'],
+      testMatch: ['<rootDir>/src/**/*.browser.test.ts?(x)', '<rootDir>/src/**/__tests__/**/*.test.ts'],
       collectCoverageFrom,
       transform: { '^.+\\.tsx?$': tsTransformReact },
       moduleNameMapper: {
