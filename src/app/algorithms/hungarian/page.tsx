@@ -1,23 +1,12 @@
 'use client';
 
-/**
- * Hungarian Algorithm Page
- * Страница визуализации Венгерского алгоритма
- */
-
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
 
-/**
- * Контент страницы Венгерского алгоритма
- */
 function HungarianContent() {
   const { loadGraph } = useAlgorithmLayout();
 
-  /**
-   * Обработать ввод матрицы стоимостей и создать граф
-   */
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
@@ -52,14 +41,11 @@ function HungarianContent() {
       const centerX = 0;
       const centerY = 0;
       
-      const nodeColor = '#3b82f6'; // blue-500
-      const edgeColor = '#60a5fa'; // blue-400
+      const nodeColor = '#3b82f6';
+      const edgeColor = '#60a5fa';
     
-      // Создаём узлы для источников (левая часть двудольного графа)
-      // Используем смещение угла, чтобы избежать перекрытия с первой целью
       for (let i = 0; i < nodeCount; i++) {
-        // Распределяем узлы по дуге от -PI/2 до PI/2, но с небольшим смещением
-        const angleRange = Math.PI * 0.8; // Используем 80% полного угла для лучшего распределения
+        const angleRange = Math.PI * 0.8;
         const startAngle = -angleRange / 2;
         const angle = startAngle + (i / Math.max(1, nodeCount - 1)) * angleRange;
         nodes.push({
@@ -73,8 +59,6 @@ function HungarianContent() {
         });
       }
 
-      // Создаём узлы для назначений (правая часть двудольного графа)
-      // Используем те же углы, но с противоположной стороны
       for (let i = 0; i < nodeCount; i++) {
         const angleRange = Math.PI * 0.8;
         const startAngle = -angleRange / 2;
@@ -85,28 +69,23 @@ function HungarianContent() {
           y: centerY + radius * Math.sin(angle),
           label: `T${i + 1}`, 
           radius: 25,
-          color: '#8b5cf6', // purple
+          color: '#8b5cf6',
           state: 'default',
         });
       }
       
       let edgeId = 0;
       
-      // Создаём рёбра с весами из матрицы
-      // Создаём рёбра только для существующих узлов и с валидными весами
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row) continue;
         for (let j = 0; j < nodeCount; j++) {
           const weight = row[j];
-          // Создаём рёбра только если вес валиден и не равен 0
-          // Также проверяем, что индексы в допустимых пределах
           if (i >= 0 && i < nodeCount && j >= 0 && j < nodeCount && 
               weight !== 0 && !isNaN(weight) && isFinite(weight)) {
             const sourceId = `source_${i}`;
             const targetId = `target_${j}`;
             
-            // Убеждаемся, что узлы существуют
             const sourceExists = nodes.some(n => n.id === sourceId);
             const targetExists = nodes.some(n => n.id === targetId);
             
@@ -183,9 +162,6 @@ function HungarianContent() {
   );
 }
 
-/**
- * Страница Венгерского алгоритма
- */
 export default function HungarianPage() {
   return (
     <AlgorithmLayout
@@ -196,4 +172,3 @@ export default function HungarianPage() {
     </AlgorithmLayout>
   );
 }
-

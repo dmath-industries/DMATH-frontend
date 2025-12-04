@@ -196,7 +196,7 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
       if (canvasContainerRef.current) {
         const containerWidth = canvasContainerRef.current.offsetWidth - 16; 
         const width = Math.max(600, containerWidth);
-        const height = Math.min(800, Math.max(500, window.innerHeight - 300)); 
+        const height = Math.min(800, Math.max(500, window.innerHeight - 300));
         setCanvasSize({ width, height });
         
         if (rendererRef.current && viewportRef.current) {

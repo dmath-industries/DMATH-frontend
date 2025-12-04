@@ -16,6 +16,7 @@ import type {
 } from '@/types';
 
 import { RobertsFloresStepGenerator } from '@/algorithms/roberts-flores/steps';
+import { HungarianStepGenerator } from '@/algorithms/hungarian/steps';
 
 interface ExecutionState {
   requestId: string;
@@ -94,6 +95,11 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
         break;
       }
 
+      case 'hungarian': {
+        const generator = new HungarianStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
       case 'bfs':
         steps = [];
         break;
