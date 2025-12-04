@@ -223,6 +223,72 @@ export class Renderer {
 
     this.edgesContainer.addChild(graphic);
     this.edgeGraphics.set(edgeId, graphic);
+
+    // Отрисовка веса ребра, если он указан
+    if (edge.weight !== undefined && edge.weight !== null) {
+      this.drawEdgeWeight(edgeId, edge.weight, startX, startY, endX, endY);
+    }
+  }
+
+  /**
+   * Отрисовка веса ребра (белые цифры без фона)
+   */
+  private drawEdgeWeight(
+    edgeId: string,
+    weight: number,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number
+  ): void {
+    if (!this.labelsContainer) return;
+
+    const oldLabelData = this.edgeWeightLabels.get(edgeId);
+    if (oldLabelData) {
+      this.labelsContainer.removeChild(oldLabelData.text);
+      oldLabelData.text.destroy();
+      if (oldLabelData.bg) {
+        this.labelsContainer.removeChild(oldLabelData.bg);
+        oldLabelData.bg.destroy();
+      }
+    }
+
+    // Позиция по середине ребра, смещённая перпендикулярно
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+
+    // Вычисляем перпендикулярное смещение для избежания пересечений
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    if (length === 0) return;
+
+    // Перпендикулярный вектор (поворот на 90 градусов)
+    const perpX = -dy / length;
+    const perpY = dx / length;
+
+    // Смещение на 20 пикселей перпендикулярно ребру
+    const offset = 20;
+    const labelX = midX + perpX * offset;
+    const labelY = midY + perpY * offset;
+
+    // Создаём текст для веса (белые цифры без фона, с чёрной обводкой)
+    const weightText = new Text({
+      text: String(weight),
+      style: {
+        fontSize: 14,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+        stroke: { color: 0x000000, width: 2 }, // Чёрная обводка для лучшей читаемости
+      },
+    });
+
+    weightText.anchor.set(0.5);
+    weightText.position.set(labelX, labelY);
+    weightText.zIndex = 15;
+
+    this.labelsContainer.addChild(weightText);
+    this.edgeWeightLabels.set(edgeId, { text: weightText, bg: null });
   }
 
   /**
