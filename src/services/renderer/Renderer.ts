@@ -22,6 +22,7 @@ export class Renderer {
   private nodeGraphics: Map<string, Graphics> = new Map();
   private edgeGraphics: Map<string, Graphics> = new Map();
   private labelGraphics: Map<string, Text> = new Map();
+  private edgeWeightLabels: Map<string, { text: Text; bg: Graphics | null }> = new Map();
 
   /**
    * Инициализация Pixi Application
@@ -305,6 +306,16 @@ export class Renderer {
       label.destroy();
     }
     this.labelGraphics.clear();
+
+    for (const labelData of this.edgeWeightLabels.values()) {
+      this.labelsContainer?.removeChild(labelData.text);
+      labelData.text.destroy();
+      if (labelData.bg) {
+        this.labelsContainer?.removeChild(labelData.bg);
+        labelData.bg.destroy();
+      }
+    }
+    this.edgeWeightLabels.clear();
   }
 
   /**

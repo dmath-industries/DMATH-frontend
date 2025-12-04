@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 interface GraphMatrixInputProps {
   onSubmit: (matrix: string) => void;
   placeholder?: string;
+  defaultValue?: string;
 }
 
-export function GraphMatrixInput({ onSubmit, placeholder }: GraphMatrixInputProps) {
-  const [matrixText, setMatrixText] = useState('0,1,0,1,0\n1,0,1,1,0\n0,1,0,0,1\n1,1,0,0,1\n0,0,1,1,0');
+export function GraphMatrixInput({ onSubmit, placeholder, defaultValue }: GraphMatrixInputProps) {
+  const [matrixText, setMatrixText] = useState(defaultValue || '0,1,0,1,0\n1,0,1,1,0\n0,1,0,0,1\n1,1,0,0,1\n0,0,1,1,0');
 
   const handleSubmit = () => {
     onSubmit(matrixText);
