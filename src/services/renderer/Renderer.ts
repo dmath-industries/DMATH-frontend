@@ -22,6 +22,8 @@ export class Renderer {
   private nodeGraphics: Map<string, Graphics> = new Map();
   private edgeGraphics: Map<string, Graphics> = new Map();
   private labelGraphics: Map<string, Text> = new Map();
+  private edgeWeightLabels: Map<string, { text: Text; bg: Graphics | null }> = new Map();
+  private nodeDistanceLabels: Map<string, Text> = new Map();
 
   /**
    * Инициализация Pixi Application
@@ -167,6 +169,18 @@ export class Renderer {
 
     this.labelsContainer.addChild(label);
     this.labelGraphics.set(nodeId, label);
+
+    const distance = (node as any).distance;
+    if (distance !== undefined && distance !== null && distance !== Infinity) {
+      this.drawNodeDistance(nodeId, distance, node.x, node.y, radius);
+    } else {
+      const oldDistanceLabel = this.nodeDistanceLabels.get(nodeId);
+      if (oldDistanceLabel) {
+        this.labelsContainer.removeChild(oldDistanceLabel);
+        oldDistanceLabel.destroy();
+        this.nodeDistanceLabels.delete(nodeId);
+      }
+    }
   }
 
   /**
@@ -222,6 +236,109 @@ export class Renderer {
 
     this.edgesContainer.addChild(graphic);
     this.edgeGraphics.set(edgeId, graphic);
+
+    // Отрисовка веса ребра, если он указан
+    if (edge.weight !== undefined && edge.weight !== null) {
+      this.drawEdgeWeight(edgeId, edge.weight, startX, startY, endX, endY);
+    }
+  }
+
+  /**
+   * Отрисовка веса ребра (белые цифры без фона)
+   */
+  private drawEdgeWeight(
+    edgeId: string,
+    weight: number,
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number
+  ): void {
+    if (!this.labelsContainer) return;
+
+    const oldLabelData = this.edgeWeightLabels.get(edgeId);
+    if (oldLabelData) {
+      this.labelsContainer.removeChild(oldLabelData.text);
+      oldLabelData.text.destroy();
+      if (oldLabelData.bg) {
+        this.labelsContainer.removeChild(oldLabelData.bg);
+        oldLabelData.bg.destroy();
+      }
+    }
+
+    // Позиция по середине ребра, смещённая перпендикулярно
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+
+    // Вычисляем перпендикулярное смещение для избежания пересечений
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    if (length === 0) return;
+
+    // Перпендикулярный вектор (поворот на 90 градусов)
+    const perpX = -dy / length;
+    const perpY = dx / length;
+
+    // Смещение на 20 пикселей перпендикулярно ребру
+    const offset = 20;
+    const labelX = midX + perpX * offset;
+    const labelY = midY + perpY * offset;
+
+    // Создаём текст для веса (белые цифры без фона, с чёрной обводкой)
+    const weightText = new Text({
+      text: String(weight),
+      style: {
+        fontSize: 14,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+        stroke: { color: 0x000000, width: 2 }, // Чёрная обводка для лучшей читаемости
+      },
+    });
+
+    weightText.anchor.set(0.5);
+    weightText.position.set(labelX, labelY);
+    weightText.zIndex = 15;
+
+    this.labelsContainer.addChild(weightText);
+    this.edgeWeightLabels.set(edgeId, { text: weightText, bg: null });
+  }
+
+  /**
+   * Отрисовка расстояния вне узла (для Ford-Bellman)
+   */
+  private drawNodeDistance(
+    nodeId: string,
+    distance: number,
+    nodeX: number,
+    nodeY: number,
+    radius: number
+  ): void {
+    if (!this.labelsContainer) return;
+
+    const oldDistanceLabel = this.nodeDistanceLabels.get(nodeId);
+    if (oldDistanceLabel) {
+      this.labelsContainer.removeChild(oldDistanceLabel);
+      oldDistanceLabel.destroy();
+    }
+
+    const offset = radius + 15;
+    const distanceText = new Text({
+      text: String(distance),
+      style: {
+        fontSize: 14,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+        stroke: { color: 0x000000, width: 2 },
+      },
+    });
+
+    distanceText.anchor.set(0.5);
+    distanceText.position.set(nodeX, nodeY - offset);
+    distanceText.zIndex = 15;
+
+    this.labelsContainer.addChild(distanceText);
+    this.nodeDistanceLabels.set(nodeId, distanceText);
   }
 
   /**
@@ -305,6 +422,16 @@ export class Renderer {
       label.destroy();
     }
     this.labelGraphics.clear();
+
+    for (const labelData of this.edgeWeightLabels.values()) {
+      this.labelsContainer?.removeChild(labelData.text);
+      labelData.text.destroy();
+      if (labelData.bg) {
+        this.labelsContainer?.removeChild(labelData.bg);
+        labelData.bg.destroy();
+      }
+    }
+    this.edgeWeightLabels.clear();
   }
 
   /**

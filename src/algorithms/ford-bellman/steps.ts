@@ -43,6 +43,14 @@ export class FordBellmanStepGenerator {
       this.distances.set(node.id, distance);
       this.predecessors.set(node.id, null);
 
+      this.addUpdateNodeStep(
+        node.id,
+        { distance: distance === Infinity ? undefined : distance },
+        node.id === startNode
+          ? `Начальная вершина ${this.label(node.id)}: расстояние = 0`
+          : `Вершина ${this.label(node.id)}: расстояние = ∞`
+      );
+
       this.addHighlightNodeStep(
         node.id,
         node.id === startNode ? 'current' : 'default',
@@ -88,7 +96,7 @@ export class FordBellmanStepGenerator {
 
           this.addUpdateNodeStep(
             v,
-            { label: `${this.label(v)}\n(${newDist})` },
+            { label: this.label(v), distance: newDist },
             `Расстояние до ${this.label(v)} обновлено: ${distV} → ${newDist}`
           );
 
@@ -217,7 +225,7 @@ export class FordBellmanStepGenerator {
    */
   private addUpdateNodeStep(
     nodeId: string,
-    attrs: Partial<{ label: string }>,
+    attrs: Partial<{ label: string; distance?: number }>,
     description?: string
   ): void {
     const step: UpdateNodeStep = {

@@ -26,6 +26,7 @@ export interface NodeDTO {
   radius?: number;
   color?: string;
   state?: ElementState;
+  distance?: number;
 }
 
 /**

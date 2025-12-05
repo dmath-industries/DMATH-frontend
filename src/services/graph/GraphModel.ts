@@ -49,6 +49,7 @@ export class GraphModel {
       radius: dto.radius ?? DEFAULT_NODE_ATTRS.radius!,
       color: dto.color ?? DEFAULT_NODE_ATTRS.color!,
       state: dto.state ?? DEFAULT_NODE_ATTRS.state!,
+      distance: dto.distance,
     };
 
     this.graph.addNode(dto.id, attrs);
@@ -66,7 +67,7 @@ export class GraphModel {
   /**
    * Обновить атрибуты узла
    */
-  updateNode(id: string, attrs: Partial<NodeAttrs>): void {
+  updateNode(id: string, attrs: Partial<NodeAttrs & { distance?: number }>): void {
     if (this.graph.hasNode(id)) {
       this.graph.mergeNodeAttributes(id, attrs);
     }
@@ -89,6 +90,7 @@ export class GraphModel {
       radius: attrs.radius,
       color: attrs.color,
       state: attrs.state,
+      distance: (attrs as any).distance,
     };
   }
 
