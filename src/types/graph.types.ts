@@ -15,6 +15,7 @@ export interface NodeAttrs {
   radius: number;
   color: string;
   state: ElementState;
+  distance?: number;
 }
 
 /**
