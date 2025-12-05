@@ -32,4 +32,3 @@ if (!fs.existsSync(standaloneStatic) && fs.existsSync(staticDir)) {
 console.log('🚀 Запуск standalone сервера...');
 process.chdir(standaloneDir);
 execSync('node server.js', { stdio: 'inherit' });
-
