@@ -27,3 +27,4 @@ if [[ ! "$BRANCH_NAME" =~ $regex_pattern && ! "$EXCLUDE_BRANCHES" =~ "$BRANCH_NA
 fi
 
 exit 0
+
