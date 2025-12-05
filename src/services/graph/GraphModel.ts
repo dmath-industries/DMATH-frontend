@@ -69,7 +69,15 @@ export class GraphModel {
    */
   updateNode(id: string, attrs: Partial<NodeAttrs & { distance?: number }>): void {
     if (this.graph.hasNode(id)) {
-      this.graph.mergeNodeAttributes(id, attrs);
+      const nodeAttrs: Partial<NodeAttrs> = {};
+      if (attrs.x !== undefined) nodeAttrs.x = attrs.x;
+      if (attrs.y !== undefined) nodeAttrs.y = attrs.y;
+      if (attrs.label !== undefined) nodeAttrs.label = attrs.label;
+      if (attrs.radius !== undefined) nodeAttrs.radius = attrs.radius;
+      if (attrs.color !== undefined) nodeAttrs.color = attrs.color;
+      if (attrs.state !== undefined) nodeAttrs.state = attrs.state;
+      if (attrs.distance !== undefined) (nodeAttrs as any).distance = attrs.distance;
+      this.graph.mergeNodeAttributes(id, nodeAttrs);
     }
   }
 
