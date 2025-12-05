@@ -21,8 +21,8 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - run: |
-          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << 'EOF'
-            cd /root/DMATH-frontend
+          ssh -p $SSH_PORT $SSH_USER@$SSH_HOST << EOF
+            cd ${{ secrets.DEPLOY_PATH }}
             git fetch origin
             git reset --hard origin/master
             docker compose -f docker-compose.nginx.yml down || true
