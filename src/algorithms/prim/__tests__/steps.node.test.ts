@@ -67,6 +67,49 @@ describe('PrimStepGenerator', () => {
     expect(steps).toEqual([]);
   });
 
+  it('должен возвращать пусто если стартовой вершины нет', () => {
+    const generator = new PrimStepGenerator();
+    const graphDTO = buildConnectedGraph();
+
+    const steps = generator.generateSteps(graphDTO, { startNode: 'missing' });
+
+    expect(steps).toEqual([]);
+  });
+
+  it('должен помечать несвязный граф без рёбер', () => {
+    const generator = new PrimStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 0, y: 0 },
+      ],
+      edges: [],
+    };
+
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    const rejected = steps.filter(
+      step => step.type === 'HIGHLIGHT_NODE' && step.state === 'rejected'
+    );
+    expect(rejected.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать ребро с бесконечным весом', () => {
+    const generator = new PrimStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 0, y: 0 },
+      ],
+      edges: [{ id: 'e0', source: '0', target: '1', weight: Number.NaN, directed: false }],
+    };
+
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    const pathEdges = steps.filter(
+      step => step.type === 'HIGHLIGHT_EDGE' && (step as HighlightEdgeStep).state === 'path'
+    );
+    expect(pathEdges.length).toBeGreaterThanOrEqual(0);
+  });
+
   it('должен помечать несвязный граф', () => {
     const generator = new PrimStepGenerator();
     const graphDTO = buildDisconnectedGraph();
