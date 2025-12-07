@@ -3,6 +3,7 @@
  * Генерирует поток Step'ов для поиска Гамильтоновых циклов в ориентированном графе
  */
 
+import Graph from 'graphology';
 import type {
   GraphDTO,
   Step,
@@ -18,6 +19,8 @@ import type {
 export class RobertsFloresStepGenerator {
   private steps: Step[] = [];
   private stepCounter = 0;
+  private graph!: Graph;
+  private edgeIdMap: Map<string, string> = new Map();
 
   /**
    * Генерировать шаги для алгоритма Roberts-Flores
@@ -25,32 +28,32 @@ export class RobertsFloresStepGenerator {
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
+    this.edgeIdMap.clear();
 
-    const firstNode = graphDTO.nodes[0];
-    const startNode = params.startNode ?? firstNode?.id ?? '0';
+    // Построить graphology граф из DTO
+    this.graph = this.buildGraph(graphDTO);
 
-    const adjacency = this.buildAdjacencyList(graphDTO);
-    const totalNodes = graphDTO.nodes.length;
-
+    const totalNodes = this.graph.order;
     if (totalNodes === 0) {
       return this.steps;
     }
 
+    const firstNode = this.graph.nodes()[0];
+    const startNode = params.startNode ?? firstNode ?? '0';
+
+    if (!this.graph.hasNode(startNode)) {
+      return this.steps;
+    }
+
     const path: string[] = [startNode];
-    
+
     this.addHighlightNodeStep(
       startNode,
       'current',
       `Начало: добавлена вершина ${this.label(startNode)}`
     );
 
-    this.findHamiltonianCycles(
-      path,
-      startNode,
-      totalNodes,
-      adjacency,
-      graphDTO
-    );
+    this.findHamiltonianCycles(path, startNode, totalNodes);
 
     return this.steps;
   }
@@ -58,24 +61,18 @@ export class RobertsFloresStepGenerator {
   /**
    * Рекурсивный поиск Гамильтоновых циклов
    */
-  private findHamiltonianCycles(
-    path: string[],
-    current: string,
-    totalNodes: number,
-    adjacency: Map<string, string[]>,
-    graphDTO: GraphDTO
-  ): void {
+  private findHamiltonianCycles(path: string[], current: string, totalNodes: number): void {
     if (path.length === totalNodes) {
       const firstNode = path[0];
       if (!firstNode) {
         return;
       }
 
-      const hasCycleEdge = this.hasEdge(current, firstNode, graphDTO);
+      const hasCycleEdge = this.graph.hasEdge(current, firstNode);
 
       if (hasCycleEdge) {
-        const edgeId = this.findEdgeId(current, firstNode, graphDTO);
-        
+        const edgeId = this.getEdgeId(current, firstNode);
+
         if (edgeId) {
           this.addHighlightEdgeStep(
             edgeId,
@@ -98,9 +95,8 @@ export class RobertsFloresStepGenerator {
       return;
     }
 
-    const neighbors = adjacency.get(current) ?? [];
-
-    for (const next of neighbors) {
+    // Используем outNeighbors для получения соседей
+    for (const next of this.graph.outNeighbors(current)) {
       if (!path.includes(next)) {
         path.push(next);
 
@@ -110,12 +106,12 @@ export class RobertsFloresStepGenerator {
           `Добавлена вершина ${this.label(next)}: ${this.pathToString(path)}`
         );
 
-        const edgeId = this.findEdgeId(current, next, graphDTO);
+        const edgeId = this.getEdgeId(current, next);
         if (edgeId) {
           this.addHighlightEdgeStep(edgeId, 'active');
         }
 
-        this.findHamiltonianCycles(path, next, totalNodes, adjacency, graphDTO);
+        this.findHamiltonianCycles(path, next, totalNodes);
 
         path.pop();
 
@@ -133,58 +129,43 @@ export class RobertsFloresStepGenerator {
   }
 
   /**
-   * Построить adjacency list из GraphDTO
+   * Построить graphology граф из GraphDTO
    */
-  private buildAdjacencyList(graphDTO: GraphDTO): Map<string, string[]> {
-    const adjacency = new Map<string, string[]>();
+  private buildGraph(graphDTO: GraphDTO): Graph {
+    const graph = new Graph({ type: 'directed' });
 
+    // Добавить узлы
     for (const node of graphDTO.nodes) {
-      adjacency.set(node.id, []);
+      graph.addNode(node.id);
     }
 
+    // Добавить рёбра и создать маппинг для поиска ID
     for (const edge of graphDTO.edges) {
-      const neighbors = adjacency.get(edge.source) ?? [];
-      neighbors.push(edge.target);
-      adjacency.set(edge.source, neighbors);
+      graph.addEdge(edge.source, edge.target);
+      this.edgeIdMap.set(`${edge.source}-${edge.target}`, edge.id);
 
+      // Если ребро не направленное, добавить обратное
       if (!edge.directed) {
-        const reverseNeighbors = adjacency.get(edge.target) ?? [];
-        reverseNeighbors.push(edge.source);
-        adjacency.set(edge.target, reverseNeighbors);
+        graph.addEdge(edge.target, edge.source);
+        this.edgeIdMap.set(`${edge.target}-${edge.source}`, edge.id);
       }
     }
 
-    return adjacency;
+    return graph;
   }
 
   /**
-   * Проверить существование ребра
+   * Получить ID ребра по source и target
    */
-  private hasEdge(from: string, to: string, graphDTO: GraphDTO): boolean {
-    return graphDTO.edges.some(
-      (edge) =>
-        (edge.source === from && edge.target === to) ||
-        (!edge.directed && edge.source === to && edge.target === from)
-    );
-  }
-
-  /**
-   * Найти ID ребра
-   */
-  private findEdgeId(from: string, to: string, graphDTO: GraphDTO): string | null {
-    const edge = graphDTO.edges.find(
-      (e) =>
-        (e.source === from && e.target === to) ||
-        (!e.directed && e.source === to && e.target === from)
-    );
-    return edge?.id ?? null;
+  private getEdgeId(from: string, to: string): string | null {
+    return this.edgeIdMap.get(`${from}-${to}`) ?? null;
   }
 
   /**
    * Преобразовать путь в строку
    */
   private pathToString(path: string[]): string {
-    return path.map((v) => this.label(v)).join(' → ');
+    return path.map(v => this.label(v)).join(' → ');
   }
 
   /**
@@ -201,11 +182,7 @@ export class RobertsFloresStepGenerator {
   /**
    * Добавить шаг для подсветки узла
    */
-  private addHighlightNodeStep(
-    nodeId: string,
-    state: ElementState,
-    description?: string
-  ): void {
+  private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -220,11 +197,7 @@ export class RobertsFloresStepGenerator {
   /**
    * Добавить шаг для подсветки ребра
    */
-  private addHighlightEdgeStep(
-    edgeId: string,
-    state: ElementState,
-    description?: string
-  ): void {
+  private addHighlightEdgeStep(edgeId: string, state: ElementState, description?: string): void {
     const step: HighlightEdgeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -236,4 +209,3 @@ export class RobertsFloresStepGenerator {
     this.steps.push(step);
   }
 }
-
