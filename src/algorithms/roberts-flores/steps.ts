@@ -4,7 +4,7 @@
  */
 
 import Graph from 'graphology';
-import { graphDTOToGraphology } from '@/services/graph/GraphUtils';
+import { GraphModel } from '@/services/graph';
 import type {
   GraphDTO,
   Step,
@@ -14,6 +14,23 @@ import type {
   ElementState,
 } from '@/types';
 
+const formatNodeLabel = (nodeId: string | number): string => {
+  const numericId =
+    typeof nodeId === 'string' && /^\d+$/.test(nodeId)
+      ? Number(nodeId)
+      : typeof nodeId === 'number'
+        ? nodeId
+        : NaN;
+
+  if (Number.isInteger(numericId) && numericId >= 0) {
+    return String.fromCharCode('a'.charCodeAt(0) + numericId);
+  }
+  return String(nodeId);
+};
+
+const formatPath = (path: (string | number)[], separator = ' → '): string =>
+  path.map(formatNodeLabel).join(separator);
+
 /**
  * Генератор шагов для алгоритма Roberts-Flores
  */
@@ -21,7 +38,7 @@ export class RobertsFloresStepGenerator {
   private steps: Step[] = [];
   private stepCounter = 0;
   private graph!: Graph;
-  private edgeIdMap: Map<string, string> = new Map();
+  private graphModel!: GraphModel;
 
   /**
    * Генерировать шаги для алгоритма Roberts-Flores
@@ -30,10 +47,10 @@ export class RobertsFloresStepGenerator {
     this.steps = [];
     this.stepCounter = 0;
 
-    // Конвертировать GraphDTO в graphology граф
-    const { graph, edgeIdMap } = graphDTOToGraphology(graphDTO, true);
-    this.graph = graph;
-    this.edgeIdMap = edgeIdMap;
+    // Конвертировать GraphDTO в GraphModel (направленный граф)
+    this.graphModel = new GraphModel(true);
+    this.graphModel.fromDTO(graphDTO);
+    this.graph = this.graphModel.getGraph();
 
     const totalNodes = this.graph.order;
     if (totalNodes === 0) {
@@ -52,7 +69,7 @@ export class RobertsFloresStepGenerator {
     this.addHighlightNodeStep(
       startNode,
       'current',
-      `Начало: добавлена вершина ${this.label(startNode)}`
+      `Начало: добавлена вершина ${formatNodeLabel(startNode)}`
     );
 
     this.findHamiltonianCycles(path, startNode, totalNodes);
@@ -76,22 +93,14 @@ export class RobertsFloresStepGenerator {
         const edgeId = this.getEdgeId(current, firstNode);
 
         if (edgeId) {
-          this.addHighlightEdgeStep(
-            edgeId,
-            'path',
-            `Найден Гамильтонов цикл: ${this.pathToString(path)}`
-          );
+          this.addHighlightEdgeStep(edgeId, 'path', `Найден Гамильтонов цикл: ${formatPath(path)}`);
         }
 
         for (const nodeId of path) {
           this.addHighlightNodeStep(nodeId, 'path');
         }
       } else {
-        this.addHighlightNodeStep(
-          current,
-          'rejected',
-          `Путь ${this.pathToString(path)} не образует цикл`
-        );
+        this.addHighlightNodeStep(current, 'rejected', `Путь ${formatPath(path)} не образует цикл`);
       }
 
       return;
@@ -105,7 +114,7 @@ export class RobertsFloresStepGenerator {
         this.addHighlightNodeStep(
           next,
           'current',
-          `Добавлена вершина ${this.label(next)}: ${this.pathToString(path)}`
+          `Добавлена вершина ${formatNodeLabel(next)}: ${formatPath(path)}`
         );
 
         const edgeId = this.getEdgeId(current, next);
@@ -120,7 +129,7 @@ export class RobertsFloresStepGenerator {
         this.addHighlightNodeStep(
           next,
           'visited',
-          `Удалена вершина ${this.label(next)}: ${this.pathToString(path)}`
+          `Удалена вершина ${formatNodeLabel(next)}: ${formatPath(path)}`
         );
 
         if (edgeId) {
@@ -128,32 +137,6 @@ export class RobertsFloresStepGenerator {
         }
       }
     }
-  }
-
-
-  /**
-   * Получить ID ребра по source и target
-   */
-  private getEdgeId(from: string, to: string): string | null {
-    return this.edgeIdMap.get(`${from}-${to}`) ?? null;
-  }
-
-  /**
-   * Преобразовать путь в строку
-   */
-  private pathToString(path: string[]): string {
-    return path.map(v => this.label(v)).join(' → ');
-  }
-
-  /**
-   * Получить метку узла (a, b, c, ...)
-   */
-  private label(v: string): string {
-    const n = Number(v);
-    if (Number.isInteger(n) && n >= 0) {
-      return String.fromCharCode('a'.charCodeAt(0) + n);
-    }
-    return v;
   }
 
   /**
@@ -184,5 +167,13 @@ export class RobertsFloresStepGenerator {
       description,
     };
     this.steps.push(step);
+  }
+
+  /**
+   * Получить ID ребра между двумя вершинами
+   */
+  private getEdgeId(from: string, to: string): string | null {
+    const edgeKey = this.graph.edge(from, to);
+    return typeof edgeKey === 'string' ? edgeKey : null;
   }
 }
