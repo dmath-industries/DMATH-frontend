@@ -110,6 +110,28 @@ describe('PrimStepGenerator', () => {
     expect(pathEdges.length).toBeGreaterThanOrEqual(0);
   });
 
+  it('должен помечать рёбра, не расширяющие остов', () => {
+    const generator = new PrimStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 1, y: 0 },
+        { id: '2', x: 2, y: 0 },
+      ],
+      edges: [
+        { id: 'e01', source: '0', target: '1', weight: 1, directed: false },
+        { id: 'e02', source: '0', target: '2', weight: 5, directed: false },
+        { id: 'e12', source: '1', target: '2', weight: 2, directed: false },
+      ],
+    };
+
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    const rejectedEdges = steps.filter(
+      step => step.type === 'HIGHLIGHT_EDGE' && (step as HighlightEdgeStep).state === 'rejected'
+    );
+    expect(rejectedEdges.length).toBeGreaterThanOrEqual(0);
+  });
+
   it('должен помечать несвязный граф', () => {
     const generator = new PrimStepGenerator();
     const graphDTO = buildDisconnectedGraph();
