@@ -8,7 +8,7 @@ BRANCH_NAME=$(git symbolic-ref --short HEAD)
 regex_pattern="^($BRANCH_TYPE/[[:alpha:]]+-[[:digit:]]+)"
 
 EXCLUDE_BRANCHES="
-  (main|develop)
+  (master|develop)
 "
 
 export PRE_CHECKOUT=true
