@@ -51,4 +51,52 @@ describe('HungarianStepGenerator', () => {
 
     expect(steps).toEqual([]);
   });
+
+  it('должен возвращать пусто если в строке нет конечных весов', () => {
+    const generator = new HungarianStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 1, y: 0 },
+      ],
+      edges: [{ id: 'e0', source: '0', target: '0', weight: 2, directed: true }],
+    };
+
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps).toEqual([]);
+  });
+
+  it('должен поддерживать числовые string-идентификаторы', () => {
+    const generator = new HungarianStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '10', x: 1, y: 0 },
+      ],
+      edges: [
+        { id: 'e0', source: '0', target: '10', weight: 1, directed: true },
+        { id: 'e1', source: '10', target: '0', weight: 1, directed: true },
+      ],
+    };
+
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен поддерживать нечисловые идентификаторы', () => {
+    const generator = new HungarianStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: 'row', x: 0, y: 0 },
+        { id: 'col', x: 1, y: 0 },
+      ],
+      edges: [
+        { id: 'e0', source: 'row', target: 'col', weight: 3, directed: true },
+        { id: 'e1', source: 'col', target: 'row', weight: 4, directed: true },
+      ],
+    };
+
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
 });
