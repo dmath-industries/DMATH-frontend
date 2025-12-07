@@ -109,5 +109,48 @@ describe('RobertsFloresStepGenerator', () => {
     const uniqueIds = new Set(stepIds);
     expect(uniqueIds.size).toBe(stepIds.length);
   });
-});
 
+  it('должен возвращать пусто если стартовой вершины нет', () => {
+    const generator = new RobertsFloresStepGenerator();
+    const graphDTO = buildSampleGraphDTO();
+    const steps = generator.generateSteps(graphDTO, { startNode: 'not-exists' });
+    expect(steps).toEqual([]);
+  });
+
+  it('должен подсветить цикл при замыкании', () => {
+    const generator = new RobertsFloresStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: 'x', x: 1, y: 0 },
+      ],
+      edges: [
+        { id: 'e0', source: '0', target: 'x', directed: true },
+        { id: 'e1', source: 'x', target: '0', directed: true },
+      ],
+    };
+
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    const pathEdges = steps.filter(
+      step => step.type === 'HIGHLIGHT_EDGE' && (step as HighlightEdgeStep).state === 'path'
+    );
+    expect(pathEdges.length).toBeGreaterThan(0);
+  });
+
+  it('должен помечать путь как нецикл при отсутствии ребра в начало', () => {
+    const generator = new RobertsFloresStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 1, y: 0 },
+      ],
+      edges: [{ id: 'e0', source: '0', target: '1', directed: true }],
+    };
+
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    const rejected = steps.filter(
+      step => step.type === 'HIGHLIGHT_NODE' && step.state === 'rejected'
+    );
+    expect(rejected.length).toBeGreaterThan(0);
+  });
+});
