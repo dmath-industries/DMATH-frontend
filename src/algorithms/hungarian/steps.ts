@@ -35,7 +35,7 @@ const formatNodeLabel = (nodeId: string | number): string => {
  * Реализация Венгерского алгоритма (минимизация).
  * Возвращает массив colIndex для каждой строки.
  */
-const hungarian = (costs: number[][]): number[] => {
+export const hungarian = (costs: number[][]): number[] => {
   const n = costs.length;
   const m = costs[0]?.length ?? 0;
   if (n === 0 || m === 0 || n !== m) return [];
@@ -54,9 +54,6 @@ const hungarian = (costs: number[][]): number[] => {
     do {
       used[j0] = true;
       const i0 = p[j0];
-      if (!Number.isInteger(i0) || i0 <= 0) {
-        break;
-      }
       let delta = Infinity;
       let j1 = 0;
 
@@ -116,7 +113,8 @@ export class HungarianStepGenerator {
   private graph!: Graph;
   private nodeOrder: string[] = [];
 
-  generateSteps(graphDTO: GraphDTO, _params: AlgorithmParams): Step[] {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  generateSteps(graphDTO: GraphDTO, _params?: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
 
@@ -138,13 +136,10 @@ export class HungarianStepGenerator {
     );
 
     for (let i = 0; i < n; i++) {
-      const from = this.nodeOrder[i];
-      if (!from) continue;
-      const row = costMatrix[i];
-      if (!row) continue;
+      const from = this.nodeOrder[i]!;
+      const row = costMatrix[i]!;
       for (let j = 0; j < n; j++) {
-        const to = this.nodeOrder[j];
-        if (!to) continue;
+        const to = this.nodeOrder[j]!;
         const edgeId = this.getEdgeId(from, to);
         if (!edgeId) continue;
         const weight = this.getEdgeWeight(edgeId);
@@ -158,21 +153,13 @@ export class HungarianStepGenerator {
     }
 
     const assignmentCols = hungarian(costMatrix);
-    if (assignmentCols.length !== n) {
-      return this.steps;
-    }
 
     const assignments: Assignment[] = [];
     for (let i = 0; i < n; i++) {
       const jValue = assignmentCols[i] ?? -1;
-      if (!Number.isInteger(jValue) || jValue < 0 || jValue >= n) {
-        continue;
-      }
-      const rowId = this.nodeOrder[i];
-      const colId = this.nodeOrder[jValue];
-      if (!rowId || !colId) {
-        continue;
-      }
+      if (jValue < 0 || jValue >= n) continue;
+      const rowId = this.nodeOrder[i]!;
+      const colId = this.nodeOrder[jValue]!;
       const edgeId = this.getEdgeId(rowId, colId);
       const weight = costMatrix[i]?.[jValue];
       assignments.push({
