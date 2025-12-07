@@ -2,7 +2,7 @@
  * Tests for HungarianStepGenerator
  */
 
-import { HungarianStepGenerator } from '../steps';
+import { HungarianStepGenerator, hungarian } from '../steps';
 import type { GraphDTO, HighlightEdgeStep, Step } from '@/types';
 
 function buildSquareCostGraph(): GraphDTO {
@@ -98,5 +98,18 @@ describe('HungarianStepGenerator', () => {
 
     const steps = generator.generateSteps(graphDTO, {});
     expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('hungarian должен возвращать пусто для пустой матрицы', () => {
+    expect(hungarian([])).toEqual([]);
+  });
+
+  it('hungarian должен возвращать пусто для неквадратной матрицы', () => {
+    expect(
+      hungarian([
+        [1, 2, 3],
+        [4, 5, 6],
+      ])
+    ).toEqual([]);
   });
 });
