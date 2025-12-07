@@ -28,8 +28,10 @@ const formatNodeLabel = (nodeId: string | number): string => {
   return String(nodeId);
 };
 
-const formatPath = (path: (string | number)[], separator = ' → '): string =>
-  path.map(formatNodeLabel).join(separator);
+const formatPath = (
+  path: (string | number)[],
+  separator = ' → '
+): string => path.map(formatNodeLabel).join(separator);
 
 /**
  * Генератор шагов для алгоритма Roberts-Flores
@@ -37,8 +39,8 @@ const formatPath = (path: (string | number)[], separator = ' → '): string =>
 export class RobertsFloresStepGenerator {
   private steps: Step[] = [];
   private stepCounter = 0;
-  private graph!: Graph;
   private graphModel!: GraphModel;
+  private graph!: Graph;
 
   /**
    * Генерировать шаги для алгоритма Roberts-Flores
@@ -91,7 +93,6 @@ export class RobertsFloresStepGenerator {
 
       if (hasCycleEdge) {
         const edgeId = this.getEdgeId(current, firstNode);
-
         if (edgeId) {
           this.addHighlightEdgeStep(edgeId, 'path', `Найден Гамильтонов цикл: ${formatPath(path)}`);
         }
