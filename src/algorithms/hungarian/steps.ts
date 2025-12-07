@@ -54,12 +54,22 @@ const hungarian = (costs: number[][]): number[] => {
     do {
       used[j0] = true;
       const i0 = p[j0];
+      if (!Number.isInteger(i0) || i0 <= 0) {
+        break;
+      }
       let delta = Infinity;
       let j1 = 0;
 
       for (let j = 1; j <= n; j++) {
         if (used[j]) continue;
-        const cur = costs[i0 - 1][j - 1] - u[i0] - v[j];
+        const rowIndex = i0 - 1;
+        const colIndex = j - 1;
+        if (rowIndex < 0 || colIndex < 0) continue;
+        const row = costs[rowIndex];
+        if (row === undefined) continue;
+        const cell = row[colIndex];
+        if (cell === undefined) continue;
+        const cur = cell - u[i0] - v[j];
         if (cur < minv[j]) {
           minv[j] = cur;
           way[j] = j0;
@@ -128,13 +138,17 @@ export class HungarianStepGenerator {
     );
 
     for (let i = 0; i < n; i++) {
+      const from = this.nodeOrder[i];
+      if (!from) continue;
+      const row = costMatrix[i];
+      if (!row) continue;
       for (let j = 0; j < n; j++) {
-        const from = this.nodeOrder[i];
         const to = this.nodeOrder[j];
+        if (!to) continue;
         const edgeId = this.getEdgeId(from, to);
         if (!edgeId) continue;
         const weight = this.getEdgeWeight(edgeId);
-        costMatrix[i][j] = Number.isFinite(weight) ? weight : Number.POSITIVE_INFINITY;
+        row[j] = Number.isFinite(weight) ? weight : Number.POSITIVE_INFINITY;
       }
     }
 
@@ -150,15 +164,23 @@ export class HungarianStepGenerator {
 
     const assignments: Assignment[] = [];
     for (let i = 0; i < n; i++) {
-      const j = assignmentCols[i];
-      if (j < 0 || j >= n) {
+      const jValue = assignmentCols[i] ?? -1;
+      if (!Number.isInteger(jValue) || jValue < 0 || jValue >= n) {
         continue;
       }
       const rowId = this.nodeOrder[i];
-      const colId = this.nodeOrder[j];
+      const colId = this.nodeOrder[jValue];
+      if (!rowId || !colId) {
+        continue;
+      }
       const edgeId = this.getEdgeId(rowId, colId);
-      const weight = costMatrix[i][j];
-      assignments.push({ rowId, colId, weight, edgeId });
+      const weight = costMatrix[i]?.[jValue];
+      assignments.push({
+        rowId,
+        colId,
+        weight: Number.isFinite(weight) ? (weight as number) : Infinity,
+        edgeId,
+      });
     }
 
     this.emitAssignments(assignments);
