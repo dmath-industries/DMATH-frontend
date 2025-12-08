@@ -79,7 +79,7 @@ export default function LocalCharacteristicsPage() {
 
       const algo = new LocalCharacteristicsAlgorithm();
       algo.initialize({ arcsG, edgesG, arcsH, edgesH });
-      const output = algo.executeDetailed();
+      const output = algo.execute();
       setResult(output);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Не удалось выполнить алгоритм';
@@ -93,8 +93,8 @@ export default function LocalCharacteristicsPage() {
         <p className="text-sm uppercase tracking-wide text-blue-400">Алгоритм</p>
         <h1 className="text-2xl font-semibold text-white">Локальные характеристики</h1>
         <p className="text-neutral-300">
-          Проверка изоморфизма двух ориентированных графов по их матрицам дуг и рёбер. Визуализация
-          пока отсутствует — результат выводится в текстовом виде.
+          Проверка изоморфизма двух ориентированных графов по их матрицам дуг и рёбер. Результат
+          выводится сразу по вычисленным матрицам шагов и меткам.
         </p>
         {!areMatricesSameSize && (
           <p className="text-sm text-amber-400">

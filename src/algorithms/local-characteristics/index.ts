@@ -62,9 +62,8 @@ export class LocalCharacteristicsAlgorithm {
     this.output = [];
   }
 
-  execute(): string {
-    const detailed = this.executeDetailed();
-    return this.formatResult(detailed);
+  execute(): LocalCharacteristicsResult {
+    return this.executeDetailed();
   }
 
   executeDetailed(): LocalCharacteristicsResult {
