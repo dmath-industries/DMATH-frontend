@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { LocalCharacteristicsAlgorithm } from '@/algorithms';
+import type {
+  LocalCharacteristicsResult,
+  LocalCharacteristicsStep,
+} from '@/algorithms/local-characteristics';
 
 type MatrixKind = 'arcsG' | 'edgesG' | 'arcsH' | 'edgesH';
 
@@ -45,7 +49,7 @@ function parseMatrix(text: string): number[][] {
 
 export default function LocalCharacteristicsPage() {
   const [matrices, setMatrices] = useState<Record<MatrixKind, string>>(defaultMatrices);
-  const [result, setResult] = useState<string>('');
+  const [result, setResult] = useState<LocalCharacteristicsResult | null>(null);
   const [error, setError] = useState<string>('');
 
   const areMatricesSameSize = useMemo(() => {
@@ -65,7 +69,7 @@ export default function LocalCharacteristicsPage() {
 
   const handleRun = () => {
     setError('');
-    setResult('');
+    setResult(null);
 
     try {
       const arcsG = parseMatrix(matrices.arcsG);
@@ -75,7 +79,7 @@ export default function LocalCharacteristicsPage() {
 
       const algo = new LocalCharacteristicsAlgorithm();
       algo.initialize({ arcsG, edgesG, arcsH, edgesH });
-      const output = algo.execute();
+      const output = algo.executeDetailed();
       setResult(output);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Не удалось выполнить алгоритм';
@@ -145,11 +149,7 @@ export default function LocalCharacteristicsPage() {
         </div>
       )}
 
-      {result && (
-        <pre className="bg-neutral-900 border border-neutral-700 rounded-lg p-4 text-sm text-neutral-100 overflow-auto whitespace-pre-wrap">
-          {result}
-        </pre>
-      )}
+      {result && <ResultView result={result} />}
 
       <div className="bg-neutral-800/50 border border-neutral-700 rounded-lg p-4 text-sm text-neutral-200 space-y-2">
         <p className="font-semibold text-white">Как работает</p>
@@ -183,6 +183,99 @@ function MatrixInput({ label, value, onChange }: MatrixInputProps) {
         className="w-full h-36 bg-neutral-900 border border-neutral-700 rounded-lg p-3 text-sm text-neutral-200 font-mono resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
         placeholder="0,1,0&#10;1,0,1&#10;0,1,0"
       />
+    </div>
+  );
+}
+
+interface ResultViewProps {
+  result: LocalCharacteristicsResult;
+}
+
+function ResultView({ result }: ResultViewProps) {
+  const verdictText = result.verdict === 'isomorphic' ? 'Графы изоморфны' : 'Графы не изоморфны';
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div
+          className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+            result.verdict === 'isomorphic'
+              ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+              : 'bg-red-500/15 text-red-200 border border-red-500/30'
+          }`}
+        >
+          {verdictText}
+        </div>
+        {result.mapping && (
+          <div className="text-sm text-neutral-200">
+            Mapping: <span className="font-mono">{`[${result.mapping.join(', ')}]`}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        {result.steps.map(step => (
+          <StepCard key={step.label} step={step} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface StepCardProps {
+  step: LocalCharacteristicsStep;
+}
+
+function StepCard({ step }: StepCardProps) {
+  return (
+    <div className="bg-neutral-900 border border-neutral-700 rounded-lg p-3 space-y-3">
+      <div className="text-sm font-semibold text-white">{step.label}</div>
+      <MatrixView matrix={step.matrix} p={step.p} />
+    </div>
+  );
+}
+
+interface MatrixViewProps {
+  matrix: number[][];
+  p: number[];
+}
+
+function MatrixView({ matrix, p }: MatrixViewProps) {
+  const size = matrix.length;
+  const headers = Array.from({ length: size }, (_, i) => i + 1);
+
+  return (
+    <div className="overflow-auto">
+      <table className="min-w-full border-collapse text-xs text-neutral-200">
+        <thead>
+          <tr>
+            <th className="border border-neutral-700 px-2 py-1 bg-neutral-800/80" />
+            {headers.map(h => (
+              <th key={h} className="border border-neutral-700 px-2 py-1 bg-neutral-800/80">
+                {h}
+              </th>
+            ))}
+            <th className="border border-neutral-700 px-2 py-1 bg-neutral-800/80">P</th>
+          </tr>
+        </thead>
+        <tbody>
+          {matrix.map((row, i) => (
+            <tr key={`r-${i}`}>
+              <th className="border border-neutral-700 px-2 py-1 bg-neutral-800/60 font-medium">
+                {i + 1}
+              </th>
+              {row.map((value, j) => (
+                <td key={`c-${i}-${j}`} className="border border-neutral-700 px-2 py-1 text-center">
+                  {value}
+                </td>
+              ))}
+              <td className="border border-neutral-700 px-2 py-1 text-center font-medium bg-neutral-800/40">
+                {p[i]}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

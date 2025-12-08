@@ -17,6 +17,18 @@ export interface LocalCharacteristicsInput {
   edgesH: number[][];
 }
 
+export interface LocalCharacteristicsStep {
+  label: string;
+  matrix: number[][];
+  p: number[];
+}
+
+export interface LocalCharacteristicsResult {
+  steps: LocalCharacteristicsStep[];
+  verdict: 'isomorphic' | 'not-isomorphic';
+  mapping?: number[];
+}
+
 export class LocalCharacteristicsAlgorithm {
   private arcsG: number[][] = [];
   private edgesG: number[][] = [];
@@ -51,15 +63,20 @@ export class LocalCharacteristicsAlgorithm {
   }
 
   execute(): string {
-    this.output.push('```Алгоритм Локальных Характеристик');
+    const detailed = this.executeDetailed();
+    return this.formatResult(detailed);
+  }
+
+  executeDetailed(): LocalCharacteristicsResult {
+    const steps: LocalCharacteristicsStep[] = [];
 
     const S0G = this.calculateS0(this.arcsG, this.edgesG);
     const S0H = this.calculateS0(this.arcsH, this.edgesH);
 
     this.calculateP0(S0G, S0H);
 
-    this.generateOutput('S0(G)', S0G, this.P[0]);
-    this.generateOutput('S0(H)', S0H, this.P[1]);
+    steps.push({ label: 'S0(G)', matrix: this.cloneMatrix(S0G), p: [...this.P[0]] });
+    steps.push({ label: 'S0(H)', matrix: this.cloneMatrix(S0H), p: [...this.P[1]] });
 
     for (let k = 1; ; k += 1) {
       const SkG = this.calculateSk(S0G, this.P[0]);
@@ -67,8 +84,8 @@ export class LocalCharacteristicsAlgorithm {
 
       this.calculatePk(SkG, SkH);
 
-      this.generateOutput(`S${k}(G)`, SkG, this.P[0]);
-      this.generateOutput(`S${k}(H)`, SkH, this.P[1]);
+      steps.push({ label: `S${k}(G)`, matrix: this.cloneMatrix(SkG), p: [...this.P[0]] });
+      steps.push({ label: `S${k}(H)`, matrix: this.cloneMatrix(SkH), p: [...this.P[1]] });
 
       const maxValue = Math.max(...this.P[0], ...this.P[1]);
       if (maxValue < this.n) {
@@ -79,21 +96,47 @@ export class LocalCharacteristicsAlgorithm {
         const freqH = this.getFrequencyMap(this.P[1]);
 
         if (this.isSameFrequency(freqG, freqH)) {
-          this.output.push('Graphs are isomorphic.');
           const mapping = this.buildMapping(this.P[1]);
-          this.output.push(`Mapping: [${mapping.join(', ')}]`);
-        } else {
-          this.output.push('Graphs are not isomorphic.');
+          return { steps, verdict: 'isomorphic', mapping };
         }
-        break;
+        return { steps, verdict: 'not-isomorphic' };
       }
 
-      this.output.push('Graphs are not isomorphic.');
-      break;
+      return { steps, verdict: 'not-isomorphic' };
+    }
+  }
+
+  private formatResult(result: LocalCharacteristicsResult): string {
+    const lines: string[] = ['```Алгоритм Локальных Характеристик'];
+
+    for (const step of result.steps) {
+      lines.push(`${step.label}:`);
+      const header = [
+        '   ',
+        ...this.rangeToArray(1, this.n).map(v => v.toString().padStart(6, ' ')),
+      ];
+      lines.push(header.join(''));
+
+      for (let i = 0; i < this.n; i += 1) {
+        const rowValues = step.matrix[i].map(value => value.toString().padStart(6, ' '));
+        const row = `${(i + 1).toString().padStart(2, ' ')} ${rowValues.join('')}  ${step.p[i]}`;
+        lines.push(row);
+      }
+
+      lines.push('');
     }
 
-    this.output.push('```');
-    return this.output.join('\n');
+    if (result.verdict === 'isomorphic') {
+      lines.push('Graphs are isomorphic.');
+      if (result.mapping) {
+        lines.push(`Mapping: [${result.mapping.join(', ')}]`);
+      }
+    } else {
+      lines.push('Graphs are not isomorphic.');
+    }
+
+    lines.push('```');
+    return lines.join('\n');
   }
 
   private calculateS0(arcs: number[][], edges: number[][]): number[][] {
@@ -238,5 +281,9 @@ export class LocalCharacteristicsAlgorithm {
       result.push(i);
     }
     return result;
+  }
+
+  private cloneMatrix(matrix: number[][]): number[][] {
+    return matrix.map(row => [...row]);
   }
 }
