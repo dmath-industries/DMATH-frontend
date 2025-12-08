@@ -72,28 +72,36 @@ export class LocalCharacteristicsAlgorithm {
 
     this.calculateP0(S0G, S0H);
 
-    steps.push({ label: 'S0(G)', matrix: this.cloneMatrix(S0G), p: [...this.P[0]] });
-    steps.push({ label: 'S0(H)', matrix: this.cloneMatrix(S0H), p: [...this.P[1]] });
+    steps.push({ label: 'S0(G)', matrix: this.cloneMatrix(S0G), p: [...(this.P[0] ?? [])] });
+    steps.push({ label: 'S0(H)', matrix: this.cloneMatrix(S0H), p: [...(this.P[1] ?? [])] });
 
     for (let k = 1; ; k += 1) {
-      const SkG = this.calculateSk(S0G, this.P[0]);
-      const SkH = this.calculateSk(S0H, this.P[1]);
+      const SkG = this.calculateSk(S0G, this.P[0]!);
+      const SkH = this.calculateSk(S0H, this.P[1]!);
 
       this.calculatePk(SkG, SkH);
 
-      steps.push({ label: `S${k}(G)`, matrix: this.cloneMatrix(SkG), p: [...this.P[0]] });
-      steps.push({ label: `S${k}(H)`, matrix: this.cloneMatrix(SkH), p: [...this.P[1]] });
+      steps.push({
+        label: `S${k}(G)`,
+        matrix: this.cloneMatrix(SkG),
+        p: [...(this.P[0] ?? [])],
+      });
+      steps.push({
+        label: `S${k}(H)`,
+        matrix: this.cloneMatrix(SkH),
+        p: [...(this.P[1] ?? [])],
+      });
 
-      const maxValue = Math.max(...this.P[0], ...this.P[1]);
+      const maxValue = Math.max(...(this.P[0] ?? []), ...(this.P[1] ?? []));
       if (maxValue < this.n) {
         continue;
       }
       if (maxValue === this.n) {
-        const freqG = this.getFrequencyMap(this.P[0]);
-        const freqH = this.getFrequencyMap(this.P[1]);
+        const freqG = this.getFrequencyMap(this.P[0] ?? []);
+        const freqH = this.getFrequencyMap(this.P[1] ?? []);
 
         if (this.isSameFrequency(freqG, freqH)) {
-          const mapping = this.buildMapping(this.P[1]);
+          const mapping = this.buildMapping(this.P[1] ?? []);
           return { steps, verdict: 'isomorphic', mapping };
         }
         return { steps, verdict: 'not-isomorphic' };
@@ -106,12 +114,12 @@ export class LocalCharacteristicsAlgorithm {
   private calculateS0(arcs: number[][], edges: number[][]): number[][] {
     const S0: number[][] = Array.from({ length: this.n }, () => new Array(this.n).fill(0));
     for (let i = 0; i < this.n; i += 1) {
+      const row = S0[i];
+      if (!row) continue;
       for (let j = 0; j < this.n; j += 1) {
-        if (i !== j) {
-          S0[i][j] = arcs[i][j] * 10 + edges[i][j];
-        } else {
-          S0[i][j] = Math.max(edges[i][j], arcs[i][j]);
-        }
+        const arc = arcs[i]?.[j] ?? 0;
+        const edge = edges[i]?.[j] ?? 0;
+        row[j] = i !== j ? arc * 10 + edge : Math.max(edge, arc);
       }
     }
     return S0;
@@ -122,23 +130,27 @@ export class LocalCharacteristicsAlgorithm {
     let code = 1;
 
     for (let i = 0; i < this.n; i += 1) {
-      const freq = this.getFrequencyMap(S0G[i]);
+      const row = S0G[i];
+      if (!row) continue;
+      const freq = this.getFrequencyMap(row);
       const key = this.frequencyKey(freq);
       if (!uniquePatterns.has(key)) {
         uniquePatterns.set(key, code);
         code += 1;
       }
-      this.P[0][i] = uniquePatterns.get(key)!;
+      this.P[0]![i] = uniquePatterns.get(key) ?? 0;
     }
 
     for (let i = 0; i < this.n; i += 1) {
-      const freq = this.getFrequencyMap(S0H[i]);
+      const row = S0H[i];
+      if (!row) continue;
+      const freq = this.getFrequencyMap(row);
       const key = this.frequencyKey(freq);
       if (!uniquePatterns.has(key)) {
         uniquePatterns.set(key, code);
         code += 1;
       }
-      this.P[1][i] = uniquePatterns.get(key)!;
+      this.P[1]![i] = uniquePatterns.get(key) ?? 0;
     }
   }
 
@@ -146,10 +158,14 @@ export class LocalCharacteristicsAlgorithm {
     const Sk: number[][] = Array.from({ length: this.n }, () => new Array(this.n).fill(0));
     for (let i = 0; i < this.n; i += 1) {
       for (let j = 0; j < this.n; j += 1) {
-        if (S0[i][j] === 0) {
+        const base = S0[i]?.[j] ?? 0;
+        if (base === 0) {
           continue;
         }
-        Sk[i][j] = S0[i][j] * 100 + P[i] * 10 + P[j];
+        const pi = P[i] ?? 0;
+        const pj = P[j] ?? 0;
+        const row = Sk[i] ?? (Sk[i] = new Array(this.n).fill(0));
+        row[j] = base * 100 + pi * 10 + pj;
       }
     }
     return Sk;
@@ -158,25 +174,39 @@ export class LocalCharacteristicsAlgorithm {
   private calculatePk(SkG: number[][], SkH: number[][]): void {
     const uniquePatterns = new Map<string, number>();
     let code = 1;
-
-    for (let i = 0; i < this.n; i += 1) {
-      const freq = this.getFrequencyMap(SkG[i]);
-      const key = this.frequencyKey(freq);
-      if (!uniquePatterns.has(key)) {
-        uniquePatterns.set(key, code);
-        code += 1;
-      }
-      this.P[0][i] = uniquePatterns.get(key)!;
+    if (!this.P[0]) {
+      this.P[0] = new Array(this.n).fill(0);
+    }
+    if (!this.P[1]) {
+      this.P[1] = new Array(this.n).fill(0);
     }
 
     for (let i = 0; i < this.n; i += 1) {
-      const freq = this.getFrequencyMap(SkH[i]);
+      const row = SkG[i];
+      if (!row) {
+        continue;
+      }
+      const freq = this.getFrequencyMap(row);
       const key = this.frequencyKey(freq);
       if (!uniquePatterns.has(key)) {
         uniquePatterns.set(key, code);
         code += 1;
       }
-      this.P[1][i] = uniquePatterns.get(key)!;
+      this.P[0]![i] = uniquePatterns.get(key) ?? 0;
+    }
+
+    for (let i = 0; i < this.n; i += 1) {
+      const row = SkH[i];
+      if (!row) {
+        continue;
+      }
+      const freq = this.getFrequencyMap(row);
+      const key = this.frequencyKey(freq);
+      if (!uniquePatterns.has(key)) {
+        uniquePatterns.set(key, code);
+        code += 1;
+      }
+      this.P[1]![i] = uniquePatterns.get(key) ?? 0;
     }
   }
 
@@ -210,7 +240,7 @@ export class LocalCharacteristicsAlgorithm {
   private buildMapping(P: number[]): number[] {
     const mapping = new Array(this.n).fill(0);
     for (let i = 0; i < this.n; i += 1) {
-      const index = P[i] - 1;
+      const index = (P[i] ?? 0) - 1;
       if (index >= 0 && index < this.n) {
         mapping[index] = i + 1;
       }
