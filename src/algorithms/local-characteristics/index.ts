@@ -36,7 +36,6 @@ export class LocalCharacteristicsAlgorithm {
   private edgesH: number[][] = [];
   private n = 0;
   private P: number[][] = [];
-  private output: string[] = [];
 
   initialize(input: LocalCharacteristicsInput): void {
     const { arcsG, edgesG, arcsH, edgesH } = input;
@@ -59,7 +58,6 @@ export class LocalCharacteristicsAlgorithm {
     this.edgesH = edgesH;
     this.n = arcsG.length;
     this.P = [new Array(this.n).fill(0), new Array(this.n).fill(0)];
-    this.output = [];
   }
 
   execute(): LocalCharacteristicsResult {
@@ -103,39 +101,6 @@ export class LocalCharacteristicsAlgorithm {
 
       return { steps, verdict: 'not-isomorphic' };
     }
-  }
-
-  private formatResult(result: LocalCharacteristicsResult): string {
-    const lines: string[] = ['```Алгоритм Локальных Характеристик'];
-
-    for (const step of result.steps) {
-      lines.push(`${step.label}:`);
-      const header = [
-        '   ',
-        ...this.rangeToArray(1, this.n).map(v => v.toString().padStart(6, ' ')),
-      ];
-      lines.push(header.join(''));
-
-      for (let i = 0; i < this.n; i += 1) {
-        const rowValues = step.matrix[i].map(value => value.toString().padStart(6, ' '));
-        const row = `${(i + 1).toString().padStart(2, ' ')} ${rowValues.join('')}  ${step.p[i]}`;
-        lines.push(row);
-      }
-
-      lines.push('');
-    }
-
-    if (result.verdict === 'isomorphic') {
-      lines.push('Graphs are isomorphic.');
-      if (result.mapping) {
-        lines.push(`Mapping: [${result.mapping.join(', ')}]`);
-      }
-    } else {
-      lines.push('Graphs are not isomorphic.');
-    }
-
-    lines.push('```');
-    return lines.join('\n');
   }
 
   private calculateS0(arcs: number[][], edges: number[][]): number[][] {
@@ -213,20 +178,6 @@ export class LocalCharacteristicsAlgorithm {
       }
       this.P[1][i] = uniquePatterns.get(key)!;
     }
-  }
-
-  private generateOutput(label: string, matrix: number[][], P: number[]): void {
-    this.output.push(`${label}:`);
-    const header = ['   ', ...this.rangeToArray(1, this.n).map(v => v.toString().padStart(6, ' '))];
-    this.output.push(header.join(''));
-
-    for (let i = 0; i < this.n; i += 1) {
-      const rowValues = matrix[i].map(value => value.toString().padStart(6, ' '));
-      const row = `${(i + 1).toString().padStart(2, ' ')} ${rowValues.join('')}  ${P[i]}`;
-      this.output.push(row);
-    }
-
-    this.output.push('');
   }
 
   private getFrequencyMap(array: number[]): Map<number, number> {

@@ -99,4 +99,55 @@ describe('LocalCharacteristicsAlgorithm', () => {
 
     expect(result).toEqual(detailed);
   });
+
+  it('бросает ошибку для неквадратных матриц', () => {
+    const algorithm = new LocalCharacteristicsAlgorithm();
+    expect(() =>
+      algorithm.initialize({
+        arcsG: [
+          [0, 1],
+          [1, 0],
+          [0, 1],
+        ],
+        edgesG: [
+          [0, 1],
+          [1, 0],
+        ],
+        arcsH: [
+          [0, 1],
+          [1, 0],
+        ],
+        edgesH: [
+          [0, 1],
+          [1, 0],
+        ],
+      })
+    ).toThrow('All matrices must be square and have the same size');
+  });
+
+  it('возвращает not-isomorphic при несовпадении частот меток', () => {
+    const algorithm = new LocalCharacteristicsAlgorithm();
+    const arcsG = [
+      [0, 1],
+      [0, 0],
+    ];
+    const edgesG = [
+      [0, 0],
+      [0, 0],
+    ];
+    const arcsH = [
+      [0, 0],
+      [0, 0],
+    ];
+    const edgesH = [
+      [0, 0],
+      [0, 0],
+    ];
+
+    algorithm.initialize({ arcsG, edgesG, arcsH, edgesH });
+    const result = algorithm.executeDetailed();
+
+    expect(result.verdict).toBe('not-isomorphic');
+    expect(result.mapping).toBeUndefined();
+  });
 });
