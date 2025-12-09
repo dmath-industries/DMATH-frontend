@@ -12,7 +12,13 @@ import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/s
 import { sessionRepository } from '@/shared/persistence';
 
 interface AlgorithmLayoutContextType {
-  loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
+  loadGraph: (graphDTO: GraphDTO, skipReset?: boolean, autoCenter?: boolean) => void;
+  addNode: (id: string, x: number, y: number) => void;
+  addEdge: (source: string, target: string, weight?: number, directed?: boolean) => void;
+  removeNode: (id: string) => void;
+  removeEdge: (id: string) => void;
+  clearGraph: () => void;
+  centerGraph: () => void;
   hasGraph: boolean;
   hasRunAlgorithm: boolean;
   graphModel: GraphModel;
