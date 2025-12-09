@@ -49,13 +49,11 @@ export function GraphMatrixInput({ onSubmit, placeholder }: GraphMatrixInputProp
         sx={{
           py: 1.5,
           background: 'linear-gradient(90deg, #9333ea 0%, #a855f7 100%)',
-          '&:hover': {
-            background: 'linear-gradient(90deg, #7e22ce 0%, #9333ea 100%)',
-          },
           fontWeight: 500,
           textTransform: 'none',
           boxShadow: '0 4px 14px rgba(147, 51, 234, 0.2)',
           '&:hover': {
+            background: 'linear-gradient(90deg, #7e22ce 0%, #9333ea 100%)',
             boxShadow: '0 6px 20px rgba(147, 51, 234, 0.4)',
           },
         }}
