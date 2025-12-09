@@ -8,7 +8,7 @@ import { GraphModel, Renderer, ViewportAdapter } from '@/services';
  * Главный контейнер для графа и управления алгоритмами
  */
 export function GraphContainer() {
-  const [model] = useState(() => new GraphModel(true)); 
+  const [model] = useState(() => new GraphModel(true));
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -62,11 +62,6 @@ export function GraphContainer() {
 
     if (rendererRef.current && viewportRef.current) {
       rendererRef.current.drawAll(model);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          viewportRef.current?.fitToGraph(model);
-        });
-      });
     }
   };
 
@@ -89,4 +84,3 @@ export function GraphContainer() {
     </div>
   );
 }
-
