@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Renderer, ViewportAdapter } from '@/services';
 import { GraphModel } from '@/services';
+import { Maximize2 } from 'lucide-react';
 
 interface GraphCanvasProps {
   model: GraphModel;
@@ -115,6 +116,16 @@ export function GraphCanvas({
     }
   }, [width, height, isReady, model, onRendererReady]);
 
+  /**
+   * Обработчик кнопки "Найти граф" (центрирование)
+   */
+  const handleFitToGraph = () => {
+    if (!viewportRef.current || model.nodeCount === 0) {
+      return;
+    }
+    viewportRef.current.fitToGraph(model);
+  };
+
   if (error) {
     return (
       <div
@@ -158,6 +169,16 @@ export function GraphCanvas({
         className="block w-full h-full"
         style={{ width: `${width}px`, height: `${height}px` }}
       />
+
+      {isReady && model.nodeCount > 0 && (
+        <button
+          onClick={handleFitToGraph}
+          className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10"
+          title="Найти граф (центрировать)"
+        >
+          <Maximize2 className="w-5 h-5 text-neutral-200" />
+        </button>
+      )}
     </div>
   );
 }
