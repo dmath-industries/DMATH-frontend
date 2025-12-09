@@ -79,10 +79,13 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
     return `${nodesStr}|${edgesStr}`;
   }, []);
 
-  /**
+/**
    * Загрузить граф из DTO
+   * @param graphDTO - данные графа
+   * @param skipReset - пропустить сброс состояния алгоритма
+   * @param autoCenter - автоматически центрировать граф после загрузки (по умолчанию false)
    */
-  const loadGraph = useCallback((graphDTO: GraphDTO, skipReset = false) => {
+  const loadGraph = useCallback((graphDTO: GraphDTO, skipReset = false, autoCenter = false) => {
     console.log('📥 Loading graph with', graphDTO.nodes.length, 'nodes');
     
     graphModel.fromDTO(graphDTO);
@@ -111,7 +114,9 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
       
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          viewportRef.current?.fitToGraph(graphModel);
+          // Если autoCenter = true, центрируем граф (как кнопка "Найти граф")
+          // Иначе только устанавливаем зум без центрирования
+          viewportRef.current?.fitToGraph(graphModel, autoCenter);
         });
       });
     }
