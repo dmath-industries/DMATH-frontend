@@ -70,6 +70,9 @@ export function GraphCanvas({
         rendererRef.current = renderer;
         viewportRef.current = viewport;
 
+        // Устанавливаем viewport adapter в renderer для управления перетаскиванием
+        renderer.setViewportAdapter(viewport);
+
         if (model.nodeCount > 0) {
           console.log('📊 Drawing initial graph with', model.nodeCount, 'nodes');
           renderer.drawAll(model);

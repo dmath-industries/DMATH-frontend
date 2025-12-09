@@ -41,8 +41,8 @@ export class ViewportAdapter {
    * Создать viewport с взаимодействием
    */
   create(
-    app: Application, 
-    config: ViewportConfig, 
+    app: Application,
+    config: ViewportConfig,
     containers?: { edges: Container | null; nodes: Container | null; labels: Container | null },
     customSettings?: Partial<ViewportSettings>
   ): Viewport {
@@ -135,33 +135,32 @@ export class ViewportAdapter {
     const graphWidth = Math.max(maxX - minX, 50);
     const graphHeight = Math.max(maxY - minY, 50);
 
-    const padding = 80; 
+    const padding = 80;
     const availableWidth = this.viewport.screenWidth - padding * 2;
     const availableHeight = this.viewport.screenHeight - padding * 2;
 
     const zoomX = availableWidth / graphWidth;
     const zoomY = availableHeight / graphHeight;
-    
+
     let targetZoom = Math.min(zoomX, zoomY);
     targetZoom = Math.max(this.settings.minZoom, Math.min(this.settings.maxZoom, targetZoom));
     targetZoom *= 0.9;
 
     this.viewport.setZoom(targetZoom, true);
     this.viewport.moveCenter(graphCenterX, graphCenterY);
-
   }
 
   /**
    * Вычислить границы графа с учётом радиусов узлов
    */
-  private calculateGraphBounds(model: GraphModel): { 
-    minX: number; 
-    maxX: number; 
-    minY: number; 
-    maxY: number 
+  private calculateGraphBounds(model: GraphModel): {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
   } | null {
     const nodes = model.getNodes();
-    
+
     if (nodes.length === 0) {
       return null;
     }
@@ -176,7 +175,7 @@ export class ViewportAdapter {
       if (!node) continue;
 
       const radius = node.radius ?? 25;
-      
+
       minX = Math.min(minX, node.x - radius);
       maxX = Math.max(maxX, node.x + radius);
       minY = Math.min(minY, node.y - radius);
@@ -206,10 +205,10 @@ export class ViewportAdapter {
    */
   zoomIn(factor: number = 1.3): void {
     if (!this.viewport) return;
-    
+
     const currentZoom = this.viewport.scale.x;
     const newZoom = Math.min(this.settings.maxZoom, currentZoom * factor);
-    
+
     this.viewport.animate({
       scale: newZoom,
       time: 200,
@@ -221,10 +220,10 @@ export class ViewportAdapter {
    */
   zoomOut(factor: number = 1.3): void {
     if (!this.viewport) return;
-    
+
     const currentZoom = this.viewport.scale.x;
     const newZoom = Math.max(this.settings.minZoom, currentZoom / factor);
-    
+
     this.viewport.animate({
       scale: newZoom,
       time: 200,
@@ -236,12 +235,9 @@ export class ViewportAdapter {
    */
   setZoom(zoom: number): void {
     if (!this.viewport) return;
-    
-    const clampedZoom = Math.max(
-      this.settings.minZoom,
-      Math.min(this.settings.maxZoom, zoom)
-    );
-    
+
+    const clampedZoom = Math.max(this.settings.minZoom, Math.min(this.settings.maxZoom, zoom));
+
     this.viewport.setZoom(clampedZoom, true);
   }
 
@@ -283,11 +279,11 @@ export class ViewportAdapter {
    */
   resize(width: number, height: number): void {
     if (!this.viewport) return;
-    
+
     console.log('📐 Resizing viewport to:', { width, height });
-    
+
     this.viewport.resize(width, height);
-    
+
     this.viewport.screenWidth = width;
     this.viewport.screenHeight = height;
   }
@@ -298,6 +294,24 @@ export class ViewportAdapter {
   private emitChange(): void {
     if (this.onViewportChange) {
       this.onViewportChange(this.getState());
+    }
+  }
+
+  /**
+   * Приостановить перетаскивание viewport (например, при перетаскивании узла)
+   */
+  pauseDrag(): void {
+    if (this.viewport) {
+      this.viewport.plugins.pause('drag');
+    }
+  }
+
+  /**
+   * Возобновить перетаскивание viewport
+   */
+  resumeDrag(): void {
+    if (this.viewport) {
+      this.viewport.plugins.resume('drag');
     }
   }
 
