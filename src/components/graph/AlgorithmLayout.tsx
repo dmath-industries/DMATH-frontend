@@ -79,7 +79,7 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
     return `${nodesStr}|${edgesStr}`;
   }, []);
 
-/**
+  /**
    * Загрузить граф из DTO
    * @param graphDTO - данные графа
    * @param skipReset - пропустить сброс состояния алгоритма
@@ -121,6 +121,164 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
       });
     }
   }, [graphModel, createGraphHash]);
+  
+  /**
+   * Обработчик изменения позиции узла
+   */
+  const handleNodePositionChange = useCallback((nodeId: string, x: number, y: number) => {
+    graphModel.updateNode(nodeId, { x, y });
+    
+    // Обновляем только связанные рёбра
+    if (rendererRef.current) {
+      const edges = graphModel.getAllEdgesForNode(nodeId);
+      const dirtyIds = new Set<string>([nodeId, ...edges]);
+      rendererRef.current.renderDirty(dirtyIds, graphModel);
+    }
+  }, [graphModel]);
+  
+  /**
+   * Добавить узел
+   */
+  const addNode = useCallback((id: string, x: number, y: number) => {
+    if (graphModel.hasNode(id)) {
+      alert(`Вершина с ID "${id}" уже существует!`);
+      return;
+    }
+    
+    const nodeColor = '#3b82f6';
+    const label = String.fromCharCode('a'.charCodeAt(0) + graphModel.nodeCount);
+    
+    graphModel.addNode({
+      id,
+      x,
+      y,
+      label,
+      radius: 25,
+      color: nodeColor,
+      state: 'default',
+    });
+    
+    if (rendererRef.current) {
+      rendererRef.current.drawAll(graphModel);
+    }
+    
+    setHasGraph(true);
+  }, [graphModel]);
+  
+  /**
+   * Добавить ребро
+   */
+  const addEdge = useCallback((source: string, target: string, weight: number = 1, directed: boolean = true) => {
+    if (!graphModel.hasNode(source)) {
+      alert(`Вершина "${source}" не существует!`);
+      return;
+    }
+    
+    if (!graphModel.hasNode(target)) {
+      alert(`Вершина "${target}" не существует!`);
+      return;
+    }
+    
+    if (source === target) {
+      alert('Нельзя создать ребро из вершины в саму себя!');
+      return;
+    }
+    
+    const edgeId = `${source}-${target}`;
+    if (graphModel.hasEdge(edgeId)) {
+      alert(`Ребро между "${source}" и "${target}" уже существует!`);
+      return;
+    }
+    
+    const edgeColor = '#60a5fa';
+    
+    graphModel.addEdge({
+      id: edgeId,
+      source,
+      target,
+      weight,
+      directed,
+      color: edgeColor,
+      width: 2,
+      state: 'default',
+    });
+    
+    if (rendererRef.current) {
+      rendererRef.current.drawAll(graphModel);
+    }
+  }, [graphModel]);
+  
+  /**
+   * Удалить узел
+   */
+  const removeNode = useCallback((id: string) => {
+    if (!graphModel.hasNode(id)) {
+      return;
+    }
+    
+    graphModel.removeNode(id);
+    
+    if (rendererRef.current) {
+      rendererRef.current.drawAll(graphModel);
+    }
+    
+    if (graphModel.nodeCount === 0) {
+      setHasGraph(false);
+    }
+  }, [graphModel]);
+  
+  /**
+   * Удалить ребро
+   */
+  const removeEdge = useCallback((id: string) => {
+    if (!graphModel.hasEdge(id)) {
+      return;
+    }
+    
+    graphModel.removeEdge(id);
+    
+    if (rendererRef.current) {
+      rendererRef.current.drawAll(graphModel);
+    }
+  }, [graphModel]);
+  
+  /**
+   * Очистить граф
+   */
+  const clearGraph = useCallback(() => {
+    graphModel.clear();
+    setHasGraph(false);
+    setHasRunAlgorithm(false);
+    setCurrentGraphHash(null);
+    
+    if (rendererRef.current) {
+      rendererRef.current.drawAll(graphModel);
+    }
+    
+    if (controllerRef.current) {
+      controllerRef.current.setSteps([]);
+    }
+  }, [graphModel]);
+
+  /**
+   * Центрировать граф в окне
+   * Находит текущее положение графа и центрирует его
+   */
+  const centerGraph = useCallback(() => {
+    if (!hasGraph || graphModel.nodeCount === 0) {
+      return;
+    }
+
+    if (rendererRef.current && viewportRef.current) {
+      // Используем двойной requestAnimationFrame для гарантии, что рендеринг завершен
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Включаем автоцентрирование для нахождения и центрирования графа
+          viewportRef.current?.fitToGraph(graphModel, true);
+        });
+      });
+    }
+  }, [hasGraph, graphModel]);
 
   /**
    * Обработчик готовности renderer и viewport
@@ -148,7 +306,8 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
       
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          viewport.fitToGraph(graphModel);
+          // Отключаем автоцентрирование для ручного управления
+          viewport.fitToGraph(graphModel, false);
         });
       });
     }
@@ -215,7 +374,7 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
           
           if (hasGraph && graphModel.nodeCount > 0) {
             setTimeout(() => {
-              viewportRef.current?.fitToGraph(graphModel);
+              viewportRef.current?.fitToGraph(graphModel, false);
             }, 50);
           }
         }
@@ -374,7 +533,7 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
     }
   }, [currentIndex]);
 
-const contextValue: AlgorithmLayoutContextType = {
+  const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
     addNode,
     addEdge,
@@ -402,111 +561,111 @@ const contextValue: AlgorithmLayoutContextType = {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4">
-            <div className="space-y-4">
-            {loadedSessionInfo && (
-              <div className="bg-blue-500/10 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <Info className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-blue-200 mb-1">Загружена сессия из истории</h4>
-                    <p className="text-xs text-blue-300">
-                      {loadedSessionInfo.name} • {loadedSessionInfo.date}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setLoadedSessionInfo(null)}
-                    className="flex-shrink-0 text-blue-300 hover:text-blue-200 transition-colors"
-                    title="Закрыть"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            <div ref={canvasContainerRef} className="bg-neutral-800/50 backdrop-blur-sm rounded-xl border border-neutral-700/50 overflow-hidden">
-              <div className="px-4 py-3 flex items-center justify-between border-b border-neutral-700/50">
-                <h3 className="text-base font-semibold text-neutral-200">Граф</h3>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleRunAlgorithm}
-                    disabled={!hasGraph || isRunning || playing || hasRunAlgorithm}
-                    className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-500 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:shadow-none"
-                    title={hasRunAlgorithm ? 'Алгоритм уже выполнен для этого графа' : 'Запустить алгоритм'}
-                  >
-                    {hasRunAlgorithm ? 'Алгоритм выполнен' : 'Запустить алгоритм'}
-                  </button>
-                  <button
-                    onClick={handleReset}
-                    disabled={!hasGraph}
-                    className="bg-neutral-700 hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2"
-                  >
-                    <RotateCcw size={16} />
-                    Сброс
-                  </button>
-                </div>
-              </div>
-              <div className="p-2 flex justify-center">
-                <GraphCanvas
-                  model={graphModel}
-                  onRendererReady={handleRendererReady}
-                  width={canvasSize.width}
-                  height={canvasSize.height}
-                />
-              </div>
-            </div>
-
-            <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-              <ControlPanel />
-            </div>
-
-            {hasRunAlgorithm && !playing && currentIndex === -1 && (
-              <div className="bg-green-500/10 backdrop-blur-sm rounded-xl p-3 border border-green-500/30">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-green-200 mb-1">Алгоритм выполнен</h4>
-                    <p className="text-xs text-green-300">
-                      Используйте панель управления для просмотра шагов. Чтобы запустить алгоритм снова, загрузите новую матрицу или нажмите "Сброс".
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4">
+          {/* Информационные блоки и редактор графа - вверху для лучшего потока */}
+          <div className="space-y-4 mb-4">
             {children}
           </div>
+
+          {/* Основная рабочая область: Граф и управление */}
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4 mt-10">
+            <div className="space-y-4">
+              {loadedSessionInfo && (
+                <div className="bg-blue-500/10 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                      <Info className="w-5
+                       h-5 text-blue-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-blue-200 mb-1">Загружена сессия из истории</h4>
+                      <p className="text-xs text-blue-300">
+                        {loadedSessionInfo.name} • {loadedSessionInfo.date}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setLoadedSessionInfo(null)}
+                      className="flex-shrink-0 text-blue-300 hover:text-blue-200 transition-colors"
+                      title="Закрыть"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {hasRunAlgorithm && !playing && currentIndex === -1 && (
+                <div className="bg-green-500/10 backdrop-blur-sm rounded-xl p-3 border border-green-500/30">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-green-200 mb-1">Алгоритм выполнен</h4>
+                      <p className="text-xs text-green-300">
+                        Используйте панель управления справа для просмотра шагов. Чтобы запустить алгоритм снова, создайте новый граф или нажмите "Сброс".
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            
+              <div ref={canvasContainerRef} className="bg-neutral-800/50 rounded-xl border border-neutral-700/50 overflow-hidden mt-100">
+                <div className="px-4 py-3 flex items-center justify-between border-b border-neutral-700/50">
+                  <h3 className="text-base font-semibold text-neutral-200">Визуализация графа</h3>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleRunAlgorithm}
+                      disabled={!hasGraph || isRunning || playing || hasRunAlgorithm}
+                      className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-500 text-white font-medium py-2 px-5 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-green-500/20 hover:shadow-green-500/40 disabled:shadow-none text-sm"
+                      title={hasRunAlgorithm ? 'Алгоритм уже выполнен для этого графа' : 'Запустить алгоритм'}
+                    >
+                      {hasRunAlgorithm ? '✓ Выполнен' : '▶ Запустить алгоритм'}
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      disabled={!hasGraph}
+                      className="bg-neutral-700 hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 text-sm"
+                      title="Очистить граф и сбросить алгоритм"
+                    >
+                      <RotateCcw size={16} />
+                      Сброс
+                    </button>
+                  </div>
+                </div>
+                <div className="p-2 flex justify-center">
+                  <GraphCanvas
+                    model={graphModel}
+                    onRendererReady={handleRendererReady}
+                    onNodePositionChange={handleNodePositionChange}
+                    autoCenter={false}
+                    width={canvasSize.width}
+                    height={canvasSize.height}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Правая панель: Управление воспроизведением (появляется после запуска) */}
+            <div className="space-y-4">
+              {hasRunAlgorithm && (
+                <div className="bg-neutral-800/50 rounded-xl p-4 border border-neutral-700/50">
+                  <ControlPanel />
+                </div>
+              )}
+              
+              {!hasRunAlgorithm && (
+                <div className="bg-neutral-800/30 backdrop-blur-sm rounded-xl p-6 border border-neutral-700/30 text-center">
+                  <div className="text-neutral-400 text-sm space-y-2">
+                    <p className="font-medium text-neutral-300">Панель управления</p>
+                    <p className="text-xs">Появится после запуска алгоритма</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </AlgorithmLayoutContext.Provider>
   );
-
-  /**
-   * Центрировать граф в окне
-   * Находит текущее положение графа и центрирует его
-   */
-  const centerGraph = useCallback(() => {
-    if (!hasGraph || graphModel.nodeCount === 0) {
-      return;
-    }
-
-    if (rendererRef.current && viewportRef.current) {
-      // Используем двойной requestAnimationFrame для гарантии, что рендеринг завершен
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Включаем автоцентрирование для нахождения и центрирования графа
-          viewportRef.current?.fitToGraph(graphModel, true);
-        });
-      });
-    }
-  }, [hasGraph, graphModel]);
 }
 
