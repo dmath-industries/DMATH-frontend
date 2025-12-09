@@ -8,6 +8,15 @@ import {
   Rewind,
   FastForward,
 } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  LinearProgress,
+  IconButton,
+  Button,
+  ButtonGroup,
+  Tooltip,
+} from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { play, pause, nextStep, prevStep, setSpeed, setIndex } from '@/shared/store';
 
@@ -48,101 +57,134 @@ export function ControlPanel() {
     : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-neutral-200">Управление воспроизведением</h3>
-        <span className="text-sm text-neutral-400">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600 }}>
+          Управление воспроизведением
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {currentIndex === -1 ? 'Начало' : `Шаг ${currentIndex + 1} / ${totalSteps}`}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="w-full h-2 bg-neutral-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-500 transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <LinearProgress
+        variant="determinate"
+        value={progress}
+        sx={{
+          height: 8,
+          borderRadius: 1,
+          bgcolor: 'rgba(115, 115, 115, 0.3)',
+          '& .MuiLinearProgress-bar': {
+            borderRadius: 1,
+            bgcolor: 'primary.main',
+          },
+        }}
+      />
 
-      <div className="flex items-center justify-center gap-2">
-        <button
-          onClick={handleReset}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="В начало"
-          disabled={currentIndex === -1}
-        >
-          <Rewind className="w-5 h-5 text-neutral-300" />
-        </button>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+        <Tooltip title="В начало">
+          <span>
+            <IconButton
+              onClick={handleReset}
+              disabled={currentIndex === -1}
+              sx={{ color: 'text.secondary' }}
+            >
+              <Rewind size={20} />
+            </IconButton>
+          </span>
+        </Tooltip>
 
-        <button
-          onClick={handlePrev}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Предыдущий шаг"
-          disabled={currentIndex === -1}
-        >
-          <SkipBack className="w-5 h-5 text-neutral-300" />
-        </button>
+        <Tooltip title="Предыдущий шаг">
+          <span>
+            <IconButton
+              onClick={handlePrev}
+              disabled={currentIndex === -1}
+              sx={{ color: 'text.secondary' }}
+            >
+              <SkipBack size={20} />
+            </IconButton>
+          </span>
+        </Tooltip>
 
         {playing ? (
-          <button
+          <IconButton
             onClick={handlePause}
-            className="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
-            title="Пауза"
+            color="primary"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            }}
           >
-            <Pause className="w-6 h-6 text-white" fill="white" />
-          </button>
+            <Pause size={24} fill="white" />
+          </IconButton>
         ) : (
-          <button
+          <IconButton
             onClick={handlePlay}
-            className="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Воспроизвести"
             disabled={totalSteps === 0}
+            color="primary"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            }}
           >
-            <Play className="w-6 h-6 text-white" fill="white" />
-          </button>
+            <Play size={24} fill="white" />
+          </IconButton>
         )}
 
-        <button
-          onClick={handleNext}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Следующий шаг"
-          disabled={currentIndex >= totalSteps - 1}
-        >
-          <SkipForward className="w-5 h-5 text-neutral-300" />
-        </button>
+        <Tooltip title="Следующий шаг">
+          <span>
+            <IconButton
+              onClick={handleNext}
+              disabled={currentIndex >= totalSteps - 1}
+              sx={{ color: 'text.secondary' }}
+            >
+              <SkipForward size={20} />
+            </IconButton>
+          </span>
+        </Tooltip>
 
-        <button
-          onClick={() => {
-            dispatch(setIndex(totalSteps - 1));
-          }}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="В конец"
-          disabled={currentIndex >= totalSteps - 1}
-        >
-          <FastForward className="w-5 h-5 text-neutral-300" />
-        </button>
-      </div>
+        <Tooltip title="В конец">
+          <span>
+            <IconButton
+              onClick={() => {
+                dispatch(setIndex(totalSteps - 1));
+              }}
+              disabled={currentIndex >= totalSteps - 1}
+              sx={{ color: 'text.secondary' }}
+            >
+              <FastForward size={20} />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-neutral-300">
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
           Скорость: {speedMs}ms
-        </label>
-        <div className="flex items-center gap-2">
+        </Typography>
+        <ButtonGroup size="small" variant="outlined">
           {[2000, 1000, 500, 250].map((speed) => (
-            <button
+            <Button
               key={speed}
               onClick={() => handleSpeedChange(speed)}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
-                speedMs === speed
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
-              }`}
+              variant={speedMs === speed ? 'contained' : 'outlined'}
+              sx={{
+                minWidth: 60,
+                textTransform: 'none',
+              }}
             >
               {speed === 2000 ? '0.5x' : speed === 1000 ? '1x' : speed === 500 ? '2x' : '4x'}
-            </button>
+            </Button>
           ))}
-        </div>
-      </div>
-    </div>
+        </ButtonGroup>
+      </Box>
+    </Box>
   );
 }
 

@@ -1,7 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Settings } from 'lucide-react';
+import { Play } from 'lucide-react';
+import {
+  Box,
+  Paper,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Button,
+  Alert,
+} from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useAppSelector } from '@/shared/store';
 
 interface AlgorithmPanelProps {
@@ -31,64 +44,99 @@ export function AlgorithmPanel({ onRun, disabled }: AlgorithmPanelProps) {
   const selectedAlgo = algorithms.find((a) => a.id === selectedAlgorithm);
 
   return (
-    <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 border border-neutral-700/50 shadow-2xl space-y-4">
-      <div className="flex items-center gap-2">
-        <Settings className="w-5 h-5 text-neutral-300" />
-        <h3 className="text-lg font-semibold text-neutral-200">Алгоритм</h3>
-      </div>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        bgcolor: 'rgba(38, 38, 38, 0.5)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 4,
+        border: '1px solid rgba(115, 115, 115, 0.5)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+        <SettingsIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600 }}>
+          Алгоритм
+        </Typography>
+      </Box>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-neutral-300">
-          Выберите алгоритм:
-        </label>
-        <select
-          value={selectedAlgorithm}
-          onChange={(e) => setSelectedAlgorithm(e.target.value)}
-          className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-          disabled={playing}
-        >
-          {algorithms.map((algo) => (
-            <option key={algo.id} value={algo.id} disabled={!algo.available}>
-              {algo.name} {!algo.available && '(скоро)'}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <FormControl fullWidth disabled={playing}>
+          <InputLabel id="algorithm-select-label">Выберите алгоритм:</InputLabel>
+          <Select
+            labelId="algorithm-select-label"
+            value={selectedAlgorithm}
+            label="Выберите алгоритм:"
+            onChange={(e) => setSelectedAlgorithm(e.target.value)}
+            sx={{
+              bgcolor: 'rgba(23, 23, 23, 0.8)',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(115, 115, 115, 0.5)',
+              },
+            }}
+          >
+            {algorithms.map((algo) => (
+              <MenuItem key={algo.id} value={algo.id} disabled={!algo.available}>
+                {algo.name} {!algo.available && '(скоро)'}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      {selectedAlgo?.id === 'roberts-flores' && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-neutral-300">
-            Начальная вершина:
-          </label>
-          <input
-            type="text"
+        {selectedAlgo?.id === 'roberts-flores' && (
+          <TextField
+            label="Начальная вершина"
             value={startNode}
             onChange={(e) => setStartNode(e.target.value)}
             placeholder="0"
-            className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             disabled={playing}
+            fullWidth
+            sx={{
+              bgcolor: 'rgba(23, 23, 23, 0.8)',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(115, 115, 115, 0.5)',
+              },
+            }}
           />
-        </div>
-      )}
+        )}
 
-      <button
-        onClick={handleRun}
-        disabled={disabled || playing || !selectedAlgo?.available}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 disabled:bg-neutral-700 disabled:text-neutral-500 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
-      >
-        <Play className="w-5 h-5" fill="white" />
-        Запустить алгоритм
-      </button>
+        <Button
+          variant="contained"
+          color="success"
+          onClick={handleRun}
+          disabled={disabled || playing || !selectedAlgo?.available}
+          startIcon={<Play size={20} fill="white" />}
+          fullWidth
+          sx={{
+            py: 1.5,
+            fontWeight: 500,
+            textTransform: 'none',
+          }}
+        >
+          Запустить алгоритм
+        </Button>
 
-      {selectedAlgo?.id === 'roberts-flores' && (
-        <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-          <p className="text-sm text-blue-300">
-            <strong className="text-blue-200">Roberts-Flores:</strong> Алгоритм поиска всех Гамильтоновых циклов 
-            в графе методом обратного отслеживания (backtracking).
-          </p>
-        </div>
-      )}
-    </div>
+        {selectedAlgo?.id === 'roberts-flores' && (
+          <Alert
+            severity="info"
+            sx={{
+              bgcolor: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              '& .MuiAlert-icon': {
+                color: 'rgba(147, 197, 253, 1)',
+              },
+            }}
+          >
+            <Typography variant="body2" sx={{ color: 'rgba(147, 197, 253, 1)' }}>
+              <strong>Roberts-Flores:</strong> Алгоритм поиска всех Гамильтоновых циклов в графе
+              методом обратного отслеживания (backtracking).
+            </Typography>
+          </Alert>
+        )}
+      </Box>
+    </Paper>
   );
 }
 

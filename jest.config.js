@@ -1,12 +1,10 @@
-import type { Config } from 'jest';
-
 const tsTransformReact = [
   'ts-jest',
   {
     tsconfig: 'tsconfig.json',
     babelConfig: { presets: [['@babel/preset-react', { runtime: 'automatic' }]] },
   },
-] as const;
+];
 
 const collectCoverageFrom = [
   'src/**/*.{ts,tsx}',
@@ -14,7 +12,9 @@ const collectCoverageFrom = [
   '!src/**/examples/**',
 ];
 
-const config: Config = {
+module.exports = {
+  // Не указываем testRunner - Jest 30 использует jest-circus по умолчанию
+  // Если возникает ошибка, это может быть проблема с установкой Jest
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: { branches: 80, functions: 80, lines: 80, statements: 80 },
@@ -43,5 +43,3 @@ const config: Config = {
     },
   ],
 };
-
-export default config;
