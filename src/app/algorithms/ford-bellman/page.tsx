@@ -80,8 +80,9 @@ function FordBellmanContent() {
               continue;
             }
             
-            const hasReverse = matrix[j]?.[i] !== 0 && !isNaN(matrix[j]?.[i]);
-            const reverseWeight = hasReverse ? matrix[j]?.[i] : undefined;
+            const reverseVal = matrix[j]?.[i];
+            const hasReverse = reverseVal !== undefined && reverseVal !== 0 && !isNaN(reverseVal);
+            const reverseWeight = hasReverse ? reverseVal : undefined;
             const isUndirected = hasReverse && weight === reverseWeight;
             
             if (isUndirected && i > j) {
