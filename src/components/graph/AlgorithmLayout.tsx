@@ -482,5 +482,25 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
       </div>
     </AlgorithmLayoutContext.Provider>
   );
+
+  /**
+   * Центрировать граф в окне
+   * Находит текущее положение графа и центрирует его
+   */
+  const centerGraph = useCallback(() => {
+    if (!hasGraph || graphModel.nodeCount === 0) {
+      return;
+    }
+
+    if (rendererRef.current && viewportRef.current) {
+      // Используем двойной requestAnimationFrame для гарантии, что рендеринг завершен
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Включаем автоцентрирование для нахождения и центрирования графа
+          viewportRef.current?.fitToGraph(graphModel, true);
+        });
+      });
+    }
+  }, [hasGraph, graphModel]);
 }
 
