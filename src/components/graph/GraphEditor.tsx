@@ -4,21 +4,16 @@ import { useState } from 'react';
 import { Plus, Minus, Network } from 'lucide-react';
 
 interface GraphEditorProps {
-  onAddNode: (id: string, x: number, y: number) => void;
+  onAddNode: (id: string, x?: number, y?: number) => void;
   onAddEdge: (source: string, target: string, weight?: number) => void;
   onClear: () => void;
-  onLoadSample: () => void;
+  onLoadSample?: () => void;
 }
 
 /**
  * Компонент панели редактирования графа
  */
-export function GraphEditor({
-  onAddNode,
-  onAddEdge,
-  onClear,
-  onLoadSample,
-}: GraphEditorProps) {
+export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: GraphEditorProps) {
   const [showNodeDialog, setShowNodeDialog] = useState(false);
   const [showEdgeDialog, setShowEdgeDialog] = useState(false);
   const [nodeId, setNodeId] = useState('');
@@ -28,9 +23,8 @@ export function GraphEditor({
 
   const handleAddNode = () => {
     if (nodeId.trim()) {
-      const x = Math.random() * 400 - 200;
-      const y = Math.random() * 300 - 150;
-      onAddNode(nodeId.trim(), x, y);
+      // Передаём undefined, чтобы позиция определялась в GraphContainer (центр viewport)
+      onAddNode(nodeId.trim());
       setNodeId('');
       setShowNodeDialog(false);
     }
@@ -68,12 +62,14 @@ export function GraphEditor({
           Добавить ребро
         </button>
 
-        <button
-          onClick={onLoadSample}
-          className="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
-        >
-          Загрузить пример
-        </button>
+        {onLoadSample && (
+          <button
+            onClick={onLoadSample}
+            className="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+          >
+            Загрузить пример
+          </button>
+        )}
 
         <button
           onClick={onClear}
@@ -91,11 +87,11 @@ export function GraphEditor({
             <input
               type="text"
               value={nodeId}
-              onChange={(e) => setNodeId(e.target.value)}
+              onChange={e => setNodeId(e.target.value)}
               placeholder="ID вершины (0, 1, 2, ...)"
               className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleAddNode()}
+              onKeyDown={e => e.key === 'Enter' && handleAddNode()}
             />
             <div className="flex gap-2">
               <button
@@ -123,7 +119,7 @@ export function GraphEditor({
               <input
                 type="text"
                 value={edgeSource}
-                onChange={(e) => setEdgeSource(e.target.value)}
+                onChange={e => setEdgeSource(e.target.value)}
                 placeholder="Из вершины"
                 className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 autoFocus
@@ -131,14 +127,14 @@ export function GraphEditor({
               <input
                 type="text"
                 value={edgeTarget}
-                onChange={(e) => setEdgeTarget(e.target.value)}
+                onChange={e => setEdgeTarget(e.target.value)}
                 placeholder="В вершину"
                 className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               />
               <input
                 type="number"
                 value={edgeWeight}
-                onChange={(e) => setEdgeWeight(e.target.value)}
+                onChange={e => setEdgeWeight(e.target.value)}
                 placeholder="Вес (опционально)"
                 className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               />
@@ -163,4 +159,3 @@ export function GraphEditor({
     </div>
   );
 }
-
