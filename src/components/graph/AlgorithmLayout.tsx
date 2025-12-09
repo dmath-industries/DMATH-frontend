@@ -374,8 +374,14 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
     }
   }, [currentIndex]);
 
-  const contextValue: AlgorithmLayoutContextType = {
+const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
+    addNode,
+    addEdge,
+    removeNode,
+    removeEdge,
+    clearGraph,
+    centerGraph,
     hasGraph,
     hasRunAlgorithm,
     graphModel,
