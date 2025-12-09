@@ -1,5 +1,21 @@
-function BronKerboschContent(){
-    const { loadGraph, addNode, addEdge, clearGraph, centerGraph, graphModel } = useAlgorithmLayout();
+'use client';
+
+/**
+ * Bron-Kerbosch Algorithm Page
+ * Страница визуализации алгоритма Брона-Кербоша
+ */
+
+import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
+import { GraphMatrixInput } from '@/components/input';
+import { GraphEditor } from '@/components/graph/GraphEditor';
+import { useState } from 'react';
+import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
+
+/**
+ * Контент страницы алгоритма Брона-Кербоша
+ */
+function BronKerboschContent() {
+  const { loadGraph, addNode, addEdge, clearGraph, centerGraph, graphModel } = useAlgorithmLayout();
   const [inputMode, setInputMode] = useState<'matrix' | 'editor'>('editor');
 
   /**
@@ -91,7 +107,6 @@ function BronKerboschContent(){
       alert('Ошибка при парсинге матрицы. Проверьте формат!');
     }
   };
-  
 
   const handleLoadSample = () => {
     // Пример графа для алгоритма Брона-Кербоша
@@ -115,7 +130,8 @@ function BronKerboschContent(){
     // Загружаем граф с автоматическим центрированием (как кнопка "Найти граф")
     loadGraph(sampleGraph, false, true);
   };
-      return (
+
+  return (
     <>
       {/* Информация об алгоритме - сначала */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
@@ -198,4 +214,21 @@ function BronKerboschContent(){
     </>
   );
 }
+
+/**
+ * Страница алгоритма Брона-Кербоша
+ */
+export default function BronKerboschPage() {
+  return (
+    <AlgorithmLayout
+      algorithmName="bron-kerbosch"
+      algorithmTitle="Алгоритм Брона-Кербоша"
+    >
+      <BronKerboschContent />
+    </AlgorithmLayout>
+  );
 }
+
+
+
+
