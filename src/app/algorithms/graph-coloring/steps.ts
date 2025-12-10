@@ -101,4 +101,30 @@ export class GraphColoringStepGenerator {
       this.adjacencyMatrix[i]![i] = -1;
     }
   }
+
+  private getDegrees(): number[] {
+    const n = this.adjacencyMatrix.length;
+    const degrees = Array(n).fill(-1);
+
+    for (let i = 0; i < n; i++) {
+      if (this.nodeColors.get(this.indexNodeMap.get(i) || '') !== undefined) {
+        degrees[i] = -1; // Уже раскрашена
+        continue;
+      }
+
+      let degree = 0;
+      for (let j = 0; j < n; j++) {
+        if (this.adjacencyMatrix[i]![j] === 1) {
+          degree++;
+        } else if (this.adjacencyMatrix[i]![j] === 0 && degrees[i] === -1) {
+          degrees[i] = 0;
+        }
+      }
+      if (degree > 0) {
+        degrees[i] = degree;
+      }
+    }
+
+    return degrees;
+  }
 }
