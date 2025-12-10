@@ -127,4 +127,30 @@ export class GraphColoringStepGenerator {
 
     return degrees;
   }
+
+  private getMaxDegreeVertex(degrees: number[], accessibleVector?: number[]): number {
+    let maxDegreeVertex = -1;
+    let maxDegree = -1;
+
+    for (let i = 0; i < degrees.length; i++) {
+      // Пропускаем уже раскрашенные вершины
+      if (this.nodeColors.get(this.indexNodeMap.get(i) || '') !== undefined) {
+        continue;
+      }
+
+      // Если передан вектор доступности, проверяем его
+      if (accessibleVector !== undefined) {
+        if (accessibleVector[i] !== 0) {
+          continue; // Вершина недоступна (уже выбрана или смежна с выбранными)
+        }
+      }
+
+      if (degrees[i]! > maxDegree) {
+        maxDegree = degrees[i]!;
+        maxDegreeVertex = i;
+      }
+    }
+
+    return maxDegreeVertex;
+  }
 }
