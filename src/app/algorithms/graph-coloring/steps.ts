@@ -273,4 +273,23 @@ export class GraphColoringStepGenerator {
     }
     return false;
   }
+
+  /**
+   * Отобразить степени вершин
+   */
+  private displayDegrees(degrees: number[]): void {
+    let description = 'Степени вершин:\n';
+    for (let i = 0; i < degrees.length; i++) {
+      const nodeId = this.indexNodeMap.get(i);
+      if (nodeId) {
+        const label = formatNodeLabel(nodeId);
+        if (degrees[i] === -1) {
+          description += `${label}: -\n`;
+        } else {
+          description += `${label}: ${degrees[i]}\n`;
+        }
+      }
+    }
+    this.addInfoStep(description);
+  }
 }
