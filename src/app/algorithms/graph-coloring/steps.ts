@@ -260,4 +260,17 @@ export class GraphColoringStepGenerator {
     this.addInfoStep(`Хроматическое число графа: ${chromaticNumber}`);
     this.addFinalSummary(chromaticNumber);
   }
+
+  /**
+   * Проверить, есть ли нераскрашенные вершины
+   */
+  private hasUncoloredVertices(): boolean {
+    const nodes = this.graph.nodes();
+    for (const node of nodes) {
+      if (this.nodeColors.get(node) === undefined) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
