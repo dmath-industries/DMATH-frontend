@@ -48,6 +48,11 @@ jest.mock('pixi.js', () => {
       position: mockPositionObj,
       zIndex: 0,
       destroy: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+      eventMode: 'none',
+      cursor: 'default',
     };
     graphicsInstances.push(instance);
     return instance;
@@ -68,6 +73,9 @@ jest.mock('pixi.js', () => {
     sortableChildren: false,
     addChild: mockAddChildFn,
     removeChild: mockRemoveChildFn,
+    on: jest.fn(),
+    off: jest.fn(),
+    removeAllListeners: jest.fn(),
   }));
 
   const mockApplicationFn = jest.fn(() => ({
@@ -76,6 +84,11 @@ jest.mock('pixi.js', () => {
       resize: mockResizeFn,
     },
     destroy: mockDestroyFn,
+    stage: {
+      on: jest.fn(),
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+    },
   }));
 
   (global as any).__PIXI_MOCKS__ = {
@@ -535,9 +548,7 @@ describe('Renderer', () => {
 
       renderer.drawAll(model);
 
-      expect(mockStroke).toHaveBeenCalledWith(
-        expect.objectContaining({ width: 5 })
-      );
+      expect(mockStroke).toHaveBeenCalledWith(expect.objectContaining({ width: 5 }));
     });
 
     it('should handle different edge states', () => {
@@ -606,8 +617,7 @@ describe('Renderer', () => {
     it('should handle edge without source node', () => {
       try {
         model.addEdge({ id: 'edge1', source: 'nonexistent', target: 'node2' });
-      } catch (e) {
-      }
+      } catch (e) {}
       const testModel = new GraphModel(false);
       testModel.addNode({ id: 'node2', x: 200, y: 200 });
       expect(() => renderer.drawAll(testModel)).not.toThrow();
@@ -616,8 +626,7 @@ describe('Renderer', () => {
     it('should handle edge without target node', () => {
       try {
         model.addEdge({ id: 'edge1', source: 'node1', target: 'nonexistent' });
-      } catch (e) {
-      }
+      } catch (e) {}
       const testModel = new GraphModel(false);
       testModel.addNode({ id: 'node1', x: 100, y: 100 });
       expect(() => renderer.drawAll(testModel)).not.toThrow();
