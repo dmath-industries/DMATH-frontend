@@ -292,4 +292,38 @@ export class GraphColoringStepGenerator {
     }
     this.addInfoStep(description);
   }
+
+  /**
+   * Отобразить таблицу векторов
+   */
+  private displayTable(maxVertices: number[], tableOfVectors: number[][], colorNum: number): void {
+    if (tableOfVectors.length === 0) return;
+
+    const currentVector = tableOfVectors[tableOfVectors.length - 1];
+    const verticesStr = maxVertices
+      .map(idx => {
+        const nodeId = this.indexNodeMap.get(idx);
+        return nodeId ? formatNodeLabel(nodeId) : '';
+      })
+      .join(',');
+
+    let description = `Таблица векторов (Шаг ${colorNum}):\n`;
+    description += `Множество вершин: {${verticesStr}}\n`;
+    description += 'Вектор: [';
+
+    const vectorStr = currentVector!
+      .map((val, idx) => {
+        const nodeId = this.indexNodeMap.get(idx);
+        const label = nodeId ? formatNodeLabel(nodeId) : '';
+        if (val === -1) {
+          return `${label}:-`;
+        } else {
+          return `${label}:${val}`;
+        }
+      })
+      .join(', ');
+
+    description += vectorStr + ']';
+    this.addInfoStep(description);
+  }
 }
