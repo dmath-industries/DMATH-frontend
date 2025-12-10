@@ -343,4 +343,22 @@ export class GraphColoringStepGenerator {
       );
     }
   }
+
+  /**
+   * Добавить информационный шаг
+   */
+  private addInfoStep(description: string): void {
+    const firstNode = this.graph.nodes()[0];
+    if (firstNode) {
+      const step: HighlightNodeStep = {
+        id: `step_${this.stepCounter++}`,
+        timestamp: Date.now(),
+        type: 'HIGHLIGHT_NODE',
+        nodeId: firstNode,
+        state: 'default',
+        description,
+      };
+      this.steps.push(step);
+    }
+  }
 }
