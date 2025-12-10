@@ -99,6 +99,7 @@ export function ControlPanel() {
             <IconButton
               onClick={handlePrev}
               disabled={currentIndex === -1}
+              aria-label="Предыдущий шаг"
               sx={{ color: 'text.secondary' }}
             >
               <SkipBack size={20} />
@@ -110,6 +111,7 @@ export function ControlPanel() {
           <IconButton
             onClick={handlePause}
             color="primary"
+            aria-label="Пауза"
             sx={{
               bgcolor: 'primary.main',
               color: 'white',
@@ -125,6 +127,7 @@ export function ControlPanel() {
             onClick={handlePlay}
             disabled={totalSteps === 0}
             color="primary"
+            aria-label="Воспроизвести"
             sx={{
               bgcolor: 'primary.main',
               color: 'white',
@@ -142,6 +145,7 @@ export function ControlPanel() {
             <IconButton
               onClick={handleNext}
               disabled={currentIndex >= totalSteps - 1}
+              aria-label="Следующий шаг"
               sx={{ color: 'text.secondary' }}
             >
               <SkipForward size={20} />

@@ -20,8 +20,8 @@ test.describe('Страница алгоритма Робертса-Флорес
   });
 
   test('должна иметь панель управления', async ({ page }) => {
-    const playButton = page.getByRole('button', { name: /play|воспроизвести|▶/i }).first();
-    const pauseButton = page.getByRole('button', { name: /pause|пауза|⏸/i }).first();
+    const playButton = page.getByRole('button', { name: /воспроизвести|play/i }).first();
+    const pauseButton = page.getByRole('button', { name: /пауза|pause/i }).first();
     
     await expect(playButton.or(pauseButton)).toBeVisible({ timeout: 5000 });
   });
@@ -46,8 +46,8 @@ test.describe('Страница алгоритма Робертса-Флорес
     const slider = page.locator('input[type="range"]').first();
     const sliderExists = await slider.count() > 0;
     
-    const nextButton = page.getByRole('button', { name: /next|следующий|→/i }).first();
-    const prevButton = page.getByRole('button', { name: /prev|предыдущий|←/i }).first();
+    const nextButton = page.getByRole('button', { name: /следующий шаг|next/i }).first();
+    const prevButton = page.getByRole('button', { name: /предыдущий шаг|prev/i }).first();
     const navigationExists = await nextButton.count() > 0 || await prevButton.count() > 0;
     
     expect(sliderExists || navigationExists).toBe(true);
