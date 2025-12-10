@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
+import { mobileConfig } from '@/shared/lib';
 
 interface AlgorithmLayoutContextType {
   loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
@@ -51,7 +52,10 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
   const [loadedSessionInfo, setLoadedSessionInfo] = useState<{ name: string; date: string } | null>(null);
   const [hasRunAlgorithm, setHasRunAlgorithm] = useState(false);
   const [currentGraphHash, setCurrentGraphHash] = useState<string | null>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ 
+    width: mobileConfig.canvas.defaultSize.width, 
+    height: mobileConfig.canvas.defaultSize.height 
+  });
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -194,15 +198,19 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
   useEffect(() => {
     const updateCanvasSize = () => {
       if (canvasContainerRef.current) {
-        const isMobile = window.innerWidth < 640;
-        const padding = isMobile ? 8 : 16;
+        const isMobile = window.innerWidth < mobileConfig.breakpoint;
+        const padding = isMobile ? mobileConfig.canvas.padding.mobile : mobileConfig.canvas.padding.desktop;
         const containerWidth = canvasContainerRef.current.offsetWidth - padding * 2; 
-        const width = Math.max(isMobile ? 300 : 600, Math.min(containerWidth, isMobile ? 600 : 1200));
-        const headerHeight = isMobile ? 80 : 60;
-        const extraSpace = isMobile ? 350 : 300;
+        const minWidth = isMobile ? mobileConfig.canvas.width.min.mobile : mobileConfig.canvas.width.min.desktop;
+        const maxWidth = isMobile ? mobileConfig.canvas.width.max.mobile : mobileConfig.canvas.width.max.desktop;
+        const width = Math.max(minWidth, Math.min(containerWidth, maxWidth));
+        const headerHeight = isMobile ? mobileConfig.canvas.headerHeight.mobile : mobileConfig.canvas.headerHeight.desktop;
+        const extraSpace = isMobile ? mobileConfig.canvas.extraSpace.mobile : mobileConfig.canvas.extraSpace.desktop;
+        const minHeight = isMobile ? mobileConfig.canvas.height.min.mobile : mobileConfig.canvas.height.min.desktop;
+        const maxHeight = isMobile ? mobileConfig.canvas.height.max.mobile : mobileConfig.canvas.height.max.desktop;
         const height = Math.min(
-          isMobile ? 400 : 800, 
-          Math.max(isMobile ? 250 : 500, window.innerHeight - headerHeight - extraSpace)
+          maxHeight, 
+          Math.max(minHeight, window.innerHeight - headerHeight - extraSpace)
         ); 
         setCanvasSize({ width, height });
         
