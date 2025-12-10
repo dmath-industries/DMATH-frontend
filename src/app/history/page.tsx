@@ -20,6 +20,10 @@ const ALGORITHM_ROUTES: Record<string, string> = {
   'roberts-flores': '/algorithms/roberts-flores',
   'Roberts-Flores': '/algorithms/roberts-flores',
   'RobertsFlores': '/algorithms/roberts-flores',
+  'bellman-ford': '/algorithms/bellman-ford',
+  'Bellman-Ford': '/algorithms/bellman-ford',
+  'ford-bellman': '/algorithms/bellman-ford',
+  'Ford-Bellman': '/algorithms/bellman-ford',
 };
 
 /**
