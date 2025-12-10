@@ -82,7 +82,7 @@ function HungarianContent() {
         for (let j = 0; j < nodeCount; j++) {
           const weight = row[j];
           if (i >= 0 && i < nodeCount && j >= 0 && j < nodeCount && 
-              weight !== 0 && !isNaN(weight) && isFinite(weight)) {
+              weight !== undefined && weight !== 0 && !isNaN(weight) && isFinite(weight)) {
             const sourceId = `source_${i}`;
             const targetId = `target_${j}`;
             
