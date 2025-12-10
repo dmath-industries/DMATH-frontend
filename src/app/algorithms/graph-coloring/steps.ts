@@ -166,4 +166,11 @@ export class GraphColoringStepGenerator {
 
     return neighbors;
   }
+
+  /**
+   * Получить строку матрицы
+   */
+  private getLine(vertexIndex: number): number[] {
+    return [...this.adjacencyMatrix[vertexIndex]!];
+  }
 }
