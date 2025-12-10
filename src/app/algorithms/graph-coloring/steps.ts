@@ -47,4 +47,35 @@ export class GraphColoringStepGenerator {
     'Голубой',
   ];
   private adjacencyMatrix: number[][] = [];
+
+  generateSteps(graphDTO: GraphDTO, _params?: AlgorithmParams): Step[] {
+    this.steps = [];
+    this.stepCounter = 0;
+    this.nodeColors.clear();
+    this.nodeIndexMap.clear();
+    this.indexNodeMap.clear();
+
+    this.graphModel = new GraphModel(false); // Неориентированный граф
+    this.graphModel.fromDTO(graphDTO);
+    this.graph = this.graphModel.getGraph();
+
+    const nodes = this.graph.nodes();
+    if (nodes.length === 0) {
+      return this.steps;
+    }
+
+    // Создаем индексное отображение
+    nodes.forEach((node, index) => {
+      this.nodeIndexMap.set(node, index);
+      this.indexNodeMap.set(index, node);
+    });
+
+    // Создаем матрицу смежности
+    this.buildAdjacencyMatrix(nodes);
+
+    // Эвристический алгоритм раскраски
+    this.heuristicColoring(nodes);
+
+    return this.steps;
+  }
 }
