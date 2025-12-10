@@ -278,7 +278,7 @@ export class GraphColoringStepGenerator {
     // Финальное резюме
     const chromaticNumber = colorNum - 1;
     this.addInfoStep(`Хроматическое число графа: ${chromaticNumber}`);
-    this.addFinalSummary(chromaticNumber);
+    this.addFinalSummary();
   }
 
   /**
@@ -350,7 +350,7 @@ export class GraphColoringStepGenerator {
   /**
    * Добавить финальное резюме раскраски
    */
-  private addFinalSummary(totalColors: number): void {
+  private addFinalSummary(): void {
     // Подсвечиваем все вершины их цветами для финального вида
     for (const [nodeId, color] of this.nodeColors.entries()) {
       const state = color - 1 < COLOR_STATES.length ? COLOR_STATES[color - 1] : 'default';
