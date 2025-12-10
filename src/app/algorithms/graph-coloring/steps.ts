@@ -1,3 +1,10 @@
+/**
+ * Graph Coloring Algorithm — Step-based версия
+ * Эвристический алгоритм раскраски графа (Heuristic Graph Coloring)
+ * Основан на алгоритме из DMath-bot-master
+ * Находит правильную раскраску вершин графа минимальным количеством цветов
+ */
+
 import Graph from 'graphology';
 
 import { GraphModel } from '@/services/graph';
@@ -79,6 +86,9 @@ export class GraphColoringStepGenerator {
     return this.steps;
   }
 
+  /**
+   * Построить матрицу смежности
+   */
   private buildAdjacencyMatrix(nodes: string[]): void {
     const n = nodes.length;
     this.adjacencyMatrix = Array(n)
@@ -102,6 +112,9 @@ export class GraphColoringStepGenerator {
     }
   }
 
+  /**
+   * Получить степени вершин
+   */
   private getDegrees(): number[] {
     const n = this.adjacencyMatrix.length;
     const degrees = Array(n).fill(-1);
@@ -128,6 +141,9 @@ export class GraphColoringStepGenerator {
     return degrees;
   }
 
+  /**
+   * Найти вершину с максимальной степенью среди доступных
+   */
   private getMaxDegreeVertex(degrees: number[], accessibleVector?: number[]): number {
     let maxDegreeVertex = -1;
     let maxDegree = -1;
@@ -154,6 +170,9 @@ export class GraphColoringStepGenerator {
     return maxDegreeVertex;
   }
 
+  /**
+   * Получить соседей вершины по индексу
+   */
   private getNeighbors(vertexIndex: number): number[] {
     const neighbors: number[] = [];
     const n = this.adjacencyMatrix.length;
@@ -255,6 +274,7 @@ export class GraphColoringStepGenerator {
 
       colorNum++;
     }
+
     // Финальное резюме
     const chromaticNumber = colorNum - 1;
     this.addInfoStep(`Хроматическое число графа: ${chromaticNumber}`);
