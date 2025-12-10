@@ -155,6 +155,7 @@ export default function RobertsFloresPage() {
     <AlgorithmLayout
       algorithmName="roberts-flores"
       algorithmTitle="Алгоритм Робертса-Флореса"
+      graphDescription="Граф для поиска всех гамильтоновых циклов. Введите матрицу смежности для построения графа."
     >
       <RobertsFloresContent />
     </AlgorithmLayout>
