@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Minus, Network } from 'lucide-react';
+import '@/styles/global.css';
 
 interface GraphEditorProps {
   onAddNode: (id: string, x?: number, y?: number) => void;
@@ -42,46 +43,54 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
   };
 
   return (
-    <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 border border-neutral-700/50 shadow-2xl space-y-4">
-      <h3 className="text-lg font-semibold text-neutral-200">Редактор графа</h3>
-
-      <div className="space-y-2">
+    <div className="p-3">
+      <div className="flex items-center justify-center gap-2 flex-wrap max-w-[400px] mx-auto">
         <button
           onClick={() => setShowNodeDialog(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          className="flex justify-center custom-btn btn-3 text-black transition"
+          title="Добавить вершину"
         >
-          <Plus className="w-4 h-4" />
-          Добавить вершину
+          <span>
+            <Plus className="w-3.5 h-3.5" />
+            Вершина
+          </span>
         </button>
 
         <button
           onClick={() => setShowEdgeDialog(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+          className="flex justify-center custom-btn btn-3 text-black transition"
+          title="Добавить ребро"
         >
-          <Network className="w-4 h-4" />
-          Добавить ребро
+          <span className="hidden sm:inline">
+            <Network className="w-3.5 h-3.5" />
+            Ребро
+          </span>
         </button>
 
         {onLoadSample && (
           <button
             onClick={onLoadSample}
-            className="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+            className="flex justify-center custom-btn btn-3 text-black transition"
+            title="Загрузить пример"
           >
-            Загрузить пример
+            <span>Пример</span>
           </button>
         )}
 
         <button
           onClick={onClear}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+          className="flex justify-center custom-btn btn-5 text-black transition"
+          title="Очистить граф"
         >
-          <Minus className="w-4 h-4" />
-          Очистить граф
+          <span>
+            <Minus className="w-3.5 h-3.5" />
+            Очистить
+          </span>
         </button>
       </div>
 
       {showNodeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999]">
           <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-96 shadow-2xl">
             <h4 className="text-lg font-semibold mb-4 text-neutral-200">Добавить вершину</h4>
             <input
@@ -112,7 +121,7 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
       )}
 
       {showEdgeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999]">
           <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-96 shadow-2xl">
             <h4 className="text-lg font-semibold mb-4 text-neutral-200">Добавить ребро</h4>
             <div className="space-y-3">
