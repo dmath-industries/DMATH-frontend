@@ -153,4 +153,17 @@ export class GraphColoringStepGenerator {
 
     return maxDegreeVertex;
   }
+
+  private getNeighbors(vertexIndex: number): number[] {
+    const neighbors: number[] = [];
+    const n = this.adjacencyMatrix.length;
+
+    for (let j = 0; j < n; j++) {
+      if (this.adjacencyMatrix[vertexIndex]![j] === 1) {
+        neighbors.push(j);
+      }
+    }
+
+    return neighbors;
+  }
 }
