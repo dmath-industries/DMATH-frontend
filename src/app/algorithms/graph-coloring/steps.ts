@@ -173,4 +173,91 @@ export class GraphColoringStepGenerator {
   private getLine(vertexIndex: number): number[] {
     return [...this.adjacencyMatrix[vertexIndex]!];
   }
+
+  /**
+   * Эвристический алгоритм раскраски графа
+   */
+  private heuristicColoring(nodes: string[]): void {
+    let colorNum = 1;
+
+    // Пока есть нераскрашенные вершины
+    while (this.hasUncoloredVertices()) {
+      const stepDescription = `Шаг ${colorNum}`;
+      this.addInfoStep(stepDescription);
+
+      // Получаем степени вершин
+      const degrees = this.getDegrees();
+      this.displayDegrees(degrees);
+
+      // Находим вершину с максимальной степенью
+      let maxDegreeVertex = this.getMaxDegreeVertex(degrees);
+      if (maxDegreeVertex === -1) {
+        break;
+      }
+
+      const maxVertices: number[] = [maxDegreeVertex];
+      const tableOfVectors: number[][] = [];
+
+      // Инициализируем первый вектор из строки матрицы
+      const initialVector = this.getLine(maxDegreeVertex);
+      tableOfVectors.push([...initialVector]);
+
+      this.displayTable(maxVertices, tableOfVectors, colorNum);
+
+      // Пока в последнем векторе есть 0 (доступные вершины)
+      while (
+        tableOfVectors[tableOfVectors.length - 1]!.some(
+          (val, idx) =>
+            val === 0 && this.nodeColors.get(this.indexNodeMap.get(idx) || '') === undefined
+        )
+      ) {
+        // Находим следующую вершину с максимальной степенью среди доступных
+        const currentVector = tableOfVectors[tableOfVectors.length - 1];
+        maxDegreeVertex = this.getMaxDegreeVertex(degrees, currentVector);
+
+        if (maxDegreeVertex === -1) {
+          break;
+        }
+
+        maxVertices.push(maxDegreeVertex);
+
+        // Создаем новый вектор
+        const newVector = [...currentVector!];
+        newVector[maxDegreeVertex] = -1; // Помечаем выбранную вершину
+
+        // Помечаем соседей выбранной вершины как недоступные (1)
+        const neighbors = this.getNeighbors(maxDegreeVertex);
+        for (const neighbor of neighbors) {
+          if (newVector[neighbor] !== -1) {
+            newVector[neighbor] = 1;
+          }
+        }
+
+        tableOfVectors.push(newVector);
+        this.displayTable(maxVertices, tableOfVectors, colorNum);
+      }
+
+      // Раскрашиваем все вершины из множества текущим цветом
+      const state = colorNum - 1 < COLOR_STATES.length ? COLOR_STATES[colorNum - 1] : 'default';
+      const colorName = this.colorNames[colorNum - 1] || `Цвет ${colorNum}`;
+
+      for (const vertexIndex of maxVertices) {
+        const nodeId = this.indexNodeMap.get(vertexIndex);
+        if (nodeId) {
+          this.nodeColors.set(nodeId, colorNum);
+          this.addHighlightNodeStep(
+            nodeId,
+            state!,
+            `Вершина ${formatNodeLabel(nodeId)} получает ${colorName} (цвет ${colorNum})`
+          );
+        }
+      }
+
+      colorNum++;
+    }
+    // Финальное резюме
+    const chromaticNumber = colorNum - 1;
+    this.addInfoStep(`Хроматическое число графа: ${chromaticNumber}`);
+    this.addFinalSummary(chromaticNumber);
+  }
 }
