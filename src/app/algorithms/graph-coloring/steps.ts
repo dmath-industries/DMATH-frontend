@@ -326,4 +326,21 @@ export class GraphColoringStepGenerator {
     description += vectorStr + ']';
     this.addInfoStep(description);
   }
+
+  /**
+   * Добавить финальное резюме раскраски
+   */
+  private addFinalSummary(totalColors: number): void {
+    // Подсвечиваем все вершины их цветами для финального вида
+    for (const [nodeId, color] of this.nodeColors.entries()) {
+      const state = color - 1 < COLOR_STATES.length ? COLOR_STATES[color - 1] : 'default';
+      const colorName = this.colorNames[color - 1] || `Цвет ${color}`;
+
+      this.addHighlightNodeStep(
+        nodeId,
+        state!,
+        `Финальная раскраска: ${formatNodeLabel(nodeId)} - ${colorName}`
+      );
+    }
+  }
 }
