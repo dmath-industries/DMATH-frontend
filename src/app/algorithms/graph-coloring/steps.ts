@@ -361,4 +361,19 @@ export class GraphColoringStepGenerator {
       this.steps.push(step);
     }
   }
+
+  /**
+   * Добавить шаг подсветки вершины
+   */
+  private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
+    const step: HighlightNodeStep = {
+      id: `step_${this.stepCounter++}`,
+      timestamp: Date.now(),
+      type: 'HIGHLIGHT_NODE',
+      nodeId,
+      state,
+      description,
+    };
+    this.steps.push(step);
+  }
 }
