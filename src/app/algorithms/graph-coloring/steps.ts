@@ -27,3 +27,24 @@ const COLOR_STATES: ElementState[] = [
   'path', // Цвет 4
   'candidate', // Цвет 5
 ];
+
+export class GraphColoringStepGenerator {
+  private steps: Step[] = [];
+  private stepCounter = 0;
+  private graphModel!: GraphModel;
+  private graph!: Graph;
+  private nodeColors: Map<string, number> = new Map();
+  private nodeIndexMap: Map<string, number> = new Map();
+  private indexNodeMap: Map<number, string> = new Map();
+  private colorNames = [
+    'Красный',
+    'Синий',
+    'Зелёный',
+    'Жёлтый',
+    'Фиолетовый',
+    'Оранжевый',
+    'Розовый',
+    'Голубой',
+  ];
+  private adjacencyMatrix: number[][] = [];
+}
