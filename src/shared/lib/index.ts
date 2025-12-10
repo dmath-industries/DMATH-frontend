@@ -6,3 +6,4 @@ export * from './utils';
 export * from './logger';
 export * from './env';
 export * from './theme';
+export * from './config';

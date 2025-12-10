@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
+import { mobileConfig } from '@/shared/lib';
 
 interface AlgorithmLayoutContextType {
   loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
@@ -35,12 +36,13 @@ interface AlgorithmLayoutProps {
   algorithmName: string;
   algorithmTitle: string;
   children?: React.ReactNode;
+  graphDescription?: string | React.ReactNode;
 }
 
 /**
  * Компонент layout для страниц с алгоритмами
  */
-export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: AlgorithmLayoutProps) {
+export function AlgorithmLayout({ algorithmName, algorithmTitle, children, graphDescription }: AlgorithmLayoutProps) {
   const dispatch = useAppDispatch();
   const { playing, currentIndex } = useAppSelector((state) => state.steps);
 
@@ -51,7 +53,10 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
   const [loadedSessionInfo, setLoadedSessionInfo] = useState<{ name: string; date: string } | null>(null);
   const [hasRunAlgorithm, setHasRunAlgorithm] = useState(false);
   const [currentGraphHash, setCurrentGraphHash] = useState<string | null>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
+  const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({ 
+    width: mobileConfig.canvas.defaultSize.width, 
+    height: mobileConfig.canvas.defaultSize.height 
+  });
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -194,9 +199,20 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
   useEffect(() => {
     const updateCanvasSize = () => {
       if (canvasContainerRef.current) {
-        const containerWidth = canvasContainerRef.current.offsetWidth - 16; 
-        const width = Math.max(600, containerWidth);
-        const height = Math.min(800, Math.max(500, window.innerHeight - 300)); 
+        const isMobile = window.innerWidth < mobileConfig.breakpoint;
+        const padding = isMobile ? mobileConfig.canvas.padding.mobile : mobileConfig.canvas.padding.desktop;
+        const containerWidth = canvasContainerRef.current.offsetWidth - padding * 2; 
+        const minWidth = isMobile ? mobileConfig.canvas.width.min.mobile : mobileConfig.canvas.width.min.desktop;
+        const maxWidth = isMobile ? mobileConfig.canvas.width.max.mobile : mobileConfig.canvas.width.max.desktop;
+        const width = Math.max(minWidth, Math.min(containerWidth, maxWidth));
+        const headerHeight = isMobile ? mobileConfig.canvas.headerHeight.mobile : mobileConfig.canvas.headerHeight.desktop;
+        const extraSpace = isMobile ? mobileConfig.canvas.extraSpace.mobile : mobileConfig.canvas.extraSpace.desktop;
+        const minHeight = isMobile ? mobileConfig.canvas.height.min.mobile : mobileConfig.canvas.height.min.desktop;
+        const maxHeight = isMobile ? mobileConfig.canvas.height.max.mobile : mobileConfig.canvas.height.max.desktop;
+        const height = Math.min(
+          maxHeight, 
+          Math.max(minHeight, window.innerHeight - headerHeight - extraSpace)
+        ); 
         setCanvasSize({ width, height });
         
         if (rendererRef.current && viewportRef.current) {
@@ -373,19 +389,20 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
   return (
     <AlgorithmLayoutContext.Provider value={contextValue}>
       <div className="min-h-screen text-white bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
-        <div className="max-w-[1920px] mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <Link href="/algorithms" className="inline-flex items-center text-neutral-400 hover:text-white transition-colors group">
+        <div className="max-w-[1920px] mx-auto px-2 sm:px-4 py-2 sm:py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-4">
+            <Link href="/algorithms" className="inline-flex items-center text-neutral-400 hover:text-white transition-colors group text-xs sm:text-sm">
               <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="text-sm">Назад к списку алгоритмов</span>
+              <span className="hidden sm:inline">Назад к списку алгоритмов</span>
+              <span className="sm:hidden">Назад</span>
             </Link>
             
-            <h2 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent text-center sm:text-left w-full sm:w-auto">
               {algorithmTitle}
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_380px] gap-3 sm:gap-4">
             <div className="space-y-4">
             {loadedSessionInfo && (
               <div className="bg-blue-500/10 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30">
@@ -411,13 +428,24 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
             )}
             
             <div ref={canvasContainerRef} className="bg-neutral-800/50 backdrop-blur-sm rounded-xl border border-neutral-700/50 overflow-hidden">
-              <div className="px-4 py-3 flex items-center justify-between border-b border-neutral-700/50">
-                <h3 className="text-base font-semibold text-neutral-200">Граф</h3>
-                <div className="flex gap-2">
+              <div className="px-2 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 border-b border-neutral-700/50">
+                <div className="flex-1">
+                  <h3 className="text-sm sm:text-base font-semibold text-neutral-200">Граф</h3>
+                  {graphDescription && (
+                    <div className="mt-1 text-xs sm:text-sm text-neutral-400">
+                      {typeof graphDescription === 'string' ? (
+                        <p>{graphDescription}</p>
+                      ) : (
+                        graphDescription
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <button
                     onClick={handleRunAlgorithm}
                     disabled={!hasGraph || isRunning || playing || hasRunAlgorithm}
-                    className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-500 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:shadow-none"
+                    className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-500 text-white font-medium py-2 px-3 sm:px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:shadow-none text-sm sm:text-base w-full sm:w-auto"
                     title={hasRunAlgorithm ? 'Алгоритм уже выполнен для этого графа' : 'Запустить алгоритм'}
                   >
                     {hasRunAlgorithm ? 'Алгоритм выполнен' : 'Запустить алгоритм'}
@@ -425,14 +453,15 @@ export function AlgorithmLayout({ algorithmName, algorithmTitle, children }: Alg
                   <button
                     onClick={handleReset}
                     disabled={!hasGraph}
-                    className="bg-neutral-700 hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-2 px-4 rounded-lg transition-all flex items-center gap-2"
+                    className="bg-neutral-700 hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-2 px-3 sm:px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
                   >
                     <RotateCcw size={16} />
-                    Сброс
+                    <span className="hidden sm:inline">Сброс</span>
+                    <span className="sm:hidden">Сброс</span>
                   </button>
                 </div>
               </div>
-              <div className="p-2 flex justify-center">
+              <div className="p-1 sm:p-2 flex justify-center overflow-x-auto">
                 <GraphCanvas
                   model={graphModel}
                   onRendererReady={handleRendererReady}

@@ -16,3 +16,4 @@ if [[ ! "$commit_message" =~ $regex_pattern ]]; then
 fi
 
 exit 0
+
