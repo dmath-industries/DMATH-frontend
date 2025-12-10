@@ -32,7 +32,7 @@ const config: Config = {
       displayName: 'jsdom',
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-      testMatch: ['<rootDir>/src/**/*.browser.test.ts?(x)', '<rootDir>/src/**/__tests__/**/*.test.ts'],
+      testMatch: ['<rootDir>/src/**/*.browser.test.ts?(x)'],
       collectCoverageFrom,
       transform: { '^.+\\.tsx?$': tsTransformReact },
       moduleNameMapper: {
