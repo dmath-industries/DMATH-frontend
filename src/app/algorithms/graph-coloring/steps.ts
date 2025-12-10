@@ -78,4 +78,27 @@ export class GraphColoringStepGenerator {
 
     return this.steps;
   }
+
+  private buildAdjacencyMatrix(nodes: string[]): void {
+    const n = nodes.length;
+    this.adjacencyMatrix = Array(n)
+      .fill(null)
+      .map(() => Array(n).fill(0));
+
+    for (let i = 0; i < n; i++) {
+      const nodeI = nodes[i];
+      for (let j = i + 1; j < n; j++) {
+        const nodeJ = nodes[j];
+        if (this.graph.hasEdge(nodeI, nodeJ)) {
+          this.adjacencyMatrix[i]![j] = 1;
+          this.adjacencyMatrix[j]![i] = 1;
+        }
+      }
+    }
+
+    // Устанавливаем -1 на диагонали
+    for (let i = 0; i < n; i++) {
+      this.adjacencyMatrix[i]![i] = -1;
+    }
+  }
 }
