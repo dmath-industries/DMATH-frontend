@@ -81,7 +81,7 @@ export class GraphColoringStepGenerator {
     this.buildAdjacencyMatrix(nodes);
 
     // Эвристический алгоритм раскраски
-    this.heuristicColoring(nodes);
+    this.heuristicColoring();
 
     return this.steps;
   }
@@ -196,7 +196,7 @@ export class GraphColoringStepGenerator {
   /**
    * Эвристический алгоритм раскраски графа
    */
-  private heuristicColoring(nodes: string[]): void {
+  private heuristicColoring(): void {
     let colorNum = 1;
 
     // Пока есть нераскрашенные вершины
