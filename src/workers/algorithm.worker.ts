@@ -98,12 +98,12 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
         break;
       }
 
-      case 'hungarian':
-        steps = [];
-        break;
-
       case 'bellman-ford': {
         const generator = new BellmanFordStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
+
       case 'prim': {
         const generator = new PrimStepGenerator();
         steps = generator.generateSteps(graphDTO, params);
