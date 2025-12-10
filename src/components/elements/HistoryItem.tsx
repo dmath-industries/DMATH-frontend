@@ -1,5 +1,6 @@
-import { IHistory } from '@/types';
+import { Card, CardContent, Typography, Box, Button, IconButton } from '@mui/material';
 import { Trash2, ExternalLink } from 'lucide-react';
+import type { IHistory } from '@/types';
 
 interface HistoryItemProps extends IHistory {
   onOpen?: () => void;
@@ -8,82 +9,128 @@ interface HistoryItemProps extends IHistory {
 
 const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
   return (
-    <div
-      className="
-        bg-[#B5B5B5] text-black 
-        w-full px-3 sm:px-4 md:px-5 py-3 sm:py-4 md:py-5 
-        rounded-xl 
-        flex flex-col sm:flex-row 
-        justify-between items-start sm:items-center
-        gap-3 sm:gap-4
-        transition-all duration-200
-        hover:bg-[#C5C5C5] hover:shadow-md
-      "
+    <Card
+      sx={{
+        bgcolor: '#B5B5B5',
+        color: 'text.primary',
+        '&:hover': {
+          bgcolor: '#C5C5C5',
+          boxShadow: 2,
+        },
+        transition: 'all 0.2s ease',
+      }}
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 flex-1 w-full">
-        <h1
-          className="
-            text-base sm:text-lg md:text-xl lg:text-2xl 
-            font-medium
-            text-center sm:text-left
-            break-words
-          "
+      <CardContent
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 2, sm: 3 },
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 1, sm: 2 },
+            flex: 1,
+            width: '100%',
+          }}
         >
-          {title}
-        </h1>
+          <Typography
+            variant="h6"
+            component="h1"
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem', lg: '1.5rem' },
+              fontWeight: 500,
+              textAlign: { xs: 'center', sm: 'left' },
+              wordBreak: 'break-word',
+              color: 'text.primary',
+            }}
+          >
+            {title}
+          </Typography>
 
-        <p
-          className="
-            text-sm sm:text-base md:text-lg lg:text-xl
-            text-gray-700
-            whitespace-nowrap
-            text-center sm:text-right
-          "
+          <Typography
+            variant="body2"
+            sx={{
+              fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem', lg: '1.25rem' },
+              color: 'text.secondary',
+              whiteSpace: 'nowrap',
+              textAlign: { xs: 'center', sm: 'right' },
+            }}
+          >
+            {date}
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { xs: 'center', sm: 'flex-end' },
+          }}
         >
-          {date}
-        </p>
-      </div>
-
-      <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end">
-        {onOpen && (
-          <button
-            onClick={onOpen}
-            className="
-              flex items-center gap-2
-              px-3 sm:px-4 py-2
-              bg-blue-500 hover:bg-blue-600
-              text-white
-              rounded-lg
-              transition-colors
-              text-sm sm:text-base
-            "
-            title="Открыть"
-          >
-            <ExternalLink className="w-4 h-4" />
-            <span className="hidden sm:inline">Открыть</span>
-          </button>
-        )}
-        
-        {onDelete && (
-          <button
-            onClick={onDelete}
-            className="
-              flex items-center gap-2
-              px-3 sm:px-4 py-2
-              bg-red-500 hover:bg-red-600
-              text-white
-              rounded-lg
-              transition-colors
-              text-sm sm:text-base
-            "
-            title="Удалить"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Удалить</span>
-          </button>
-        )}
-      </div>
-    </div>
+          {onOpen && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={onOpen}
+              startIcon={<ExternalLink size={16} />}
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+              }}
+            >
+              Открыть
+            </Button>
+          )}
+          {onOpen && (
+            <IconButton
+              color="primary"
+              onClick={onOpen}
+              sx={{
+                display: { xs: 'flex', sm: 'none' },
+              }}
+              title="Открыть"
+            >
+              <ExternalLink size={16} />
+            </IconButton>
+          )}
+          
+          {onDelete && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={onDelete}
+              startIcon={<Trash2 size={16} />}
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+              }}
+            >
+              Удалить
+            </Button>
+          )}
+          {onDelete && (
+            <IconButton
+              color="error"
+              onClick={onDelete}
+              sx={{
+                display: { xs: 'flex', sm: 'none' },
+              }}
+              title="Удалить"
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
