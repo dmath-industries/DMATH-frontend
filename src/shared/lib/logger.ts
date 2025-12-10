@@ -1,65 +1,103 @@
-import HawkCatcher from '@hawk.so/javascript';
+import * as Sentry from '@sentry/nextjs';
 
 interface LogContext {
   [key: string]: unknown;
 }
 
+const getSentryLogger = () => {
+  try {
+    const { logger } = Sentry;
+    return logger;
+  } catch {
+    return null;
+  }
+};
+
 class Logger {
   private enabled = process.env.NODE_ENV !== 'test';
-  private hawk: HawkCatcher | null = null;
+  private sentryLogger = getSentryLogger();
 
-  constructor() {
-    if (typeof window !== 'undefined') {
-      const windowWithHawk = window as typeof window & { hawk?: HawkCatcher };
-      if (windowWithHawk.hawk) {
-        this.hawk = windowWithHawk.hawk;
-      }
+  trace(message: string, context?: LogContext): void {
+    if (!this.enabled) return;
+    if (this.sentryLogger) {
+      this.sentryLogger.trace(message, context);
+    } else {
+      console.trace(`[TRACE] ${message}`, context);
     }
   }
 
   debug(message: string, context?: LogContext): void {
     if (!this.enabled) return;
-    console.debug(`[DEBUG] ${message}`, context);
+    if (this.sentryLogger) {
+      if (this.sentryLogger.fmt) {
+        this.sentryLogger.debug(this.sentryLogger.fmt`${message}`, context);
+      } else {
+        this.sentryLogger.debug(message, context);
+      }
+    } else {
+      console.debug(`[DEBUG] ${message}`, context);
+    }
   }
 
   info(message: string, context?: LogContext): void {
     if (!this.enabled) return;
-    console.info(`[INFO] ${message}`, context);
+    if (this.sentryLogger) {
+      this.sentryLogger.info(message, context);
+    } else {
+      console.info(`[INFO] ${message}`, context);
+    }
   }
 
   warn(message: string, context?: LogContext): void {
     if (!this.enabled) return;
-    console.warn(`[WARN] ${message}`, context);
-    
-    if (this.hawk) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.hawk.send(message, context as any);
-      } catch (err) {
-        console.warn('Failed to send warning to Hawk:', err);
-      }
+    if (this.sentryLogger) {
+      this.sentryLogger.warn(message, context);
+    } else {
+      console.warn(`[WARN] ${message}`, context);
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        extra: context,
+      });
     }
   }
 
   error(message: string, error?: Error, context?: LogContext): void {
     if (!this.enabled) return;
-    console.error(`[ERROR] ${message}`, error, context);
-    
-    if (this.hawk) {
-      try {
-        if (error) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          this.hawk.send(error, { message, ...context } as any);
-        } else {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          this.hawk.send(message, context as any);
-        }
-      } catch (err) {
-        console.warn('Failed to send error to Hawk:', err);
+
+    if (error) {
+      Sentry.captureException(error, {
+        extra: { message, ...context },
+      });
+    }
+
+    if (this.sentryLogger) {
+      this.sentryLogger.error(message, {
+        ...(error && { error: error.message, stack: error.stack }),
+        ...context,
+      });
+    } else {
+      console.error(`[ERROR] ${message}`, error, context);
+      if (!error) {
+        Sentry.captureMessage(message, {
+          level: 'error',
+          extra: context,
+        });
       }
+    }
+  }
+
+  fatal(message: string, context?: LogContext): void {
+    if (!this.enabled) return;
+    if (this.sentryLogger) {
+      this.sentryLogger.fatal(message, context);
+    } else {
+      console.error(`[FATAL] ${message}`, context);
+      Sentry.captureMessage(message, {
+        level: 'fatal',
+        extra: context,
+      });
     }
   }
 }
 
 export const logger = new Logger();
-

@@ -3,4 +3,7 @@
  * Экспорт всех алгоритмов для работы с графами
  */
 
-export { RobertsFloresStepGenerator } from './roberts-flores/steps'; 
+export { RobertsFloresStepGenerator } from './roberts-flores/steps';
+export { PrimStepGenerator } from './prim/steps';
+export { HungarianStepGenerator } from './hungarian/steps';
+export { BronKerboschStepGenerator } from './bron-kerbosch/steps';

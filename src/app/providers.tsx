@@ -1,7 +1,6 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -38,12 +37,6 @@ const darkTheme = createTheme({
 });
 
 export function Providers({ children }: ProvidersProps) {
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      import('../../hawk.client.config');
-    }
-  }, []);
-
   return (
     <Provider store={store}>
       <ThemeProvider theme={darkTheme}>

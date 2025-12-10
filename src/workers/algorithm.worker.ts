@@ -17,6 +17,9 @@ import type {
 
 import { RobertsFloresStepGenerator } from '@/algorithms/roberts-flores/steps';
 import { BellmanFordStepGenerator } from '@/algorithms/bellman-ford/steps';
+import { PrimStepGenerator } from '@/algorithms/prim/steps';
+import { HungarianStepGenerator } from '@/algorithms/hungarian/steps';
+import { BronKerboschStepGenerator } from '@/algorithms/bron-kerbosch/steps';
 
 interface ExecutionState {
   requestId: string;
@@ -101,6 +104,20 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
 
       case 'bellman-ford': {
         const generator = new BellmanFordStepGenerator();
+      case 'prim': {
+        const generator = new PrimStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
+
+      case 'hungarian': {
+        const generator = new HungarianStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
+
+      case 'bron-kerbosch': {
+        const generator = new BronKerboschStepGenerator();
         steps = generator.generateSteps(graphDTO, params);
         break;
       }
@@ -156,7 +173,7 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
 
 /**
  * Отправка шагов батчами с поддержкой backpressure
- * 
+ *
  * @param steps - Массив шагов алгоритма
  * @param chunkSize - Размер одного чанка
  * @param requestId - ID запроса для отслеживания
@@ -184,7 +201,7 @@ async function sendStepsInChunks(
       if (signal.aborted || currentExecution.cancelled) {
         return;
       }
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     const message: StepChunkMessage = {
@@ -223,7 +240,10 @@ async function sendStepsInChunks(
  * Обработчик отмены выполнения алгоритма
  */
 function handleCancel(message: CancelMessage): void {
-  if (currentExecution && (!message.requestId || currentExecution.requestId === message.requestId)) {
+  if (
+    currentExecution &&
+    (!message.requestId || currentExecution.requestId === message.requestId)
+  ) {
     currentExecution.cancelled = true;
     currentExecution.abortController.abort();
     currentExecution = null;
@@ -241,4 +261,3 @@ function handleChunkAck(message: ChunkAckMessage): void {
     currentExecution.pendingChunks--;
   }
 }
-
