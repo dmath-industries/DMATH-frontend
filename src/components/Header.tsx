@@ -4,11 +4,14 @@ import { Menu, ChevronLeft, Sun, Moon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { IconButton, Tooltip } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/shared/store';
+import { setTheme } from '@/shared/store/ui.slice';
 import { cn } from '@/shared/lib/utils';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('dark');
+  const dispatch = useAppDispatch();
+  const themeMode = useAppSelector((state) => state.ui.theme);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => {
@@ -36,28 +39,9 @@ const Header = () => {
     };
   }, [isMenuOpen]);
 
-  // Синхронизация темы
-  useEffect(() => {
-    const checkTheme = () => {
-      if (typeof window !== 'undefined' && (window as any).themeMode) {
-        setThemeMode((window as any).themeMode);
-      }
-    };
-    
-    checkTheme();
-    const interval = setInterval(checkTheme, 100);
-    return () => clearInterval(interval);
-  }, []);
-
   const toggleTheme = () => {
-    if (typeof window !== 'undefined' && (window as any).toggleTheme) {
-      (window as any).toggleTheme();
-      setTimeout(() => {
-        if ((window as any).themeMode) {
-          setThemeMode((window as any).themeMode);
-        }
-      }, 50);
-    }
+    const newTheme = themeMode === 'dark' ? 'light' : 'dark';
+    dispatch(setTheme(newTheme));
   };
 
   return (

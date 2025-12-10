@@ -17,13 +17,22 @@ interface UIState {
   sidebarOpen: boolean;
 }
 
+// Загружаем тему из localStorage при инициализации
+const getInitialTheme = (): 'light' | 'dark' => {
+  if (typeof window !== 'undefined') {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    return savedTheme || 'dark';
+  }
+  return 'dark';
+};
+
 const initialState: UIState = {
   viewport: {
     x: 0,
     y: 0,
     zoom: 1,
   },
-  theme: 'light',
+  theme: getInitialTheme(),
   selectedAlgorithm: 'roberts-flores',
   sidebarOpen: true,
 };
