@@ -16,7 +16,7 @@ export const mobileConfig = {
    */
   canvas: {
     /**
-     * Отступы контейнера 
+     * Отступы контейнера
      */
     padding: {
       mobile: 8,
@@ -24,7 +24,7 @@ export const mobileConfig = {
     },
 
     /**
-     * Ограничения по ширине 
+     * Ограничения по ширине
      */
     width: {
       min: {
@@ -77,3 +77,52 @@ export const mobileConfig = {
   },
 } as const;
 
+/**
+ * Конфигурация для визуализации графов
+ */
+export const graphConfig = {
+  /**
+   * Радиус расположения узлов по кругу
+   */
+  nodeRadius: 180,
+
+  /**
+   * Центр графа
+   */
+  center: {
+    x: 0,
+    y: 0,
+  },
+
+  /**
+   * Радиус узла
+   */
+  nodeSize: {
+    radius: 25,
+  },
+
+  /**
+   * Цвета узлов
+   */
+  nodeColors: {
+    default: '#3b82f6', // blue-500
+    target: '#8b5cf6', // purple-500
+  },
+
+  /**
+   * Цвета рёбер
+   */
+  edgeColors: {
+    default: '#60a5fa', // blue-400
+  },
+
+  /**
+   * Ширина ребра
+   */
+  edgeWidth: 2,
+
+  /**
+   * Диапазон углов для расположения узлов (в радианах)
+   */
+  angleRange: Math.PI * 0.8,
+} as const;
