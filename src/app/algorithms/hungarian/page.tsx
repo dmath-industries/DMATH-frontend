@@ -2,14 +2,26 @@
 
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
-import type { GraphDTO } from '@/types';
+import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
 
 function HungarianContent() {
   const { loadGraph } = useAlgorithmLayout();
 
   const handleMatrixSubmit = (matrixText: string) => {
-    // TODO: implement matrix parsing
-    console.log('Matrix submitted:', matrixText);
+    try {
+      const rows = matrixText.split('\n');
+      const matrix = rows.map(row => row.split(',').map(cell => parseInt(cell.trim(), 10)));
+
+      const nodes: NodeDTO[] = [];
+      const edges: EdgeDTO[] = [];
+
+      // TODO: create nodes and edges from matrix
+
+      const graphDTO: GraphDTO = { nodes, edges };
+      loadGraph(graphDTO);
+    } catch (error) {
+      console.error('Error parsing matrix:', error);
+    }
   };
 
   return (
