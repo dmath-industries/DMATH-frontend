@@ -106,8 +106,47 @@ function BellmanFordContent() {
         </h3>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
-          placeholder="Введите квадратную матрицу весов построчно. Используйте запятую как разделитель."
+          placeholder="Введите квадратную матрицу весов построчно. Используйте запятую как разделитель. Числа представляют веса рёбер. Используйте 'inf' или '∞' для отсутствующих рёбер."
         />
+      </div>
+
+      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
+        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">
+          О алгоритме
+        </h3>
+        <div className="text-xs sm:text-sm text-neutral-300 space-y-2 leading-relaxed">
+          <p>
+            <strong className="text-white">Алгоритм Форда-Беллмана</strong> — это алгоритм поиска
+            кратчайших путей от одной вершины до всех остальных в ориентированном взвешенном графе.
+            В отличие от алгоритма Дейкстры, он может работать с рёбрами отрицательного веса и
+            обнаруживать отрицательные циклы.
+          </p>
+          <p>
+            Алгоритм выполняет V-1 итераций релаксации всех рёбер, где V — количество вершин. После
+            этого выполняется дополнительная проверка на наличие отрицательных циклов.
+          </p>
+          <p>Временная сложность: O(V × E), где V — количество вершин, E — количество рёбер.</p>
+          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <p className="text-blue-300 text-xs font-medium">
+              💡 Совет: Используйте матрицу весов, где элемент [i][j] — вес ребра от вершины i к
+              вершине j. Используйте 0 для отсутствия ребра или 'inf' для бесконечности.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-500/30">
+        <h3 className="text-sm sm:text-base font-semibold text-blue-200 mb-2 sm:mb-3">
+          Как использовать
+        </h3>
+        <ol className="text-xs sm:text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
+          <li>
+            Введите квадратную матрицу весов (числа — веса рёбер, 0 или 'inf' — отсутствие ребра)
+          </li>
+          <li>Нажмите "Отправить" чтобы построить граф</li>
+          <li>Нажмите "Запустить" чтобы выполнить алгоритм (начнётся с первой вершины)</li>
+          <li>Просмотрите результаты: кратчайшие расстояния и пути от стартовой вершины</li>
+        </ol>
       </div>
     </>
   );
