@@ -20,6 +20,7 @@ import { PrimStepGenerator } from '@/algorithms/prim/steps';
 import { HungarianStepGenerator } from '@/algorithms/hungarian/steps';
 import { BronKerboschStepGenerator } from '@/algorithms/bron-kerbosch/steps';
 import { GraphColoringStepGenerator } from '@/algorithms/graph-coloring/steps';
+import { BellmanFordStepGenerator } from '@/algorithms/bellman-ford/steps';
 
 interface ExecutionState {
   requestId: string;
@@ -118,6 +119,12 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
 
       case 'graph-coloring': {
         const generator = new GraphColoringStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
+
+      case 'bellman-ford': {
+        const generator = new BellmanFordStepGenerator();
         steps = generator.generateSteps(graphDTO, params);
         break;
       }
