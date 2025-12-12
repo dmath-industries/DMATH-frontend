@@ -39,20 +39,39 @@ function HungarianContent() {
       const nodes: NodeDTO[] = [];
       const edges: EdgeDTO[] = [];
 
-      const radius = 150;
+      const radius = 180;
       const centerX = 0;
       const centerY = 0;
 
-      // Create nodes - BUG: all nodes in one circle, not bipartite
+      const nodeColor = '#3b82f6';
+      const edgeColor = '#60a5fa';
+
       for (let i = 0; i < nodeCount; i++) {
-        const angle = (2 * Math.PI * i) / nodeCount;
+        const angleRange = Math.PI * 0.8;
+        const startAngle = -angleRange / 2;
+        const angle = startAngle + (i / Math.max(1, nodeCount - 1)) * angleRange;
         nodes.push({
-          id: `node_${i}`,
+          id: `source_${i}`,
+          x: centerX - radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle),
+          label: `S${i + 1}`,
+          radius: 25,
+          color: nodeColor,
+          state: 'default',
+        });
+      }
+
+      for (let i = 0; i < nodeCount; i++) {
+        const angleRange = Math.PI * 0.8;
+        const startAngle = -angleRange / 2;
+        const angle = startAngle + (i / Math.max(1, nodeCount - 1)) * angleRange;
+        nodes.push({
+          id: `target_${i}`,
           x: centerX + radius * Math.cos(angle),
           y: centerY + radius * Math.sin(angle),
-          label: `N${i + 1}`,
+          label: `T${i + 1}`,
           radius: 25,
-          color: '#3b82f6',
+          color: '#8b5cf6',
           state: 'default',
         });
       }
