@@ -136,7 +136,105 @@ export class BellmanFordStepGenerator {
       }
     }
 
+    this.addDescriptionStep('Проверка на наличие отрицательных циклов');
+    let hasNegativeCycle = false;
+    const negativeCycleEdges: string[] = [];
+
+    for (const edge of edges) {
+      const u = edge.source;
+      const v = edge.target;
+      const w = edge.weight;
+
+      const distU = this.distances.get(u) ?? Infinity;
+      const distV = this.distances.get(v) ?? Infinity;
+
+      this.addHighlightEdgeStep(
+        edge.edgeId,
+        'active',
+        `Проверка ребра ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} на отрицательный цикл`
+      );
+
+      if (distU !== Infinity && distU + w < distV) {
+        hasNegativeCycle = true;
+        negativeCycleEdges.push(edge.edgeId);
+        this.addHighlightEdgeStep(
+          edge.edgeId,
+          'rejected',
+          `Обнаружено: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} указывает на отрицательный цикл!`
+        );
+        this.addHighlightNodeStep(
+          u,
+          'rejected',
+          `Вершина ${this.getNodeLabel(u)} в отрицательном цикле`
+        );
+        this.addHighlightNodeStep(
+          v,
+          'rejected',
+          `Вершина ${this.getNodeLabel(v)} в отрицательном цикле`
+        );
+      } else {
+        this.addHighlightEdgeStep(edge.edgeId, 'default');
+      }
+    }
+
+    if (hasNegativeCycle) {
+      this.addDescriptionStep('⚠️ Обнаружен отрицательный цикл! Кратчайшие пути не определены.');
+    } else {
+      this.addDescriptionStep('✓ Отрицательных циклов не обнаружено. Кратчайшие пути найдены.');
+
+      for (const node of graphDTO.nodes) {
+        if (node.id === startNode) {
+          this.addHighlightNodeStep(
+            node.id,
+            'path',
+            `Стартовая вершина: ${this.getNodeLabel(startNode)}`
+          );
+        } else {
+          const dist = this.distances.get(node.id);
+          if (dist !== undefined && dist !== Infinity) {
+            const path = this.reconstructPath(startNode, node.id);
+            if (path.length > 1) {
+              this.addHighlightNodeStep(
+                node.id,
+                'path',
+                `Кратчайшее расстояние: ${dist}, путь: ${path.map(n => this.getNodeLabel(n)).join(' → ')}`
+              );
+            }
+          }
+        }
+      }
+
+      for (const node of graphDTO.nodes) {
+        const pred = this.predecessors.get(node.id);
+        if (pred !== null && pred !== undefined) {
+          const edge = edges.find(e => e.source === pred && e.target === node.id);
+          if (edge) {
+            this.addHighlightEdgeStep(
+              edge.edgeId,
+              'path',
+              `Ребро в кратчайшем пути: ${this.getNodeLabel(pred)} → ${this.getNodeLabel(node.id)}`
+            );
+          }
+        }
+      }
+    }
+
     return this.steps;
+  }
+
+  private reconstructPath(start: string, target: string): string[] {
+    const path: string[] = [];
+    let current: string | null = target;
+
+    while (current !== null && current !== undefined) {
+      path.unshift(current);
+      if (current === start) {
+        break;
+      }
+      current = this.predecessors.get(current) ?? null;
+    }
+
+    return path;
   }
 
   private buildEdgeList(graphDTO: GraphDTO): Edge[] {
