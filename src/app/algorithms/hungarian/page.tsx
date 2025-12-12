@@ -2,6 +2,7 @@
 
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
+import { graphConfig } from '@/shared/lib/config';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
 
 function HungarianContent() {
@@ -39,39 +40,33 @@ function HungarianContent() {
       const nodes: NodeDTO[] = [];
       const edges: EdgeDTO[] = [];
 
-      const radius = 180;
-      const centerX = 0;
-      const centerY = 0;
-
-      const nodeColor = '#3b82f6';
-      const edgeColor = '#60a5fa';
+      const { nodeRadius, center, nodeSize, nodeColors, edgeColors, edgeWidth, angleRange } =
+        graphConfig;
 
       for (let i = 0; i < nodeCount; i++) {
-        const angleRange = Math.PI * 0.8;
         const startAngle = -angleRange / 2;
         const angle = startAngle + (i / Math.max(1, nodeCount - 1)) * angleRange;
         nodes.push({
           id: `source_${i}`,
-          x: centerX - radius * Math.cos(angle),
-          y: centerY + radius * Math.sin(angle),
+          x: center.x - nodeRadius * Math.cos(angle),
+          y: center.y + nodeRadius * Math.sin(angle),
           label: `S${i + 1}`,
-          radius: 25,
-          color: nodeColor,
+          radius: nodeSize.radius,
+          color: nodeColors.default,
           state: 'default',
         });
       }
 
       for (let i = 0; i < nodeCount; i++) {
-        const angleRange = Math.PI * 0.8;
         const startAngle = -angleRange / 2;
         const angle = startAngle + (i / Math.max(1, nodeCount - 1)) * angleRange;
         nodes.push({
           id: `target_${i}`,
-          x: centerX + radius * Math.cos(angle),
-          y: centerY + radius * Math.sin(angle),
+          x: center.x + nodeRadius * Math.cos(angle),
+          y: center.y + nodeRadius * Math.sin(angle),
           label: `T${i + 1}`,
-          radius: 25,
-          color: '#8b5cf6',
+          radius: nodeSize.radius,
+          color: nodeColors.target,
           state: 'default',
         });
       }
@@ -106,8 +101,8 @@ function HungarianContent() {
                 target: targetId,
                 weight: weight,
                 directed: true,
-                color: edgeColor,
-                width: 2,
+                color: edgeColors.default,
+                width: edgeWidth,
                 state: 'default',
               });
             }
