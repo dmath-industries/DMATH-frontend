@@ -9,8 +9,32 @@ function HungarianContent() {
 
   const handleMatrixSubmit = (matrixText: string) => {
     try {
-      const rows = matrixText.split('\n');
-      const matrix = rows.map(row => row.split(',').map(cell => parseInt(cell.trim(), 10)));
+      if (!matrixText || !matrixText.trim()) {
+        alert('Матрица пуста!');
+        return;
+      }
+
+      const rows = matrixText.trim().split('\n');
+      const matrix = rows.map(row =>
+        row.split(',').map(cell => {
+          const trimmed = cell.trim();
+          return trimmed === '' ? 0 : parseInt(trimmed, 10);
+        })
+      );
+
+      const nodeCount = matrix.length;
+      if (nodeCount === 0) {
+        alert('Матрица пуста!');
+        return;
+      }
+
+      for (let i = 0; i < nodeCount; i++) {
+        const row = matrix[i];
+        if (!row || row.length !== nodeCount) {
+          alert('Матрица должна быть квадратной!');
+          return;
+        }
+      }
 
       const nodes: NodeDTO[] = [];
       const edges: EdgeDTO[] = [];
@@ -21,6 +45,7 @@ function HungarianContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
+      alert('Ошибка при парсинге матрицы. Проверьте формат!');
     }
   };
 
