@@ -36,7 +36,7 @@ export default function AlgorithmsPage() {
     {
       title: 'Алгоритм Форда-Беллмана',
       img: '',
-      href: '/algorithms/ford-bellman',
+      href: '/algorithms/bellman-ford',
     },
     {
       title: 'Венгерский алгоритм',
