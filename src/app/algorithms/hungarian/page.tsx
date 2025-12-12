@@ -39,7 +39,23 @@ function HungarianContent() {
       const nodes: NodeDTO[] = [];
       const edges: EdgeDTO[] = [];
 
-      // TODO: create nodes and edges from matrix
+      const radius = 150;
+      const centerX = 0;
+      const centerY = 0;
+
+      // Create nodes - BUG: all nodes in one circle, not bipartite
+      for (let i = 0; i < nodeCount; i++) {
+        const angle = (2 * Math.PI * i) / nodeCount;
+        nodes.push({
+          id: `node_${i}`,
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle),
+          label: `N${i + 1}`,
+          radius: 25,
+          color: '#3b82f6',
+          state: 'default',
+        });
+      }
 
       const graphDTO: GraphDTO = { nodes, edges };
       loadGraph(graphDTO);
