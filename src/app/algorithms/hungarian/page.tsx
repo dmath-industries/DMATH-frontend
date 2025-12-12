@@ -76,6 +76,28 @@ function HungarianContent() {
         });
       }
 
+      let edgeId = 0;
+
+      for (let i = 0; i < nodeCount; i++) {
+        const row = matrix[i];
+        if (!row) continue;
+        for (let j = 0; j < nodeCount; j++) {
+          const weight = row[j];
+          if (weight !== undefined && weight !== 0) {
+            edges.push({
+              id: `e${edgeId++}`,
+              source: `source_${i}`,
+              target: `target_${j}`,
+              weight: weight,
+              directed: true,
+              color: edgeColor,
+              width: 2,
+              state: 'default',
+            });
+          }
+        }
+      }
+
       const graphDTO: GraphDTO = { nodes, edges };
       loadGraph(graphDTO);
     } catch (error) {
