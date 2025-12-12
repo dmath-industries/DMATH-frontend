@@ -280,12 +280,12 @@ describe('Renderer', () => {
     it('should draw all nodes and edges', () => {
       model.addNode({ id: 'node1', x: 100, y: 100 });
       model.addNode({ id: 'node2', x: 200, y: 200 });
-      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2' });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2', weight: 5 });
 
       renderer.drawAll(model);
 
       expect(mockGraphics).toHaveBeenCalledTimes(3);
-      expect(mockText).toHaveBeenCalledTimes(2);
+      expect(mockText).toHaveBeenCalledTimes(3); // 2 node labels + 1 edge weight
     });
 
     it('should draw edges before nodes', () => {
