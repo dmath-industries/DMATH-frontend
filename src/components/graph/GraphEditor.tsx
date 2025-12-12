@@ -2,23 +2,19 @@
 
 import { useState } from 'react';
 import { Plus, Minus, Network } from 'lucide-react';
+import '@/styles/global.css';
 
 interface GraphEditorProps {
-  onAddNode: (id: string, x: number, y: number) => void;
+  onAddNode: (id: string, x?: number, y?: number) => void;
   onAddEdge: (source: string, target: string, weight?: number) => void;
   onClear: () => void;
-  onLoadSample: () => void;
+  onLoadSample?: () => void;
 }
 
 /**
  * Компонент панели редактирования графа
  */
-export function GraphEditor({
-  onAddNode,
-  onAddEdge,
-  onClear,
-  onLoadSample,
-}: GraphEditorProps) {
+export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: GraphEditorProps) {
   const [showNodeDialog, setShowNodeDialog] = useState(false);
   const [showEdgeDialog, setShowEdgeDialog] = useState(false);
   const [nodeId, setNodeId] = useState('');
@@ -28,9 +24,8 @@ export function GraphEditor({
 
   const handleAddNode = () => {
     if (nodeId.trim()) {
-      const x = Math.random() * 400 - 200;
-      const y = Math.random() * 300 - 150;
-      onAddNode(nodeId.trim(), x, y);
+      // Передаём undefined, чтобы позиция определялась в GraphContainer (центр viewport)
+      onAddNode(nodeId.trim());
       setNodeId('');
       setShowNodeDialog(false);
     }
@@ -48,54 +43,64 @@ export function GraphEditor({
   };
 
   return (
-    <div className="bg-neutral-800/50 backdrop-blur-sm rounded-2xl p-6 border border-neutral-700/50 shadow-2xl space-y-4">
-      <h3 className="text-lg font-semibold text-neutral-200">Редактор графа</h3>
-
-      <div className="space-y-2">
+    <div className="p-3">
+      <div className="flex items-center justify-center gap-2 flex-wrap max-w-[400px] mx-auto">
         <button
           onClick={() => setShowNodeDialog(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+          className="flex justify-center custom-btn btn-3 text-black transition"
+          title="Добавить вершину"
         >
-          <Plus className="w-4 h-4" />
-          Добавить вершину
+          <span>
+            <Plus className="w-3.5 h-3.5" />
+            Вершина
+          </span>
         </button>
 
         <button
           onClick={() => setShowEdgeDialog(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+          className="flex justify-center custom-btn btn-3 text-black transition"
+          title="Добавить ребро"
         >
-          <Network className="w-4 h-4" />
-          Добавить ребро
+          <span className="hidden sm:inline">
+            <Network className="w-3.5 h-3.5" />
+            Ребро
+          </span>
         </button>
 
-        <button
-          onClick={onLoadSample}
-          className="w-full px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
-        >
-          Загрузить пример
-        </button>
+        {onLoadSample && (
+          <button
+            onClick={onLoadSample}
+            className="flex justify-center custom-btn btn-3 text-black transition"
+            title="Загрузить пример"
+          >
+            <span>Пример</span>
+          </button>
+        )}
 
         <button
           onClick={onClear}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+          className="flex justify-center custom-btn btn-5 text-black transition"
+          title="Очистить граф"
         >
-          <Minus className="w-4 h-4" />
-          Очистить граф
+          <span>
+            <Minus className="w-3.5 h-3.5" />
+            Очистить
+          </span>
         </button>
       </div>
 
       {showNodeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999]">
           <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-96 shadow-2xl">
             <h4 className="text-lg font-semibold mb-4 text-neutral-200">Добавить вершину</h4>
             <input
               type="text"
               value={nodeId}
-              onChange={(e) => setNodeId(e.target.value)}
+              onChange={e => setNodeId(e.target.value)}
               placeholder="ID вершины (0, 1, 2, ...)"
               className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleAddNode()}
+              onKeyDown={e => e.key === 'Enter' && handleAddNode()}
             />
             <div className="flex gap-2">
               <button
@@ -116,14 +121,14 @@ export function GraphEditor({
       )}
 
       {showEdgeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999]">
           <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-96 shadow-2xl">
             <h4 className="text-lg font-semibold mb-4 text-neutral-200">Добавить ребро</h4>
             <div className="space-y-3">
               <input
                 type="text"
                 value={edgeSource}
-                onChange={(e) => setEdgeSource(e.target.value)}
+                onChange={e => setEdgeSource(e.target.value)}
                 placeholder="Из вершины"
                 className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 autoFocus
@@ -131,14 +136,14 @@ export function GraphEditor({
               <input
                 type="text"
                 value={edgeTarget}
-                onChange={(e) => setEdgeTarget(e.target.value)}
+                onChange={e => setEdgeTarget(e.target.value)}
                 placeholder="В вершину"
                 className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               />
               <input
                 type="number"
                 value={edgeWeight}
-                onChange={(e) => setEdgeWeight(e.target.value)}
+                onChange={e => setEdgeWeight(e.target.value)}
                 placeholder="Вес (опционально)"
                 className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               />
@@ -163,4 +168,3 @@ export function GraphEditor({
     </div>
   );
 }
-

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Renderer, ViewportAdapter } from '@/services';
 import { GraphModel } from '@/services';
+import { Maximize2 } from 'lucide-react';
 
 interface GraphCanvasProps {
   model: GraphModel;
@@ -14,8 +15,8 @@ interface GraphCanvasProps {
 /**
  * Компонент для отрисовки графа на canvas с использованием Pixi.js
  */
-export function GraphCanvas({ 
-  model, 
+export function GraphCanvas({
+  model,
   onRendererReady,
   width = 1200,
   height = 800,
@@ -25,7 +26,7 @@ export function GraphCanvas({
   const viewportRef = useRef<ViewportAdapter | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const initRef = useRef(false); 
+  const initRef = useRef(false);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -43,46 +44,45 @@ export function GraphCanvas({
         await renderer.init(canvasRef.current, {
           width,
           height,
-          backgroundColor: 0x1f2937, 
+          backgroundColor: 0x1f2937,
         });
 
         console.log('✅ Renderer initialized');
 
         const viewport = new ViewportAdapter();
         const app = renderer.getApp();
-        
+
         if (!app) {
           throw new Error('Failed to get Pixi.js application');
         }
 
         const containers = renderer.getContainers();
-        viewport.create(app, {
-          screenWidth: width,
-          screenHeight: height,
-        }, containers);
+        viewport.create(
+          app,
+          {
+            screenWidth: width,
+            screenHeight: height,
+          },
+          containers
+        );
 
         console.log('✅ Viewport initialized');
 
         rendererRef.current = renderer;
         viewportRef.current = viewport;
 
+        // Устанавливаем viewport adapter в renderer для управления перетаскиванием
+        renderer.setViewportAdapter(viewport);
+
         if (model.nodeCount > 0) {
           console.log('📊 Drawing initial graph with', model.nodeCount, 'nodes');
           renderer.drawAll(model);
-          
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              console.log('🎯 Fitting viewport to graph');
-              viewport.fitToGraph(model);
-            });
-          });
         }
 
         onRendererReady?.(renderer, viewport);
 
         setIsReady(true);
         console.log('✅ GraphCanvas ready');
-        
       } catch (err) {
         console.error('❌ Failed to initialize renderer:', err);
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
@@ -101,30 +101,35 @@ export function GraphCanvas({
       viewportRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); 
+  }, []);
 
   useEffect(() => {
     if (!isReady || !rendererRef.current || !viewportRef.current) return;
-    
+
     console.log('📐 Canvas size changed:', { width, height });
-    
+
     rendererRef.current.resize(width, height);
     viewportRef.current.resize(width, height);
-    
+
     if (model.nodeCount > 0) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          console.log('🎯 Re-fitting viewport to graph after resize');
-          viewportRef.current?.fitToGraph(model);
-        });
-      });
+      // Граф уже отрисован, автоцентрирование отключено
     }
   }, [width, height, isReady, model, onRendererReady]);
 
+  /**
+   * Обработчик кнопки "Найти граф" (центрирование)
+   */
+  const handleFitToGraph = () => {
+    if (!viewportRef.current || model.nodeCount === 0) {
+      return;
+    }
+    viewportRef.current.fitToGraph(model);
+  };
+
   if (error) {
     return (
-      <div 
-        className="relative bg-red-500/10 border border-red-500/30 rounded-lg overflow-hidden shadow-inner p-8 flex items-center justify-center" 
+      <div
+        className="relative bg-red-500/10 border border-red-500/30 rounded-lg overflow-hidden shadow-inner p-8 flex items-center justify-center"
         style={{ width, height }}
       >
         <div className="text-red-400 text-center space-y-3">
@@ -142,12 +147,12 @@ export function GraphCanvas({
   }
 
   return (
-    <div 
-      className="relative rounded-lg overflow-hidden" 
-      style={{ 
-        width: `${width}px`, 
+    <div
+      className="relative rounded-lg overflow-hidden"
+      style={{
+        width: `${width}px`,
         height: `${height}px`,
-        backgroundColor: '#1f2937' 
+        backgroundColor: '#1f2937',
       }}
     >
       {!isReady && (
@@ -164,6 +169,16 @@ export function GraphCanvas({
         className="block w-full h-full"
         style={{ width: `${width}px`, height: `${height}px` }}
       />
+
+      {isReady && model.nodeCount > 0 && (
+        <button
+          onClick={handleFitToGraph}
+          className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10"
+          title="Найти граф (центрировать)"
+        >
+          <Maximize2 className="w-5 h-5 text-neutral-200" />
+        </button>
+      )}
     </div>
   );
 }

@@ -48,6 +48,11 @@ jest.mock('pixi.js', () => {
       position: mockPositionObj,
       zIndex: 0,
       destroy: jest.fn(),
+      on: jest.fn(),
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+      eventMode: 'none',
+      cursor: 'default',
     };
     graphicsInstances.push(instance);
     return instance;
@@ -68,6 +73,9 @@ jest.mock('pixi.js', () => {
     sortableChildren: false,
     addChild: mockAddChildFn,
     removeChild: mockRemoveChildFn,
+    on: jest.fn(),
+    off: jest.fn(),
+    removeAllListeners: jest.fn(),
   }));
 
   const mockApplicationFn = jest.fn(() => ({
@@ -76,6 +84,11 @@ jest.mock('pixi.js', () => {
       resize: mockResizeFn,
     },
     destroy: mockDestroyFn,
+    stage: {
+      on: jest.fn(),
+      off: jest.fn(),
+      removeAllListeners: jest.fn(),
+    },
   }));
 
   (global as any).__PIXI_MOCKS__ = {
@@ -535,9 +548,7 @@ describe('Renderer', () => {
 
       renderer.drawAll(model);
 
-      expect(mockStroke).toHaveBeenCalledWith(
-        expect.objectContaining({ width: 5 })
-      );
+      expect(mockStroke).toHaveBeenCalledWith(expect.objectContaining({ width: 5 }));
     });
 
     it('should handle different edge states', () => {
@@ -606,8 +617,7 @@ describe('Renderer', () => {
     it('should handle edge without source node', () => {
       try {
         model.addEdge({ id: 'edge1', source: 'nonexistent', target: 'node2' });
-      } catch (e) {
-      }
+      } catch (e) {}
       const testModel = new GraphModel(false);
       testModel.addNode({ id: 'node2', x: 200, y: 200 });
       expect(() => renderer.drawAll(testModel)).not.toThrow();
@@ -616,8 +626,7 @@ describe('Renderer', () => {
     it('should handle edge without target node', () => {
       try {
         model.addEdge({ id: 'edge1', source: 'node1', target: 'nonexistent' });
-      } catch (e) {
-      }
+      } catch (e) {}
       const testModel = new GraphModel(false);
       testModel.addNode({ id: 'node1', x: 100, y: 100 });
       expect(() => renderer.drawAll(testModel)).not.toThrow();
@@ -931,6 +940,42 @@ describe('Renderer', () => {
       expect(oldLabel.destroy).toHaveBeenCalled();
     });
 
+    it('should call removeChild for old graphic when redrawing node', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+      const oldGraphic = createdGraphics[0];
+      expect(oldGraphic).toBeDefined();
+
+      jest.clearAllMocks();
+      const containers = renderer.getContainers();
+      const removeChildSpy = jest.spyOn(containers.nodes!, 'removeChild');
+
+      // Используем renderDirty вместо drawAll, чтобы старые графики остались
+      model.updateNode('node1', { x: 150, y: 150 });
+      renderer.renderDirty(new Set(['node1']), model);
+
+      expect(removeChildSpy).toHaveBeenCalledWith(oldGraphic);
+      expect(oldGraphic.destroy).toHaveBeenCalled();
+    });
+
+    it('should call removeChild for old label when redrawing node', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100, label: 'Node 1' });
+      renderer.drawAll(model);
+      const oldLabel = createdTexts[0];
+      expect(oldLabel).toBeDefined();
+
+      jest.clearAllMocks();
+      const containers = renderer.getContainers();
+      const removeChildSpy = jest.spyOn(containers.labels!, 'removeChild');
+
+      // Используем renderDirty вместо drawAll, чтобы старые метки остались
+      model.updateNode('node1', { x: 150, y: 150 });
+      renderer.renderDirty(new Set(['node1']), model);
+
+      expect(removeChildSpy).toHaveBeenCalledWith(oldLabel);
+      expect(oldLabel.destroy).toHaveBeenCalled();
+    });
+
     it('should handle drawing edge when oldGraphic exists', () => {
       model.addNode({ id: 'node1', x: 100, y: 100 });
       model.addNode({ id: 'node2', x: 200, y: 200 });
@@ -942,6 +987,425 @@ describe('Renderer', () => {
       model.updateEdge('edge1', { width: 5 });
       renderer.drawAll(model);
       expect(oldGraphic?.destroy).toHaveBeenCalled();
+    });
+  });
+
+  describe('setViewportAdapter', () => {
+    it('should set viewport adapter', () => {
+      const mockViewportAdapter = {
+        pauseDrag: jest.fn(),
+        resumeDrag: jest.fn(),
+      } as any;
+
+      renderer.setViewportAdapter(mockViewportAdapter);
+      // Проверяем, что метод не выбрасывает ошибку
+      expect(() => renderer.setViewportAdapter(mockViewportAdapter)).not.toThrow();
+    });
+
+    it('should allow setting null viewport adapter', () => {
+      expect(() => renderer.setViewportAdapter(null)).not.toThrow();
+    });
+  });
+
+  describe('node dragging', () => {
+    let mockViewportAdapter: any;
+    let stageOnHandlers: Map<string, jest.Mock>;
+
+    beforeEach(async () => {
+      await renderer.init(canvas, {
+        width: 800,
+        height: 600,
+        backgroundColor: 0x1f2937,
+      });
+
+      stageOnHandlers = new Map();
+      const app = renderer.getApp();
+      if (app && app.stage) {
+        (app.stage as any).on = jest.fn((event: string, handler: any) => {
+          stageOnHandlers.set(event, handler);
+        });
+      }
+
+      mockViewportAdapter = {
+        pauseDrag: jest.fn(),
+        resumeDrag: jest.fn(),
+      };
+
+      renderer.setViewportAdapter(mockViewportAdapter);
+    });
+
+    it('should setup node interactivity when drawing nodes', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      const nodeGraphic = createdGraphics[0];
+      expect(nodeGraphic).toBeDefined();
+      expect(nodeGraphic.on).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+    });
+
+    it('should pause viewport drag when node drag starts', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      expect(pointerDownHandler).toBeDefined();
+
+      const mockEvent = {
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      };
+
+      // Мокируем toLocal для nodesContainer
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler(mockEvent);
+
+      expect(mockViewportAdapter.pauseDrag).toHaveBeenCalled();
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    });
+
+    it('should not pause drag if model is null', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Устанавливаем model в null
+      (renderer as any).model = null;
+
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockEvent = {
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      };
+
+      pointerDownHandler(mockEvent);
+
+      expect(mockViewportAdapter.pauseDrag).not.toHaveBeenCalled();
+    });
+
+    it('should not pause drag if node does not exist', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Удаляем узел из модели
+      model.removeNode('node1');
+
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockEvent = {
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      };
+
+      pointerDownHandler(mockEvent);
+
+      expect(mockViewportAdapter.pauseDrag).not.toHaveBeenCalled();
+    });
+
+    it('should update node position on pointer move', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Начинаем перетаскивание
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler({
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      });
+
+      // Получаем обработчик pointermove
+      const pointerMoveHandler = stageOnHandlers.get('pointermove');
+      expect(pointerMoveHandler).toBeDefined();
+      if (!pointerMoveHandler) return;
+
+      // Мокируем toLocal для нового вызова
+      mockToLocal.mockReturnValue({ x: 200, y: 200 });
+
+      const updateNodeSpy = jest.spyOn(model, 'updateNode');
+
+      pointerMoveHandler({
+        global: { x: 250, y: 250 },
+      });
+
+      expect(updateNodeSpy).toHaveBeenCalledWith('node1', { x: 200, y: 200 });
+    });
+
+    it('should not update position if not dragging', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      const pointerMoveHandler = stageOnHandlers.get('pointermove');
+      expect(pointerMoveHandler).toBeDefined();
+      if (!pointerMoveHandler) return;
+
+      const updateNodeSpy = jest.spyOn(model, 'updateNode');
+
+      pointerMoveHandler({
+        global: { x: 250, y: 250 },
+      });
+
+      expect(updateNodeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not update position if model is null during drag', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Начинаем перетаскивание
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler({
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      });
+
+      // Устанавливаем model в null
+      (renderer as any).model = null;
+
+      const pointerMoveHandler = stageOnHandlers.get('pointermove');
+      expect(pointerMoveHandler).toBeDefined();
+      if (!pointerMoveHandler) return;
+
+      const updateNodeSpy = jest.spyOn(model, 'updateNode');
+
+      pointerMoveHandler({
+        global: { x: 250, y: 250 },
+      });
+
+      expect(updateNodeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should redraw connected edges when node is dragged', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      model.addNode({ id: 'node2', x: 200, y: 200 });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2' });
+      renderer.drawAll(model);
+
+      // Находим графику узла (первая созданная графика - это узел)
+      const nodeGraphic = createdGraphics.find((g: any) =>
+        g.on.mock.calls.some((call: any[]) => call[0] === 'pointerdown')
+      );
+
+      expect(nodeGraphic).toBeDefined();
+
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      expect(pointerDownHandler).toBeDefined();
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler({
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      });
+
+      const drawEdgeSpy = jest.spyOn(renderer as any, 'drawEdge');
+      mockToLocal.mockReturnValue({ x: 200, y: 200 });
+
+      const pointerMoveHandler = stageOnHandlers.get('pointermove');
+      expect(pointerMoveHandler).toBeDefined();
+      if (!pointerMoveHandler) return;
+
+      pointerMoveHandler({
+        global: { x: 250, y: 250 },
+      });
+
+      expect(drawEdgeSpy).toHaveBeenCalledWith('edge1', model);
+    });
+
+    it('should resume drag when pointer up', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Начинаем перетаскивание
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler({
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      });
+
+      const pointerUpHandler = stageOnHandlers.get('pointerup');
+      expect(pointerUpHandler).toBeDefined();
+      if (!pointerUpHandler) return;
+
+      pointerUpHandler();
+
+      expect(mockViewportAdapter.resumeDrag).toHaveBeenCalled();
+    });
+
+    it('should resume drag when pointer up outside', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Начинаем перетаскивание
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler({
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      });
+
+      const pointerUpOutsideHandler = stageOnHandlers.get('pointerupoutside');
+      expect(pointerUpOutsideHandler).toBeDefined();
+      if (!pointerUpOutsideHandler) return;
+
+      pointerUpOutsideHandler();
+
+      expect(mockViewportAdapter.resumeDrag).toHaveBeenCalled();
+    });
+
+    it('should not resume drag if not dragging', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      const pointerUpHandler = stageOnHandlers.get('pointerup');
+      expect(pointerUpHandler).toBeDefined();
+      if (!pointerUpHandler) return;
+
+      pointerUpHandler();
+
+      expect(mockViewportAdapter.resumeDrag).not.toHaveBeenCalled();
+    });
+
+    it('should handle drag without viewport adapter', () => {
+      renderer.setViewportAdapter(null);
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      expect(() => {
+        pointerDownHandler({
+          global: { x: 150, y: 150 },
+          stopPropagation: jest.fn(),
+        });
+      }).not.toThrow();
+    });
+
+    it('should handle drag without local position', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue(null);
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      expect(() => {
+        pointerDownHandler({
+          global: { x: 150, y: 150 },
+          stopPropagation: jest.fn(),
+        });
+      }).not.toThrow();
+    });
+
+    it('should handle pointer move without local position', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      renderer.drawAll(model);
+
+      // Начинаем перетаскивание
+      const nodeGraphic = createdGraphics[0];
+      const pointerDownHandler = nodeGraphic.on.mock.calls.find(
+        (call: any[]) => call[0] === 'pointerdown'
+      )?.[1];
+
+      const mockToLocal = jest.fn().mockReturnValue({ x: 100, y: 100 });
+      const containers = renderer.getContainers();
+      if (containers.nodes) {
+        (containers.nodes as any).toLocal = mockToLocal;
+      }
+
+      pointerDownHandler({
+        global: { x: 150, y: 150 },
+        stopPropagation: jest.fn(),
+      });
+
+      mockToLocal.mockReturnValue(null);
+
+      const pointerMoveHandler = stageOnHandlers.get('pointermove');
+      expect(pointerMoveHandler).toBeDefined();
+      if (!pointerMoveHandler) return;
+
+      const updateNodeSpy = jest.spyOn(model, 'updateNode');
+
+      pointerMoveHandler({
+        global: { x: 250, y: 250 },
+      });
+
+      expect(updateNodeSpy).not.toHaveBeenCalled();
     });
   });
 });

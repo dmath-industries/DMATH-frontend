@@ -19,6 +19,7 @@ import { RobertsFloresStepGenerator } from '@/algorithms/roberts-flores/steps';
 import { PrimStepGenerator } from '@/algorithms/prim/steps';
 import { HungarianStepGenerator } from '@/algorithms/hungarian/steps';
 import { BronKerboschStepGenerator } from '@/algorithms/bron-kerbosch/steps';
+import { GraphColoringStepGenerator } from '@/algorithms/graph-coloring/steps';
 
 interface ExecutionState {
   requestId: string;
@@ -111,6 +112,12 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
 
       case 'bron-kerbosch': {
         const generator = new BronKerboschStepGenerator();
+        steps = generator.generateSteps(graphDTO, params);
+        break;
+      }
+
+      case 'graph-coloring': {
+        const generator = new GraphColoringStepGenerator();
         steps = generator.generateSteps(graphDTO, params);
         break;
       }

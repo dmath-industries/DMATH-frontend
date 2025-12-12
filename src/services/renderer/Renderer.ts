@@ -6,6 +6,7 @@
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { GraphModel } from '@/services/graph/GraphModel';
 import { ElementState } from '@/types';
+import { ViewportAdapter } from './ViewportAdapter';
 
 interface RendererConfig {
   width: number;
@@ -24,13 +25,18 @@ export class Renderer {
   private labelGraphics: Map<string, Text> = new Map();
   private edgeWeightLabels: Map<string, { text: Text; bg: Graphics | null }> = new Map();
 
+  private model: GraphModel | null = null;
+  private draggingNodeId: string | null = null;
+  private dragOffset: { x: number; y: number } | null = null;
+  private viewportAdapter: ViewportAdapter | null = null;
+
   /**
    * Инициализация Pixi Application
    */
   async init(canvas: HTMLCanvasElement, config: RendererConfig): Promise<void> {
     try {
       this.app = new Application();
-      
+
       await this.app.init({
         canvas,
         width: config.width,
@@ -48,7 +54,6 @@ export class Renderer {
       this.edgesContainer.sortableChildren = true;
       this.nodesContainer.sortableChildren = true;
       this.labelsContainer.sortableChildren = true;
-
     } catch (error) {
       console.error('Failed to initialize Pixi:', error);
       throw error;
@@ -74,11 +79,19 @@ export class Renderer {
   }
 
   /**
+   * Установить viewport adapter для управления перетаскиванием
+   */
+  setViewportAdapter(viewportAdapter: ViewportAdapter | null): void {
+    this.viewportAdapter = viewportAdapter;
+  }
+
+  /**
    * Полная отрисовка графа
    */
   drawAll(model: GraphModel): void {
     if (!this.app) return;
 
+    this.model = model;
     this.clear();
 
     for (const edgeId of model.getEdges()) {
@@ -88,6 +101,8 @@ export class Renderer {
     for (const nodeId of model.getNodes()) {
       this.drawNode(nodeId, model);
     }
+
+    this.setupNodeInteractivity();
   }
 
   /**
@@ -95,6 +110,8 @@ export class Renderer {
    */
   renderDirty(dirtyIds: Set<string>, model: GraphModel): void {
     if (!this.app) return;
+
+    this.model = model;
 
     const dirtyNodes: string[] = [];
     const dirtyEdges: string[] = [];
@@ -113,6 +130,11 @@ export class Renderer {
 
     for (const nodeId of dirtyNodes) {
       this.drawNode(nodeId, model);
+    }
+
+    // Настраиваем интерактивность для новых или обновлённых узлов
+    if (dirtyNodes.length > 0) {
+      this.setupNodeInteractivity();
     }
   }
 
@@ -140,14 +162,18 @@ export class Renderer {
     const graphic = new Graphics();
     const color = this.getStateColor(node.state, node.color);
     const radius = node.radius ?? 25;
-    
+
     graphic.circle(0, 0, radius);
     graphic.fill(color);
-    
+
     graphic.stroke({ width: 3, color: 0x000000 });
 
     graphic.position.set(node.x, node.y);
     graphic.zIndex = 10;
+
+    // Делаем вершину интерактивной
+    graphic.eventMode = 'static';
+    graphic.cursor = 'pointer';
 
     this.nodesContainer.addChild(graphic);
     this.nodeGraphics.set(nodeId, graphic);
@@ -165,6 +191,7 @@ export class Renderer {
     label.anchor.set(0.5);
     label.position.set(node.x, node.y);
     label.zIndex = 20;
+    label.eventMode = 'none'; // Метка не должна перехватывать события
 
     this.labelsContainer.addChild(label);
     this.labelGraphics.set(nodeId, label);
@@ -393,6 +420,113 @@ export class Renderer {
   }
 
   /**
+   * Настроить интерактивность вершин (перетаскивание)
+   */
+  private setupNodeInteractivity(): void {
+    if (!this.app || !this.model) return;
+
+    // Удаляем старые глобальные обработчики, если они есть
+    if (this.app.stage) {
+      this.app.stage.removeAllListeners('pointermove');
+      this.app.stage.removeAllListeners('pointerup');
+      this.app.stage.removeAllListeners('pointerupoutside');
+    }
+
+    for (const [nodeId, graphic] of this.nodeGraphics.entries()) {
+      // Удаляем старые обработчики, если они есть
+      graphic.removeAllListeners('pointerdown');
+
+      // Обработчик начала перетаскивания
+      graphic.on('pointerdown', event => {
+        if (!this.model) return;
+
+        const node = this.model.getNode(nodeId);
+        if (!node) return;
+
+        this.draggingNodeId = nodeId;
+
+        // Приостанавливаем перетаскивание viewport
+        this.viewportAdapter?.pauseDrag();
+
+        // Получаем глобальные координаты клика
+        const globalPos = event.global;
+        // Преобразуем в локальные координаты контейнера узлов
+        const localPos = this.nodesContainer?.toLocal(globalPos);
+
+        if (localPos) {
+          this.dragOffset = {
+            x: localPos.x - node.x,
+            y: localPos.y - node.y,
+          };
+        }
+
+        event.stopPropagation();
+      });
+    }
+
+    // Глобальные обработчики для перетаскивания
+    if (this.app.stage) {
+      this.app.stage.eventMode = 'static';
+
+      const handlePointerMove = (event: any) => {
+        if (!this.draggingNodeId || !this.model || !this.dragOffset) return;
+
+        const node = this.model.getNode(this.draggingNodeId);
+        if (!node) return;
+
+        // Получаем глобальные координаты мыши
+        const globalPos = event.global;
+        // Преобразуем в локальные координаты контейнера узлов
+        const localPos = this.nodesContainer?.toLocal(globalPos);
+
+        if (localPos) {
+          const newX = localPos.x - this.dragOffset.x;
+          const newY = localPos.y - this.dragOffset.y;
+
+          // Обновляем позицию в модели
+          this.model.updateNode(this.draggingNodeId, { x: newX, y: newY });
+
+          // Обновляем позицию графики и метки
+          const graphic = this.nodeGraphics.get(this.draggingNodeId);
+          const label = this.labelGraphics.get(this.draggingNodeId);
+
+          if (graphic) {
+            graphic.position.set(newX, newY);
+          }
+          if (label) {
+            label.position.set(newX, newY);
+          }
+
+          // Перерисовываем связанные рёбра
+          const edges = this.model.getEdges();
+          for (const edgeId of edges) {
+            const edge = this.model.getEdge(edgeId);
+            if (
+              edge &&
+              (edge.source === this.draggingNodeId || edge.target === this.draggingNodeId)
+            ) {
+              this.drawEdge(edgeId, this.model);
+            }
+          }
+        }
+      };
+
+      const handlePointerUp = () => {
+        // Возобновляем перетаскивание viewport
+        if (this.draggingNodeId) {
+          this.viewportAdapter?.resumeDrag();
+        }
+        this.draggingNodeId = null;
+        this.dragOffset = null;
+      };
+
+      this.app.stage.on('pointermove', handlePointerMove);
+      this.app.stage.on('pointerup', handlePointerUp);
+      this.app.stage.on('pointerupoutside', handlePointerUp);
+    }
+  }
+
+  /**
    * Уничтожить renderer
    */
   destroy(): void {
@@ -404,5 +538,9 @@ export class Renderer {
     this.nodesContainer = null;
     this.edgesContainer = null;
     this.labelsContainer = null;
+    this.model = null;
+    this.draggingNodeId = null;
+    this.dragOffset = null;
+    this.viewportAdapter = null;
   }
 }
