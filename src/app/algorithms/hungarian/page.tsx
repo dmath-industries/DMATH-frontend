@@ -83,17 +83,34 @@ function HungarianContent() {
         if (!row) continue;
         for (let j = 0; j < nodeCount; j++) {
           const weight = row[j];
-          if (weight !== undefined && weight !== 0) {
-            edges.push({
-              id: `e${edgeId++}`,
-              source: `source_${i}`,
-              target: `target_${j}`,
-              weight: weight,
-              directed: true,
-              color: edgeColor,
-              width: 2,
-              state: 'default',
-            });
+          if (
+            i >= 0 &&
+            i < nodeCount &&
+            j >= 0 &&
+            j < nodeCount &&
+            weight !== undefined &&
+            weight !== 0 &&
+            !isNaN(weight) &&
+            isFinite(weight)
+          ) {
+            const sourceId = `source_${i}`;
+            const targetId = `target_${j}`;
+
+            const sourceExists = nodes.some(n => n.id === sourceId);
+            const targetExists = nodes.some(n => n.id === targetId);
+
+            if (sourceExists && targetExists) {
+              edges.push({
+                id: `e${edgeId++}`,
+                source: sourceId,
+                target: targetId,
+                weight: weight,
+                directed: true,
+                color: edgeColor,
+                width: 2,
+                state: 'default',
+              });
+            }
           }
         }
       }
