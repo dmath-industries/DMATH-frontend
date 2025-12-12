@@ -19,7 +19,11 @@ import type { Session } from '@/shared/persistence';
 const ALGORITHM_ROUTES: Record<string, string> = {
   'roberts-flores': '/algorithms/roberts-flores',
   'Roberts-Flores': '/algorithms/roberts-flores',
-  'RobertsFlores': '/algorithms/roberts-flores',
+  RobertsFlores: '/algorithms/roberts-flores',
+  'bellman-ford': '/algorithms/bellman-ford',
+  'Bellman-Ford': '/algorithms/bellman-ford',
+  'ford-bellman': '/algorithms/bellman-ford',
+  'Ford-Bellman': '/algorithms/bellman-ford',
 };
 
 /**
@@ -60,7 +64,7 @@ export default function HistoryPage() {
   const handleOpenSession = (session: Session) => {
     // Получаем маршрут для алгоритма
     const route = ALGORITHM_ROUTES[session.algorithmName];
-    
+
     if (route) {
       // Сохраняем ID сессии в localStorage для загрузки на странице алгоритма
       localStorage.setItem('loadSessionId', session.id);
@@ -72,10 +76,10 @@ export default function HistoryPage() {
 
   const handleDeleteSession = async (sessionId: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionId);
-    const confirmMessage = sessionToDelete 
+    const confirmMessage = sessionToDelete
       ? `Вы уверены, что хотите удалить сессию "${sessionToDelete.algorithmName}"?\n\nДата: ${formatDate(sessionToDelete.updatedAt)}`
       : 'Вы уверены, что хотите удалить эту сессию?';
-    
+
     if (!confirm(confirmMessage)) {
       return;
     }
@@ -84,7 +88,7 @@ export default function HistoryPage() {
       await sessionRepository.deleteSession(sessionId);
       // Обновляем список сессий с плавным удалением
       setSessions(prevSessions => prevSessions.filter(s => s.id !== sessionId));
-      
+
       // Показываем уведомление об успехе
       console.log('Session deleted successfully:', sessionId);
     } catch (error) {
@@ -96,14 +100,14 @@ export default function HistoryPage() {
   return (
     <div className="App min-h-screen">
       <div className="min-h-screen py-4 sm:py-6 md:py-8 px-4 sm:px-6 lg:px-8 container m-auto mt-4 sm:mt-6 md:mt-8 lg:mt-[10%]">
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-4 group ml-0 sm:ml-4 md:ml-10"
         >
           <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm">Назад на главную</span>
         </Link>
-        
+
         <h1 className="text-2xl sm:text-3xl md:text-4xl mb-4 sm:mb-6 text-center sm:text-left ml-0 sm:ml-4 md:ml-10">
           История решений
         </h1>
@@ -125,8 +129,8 @@ export default function HistoryPage() {
                 <p className="text-gray-300 text-sm">
                   Запустите алгоритм, чтобы создать первую запись в истории решений.
                 </p>
-                <Link 
-                  href="/algorithms" 
+                <Link
+                  href="/algorithms"
                   className="inline-block mt-6 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
                 >
                   Перейти к алгоритмам
@@ -135,11 +139,11 @@ export default function HistoryPage() {
             </div>
           ) : (
             <div className="space-y-4 sm:space-y-6 md:space-y-8">
-              {sessions.map((session) => {
+              {sessions.map(session => {
                 const nodeCount = session.graphDTO?.nodes?.length || 0;
                 const edgeCount = session.graphDTO?.edges?.length || 0;
                 const stepCount = session.metadata?.totalSteps || session.steps?.length || 0;
-                
+
                 return (
                   <div key={session.id} className="space-y-2">
                     <HistoryItem
