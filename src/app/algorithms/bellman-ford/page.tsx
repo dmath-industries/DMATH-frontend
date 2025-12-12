@@ -2,6 +2,7 @@
 
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
+import { graphConfig } from '@/shared/lib/config';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
 
 function BellmanFordContent() {
@@ -42,22 +43,17 @@ function BellmanFordContent() {
       const nodes: NodeDTO[] = [];
       const edges: EdgeDTO[] = [];
 
-      const radius = 180;
-      const centerX = 0;
-      const centerY = 0;
-
-      const nodeColor = '#3b82f6';
-      const edgeColor = '#60a5fa';
+      const { nodeRadius, center, nodeSize, nodeColors, edgeColors, edgeWidth } = graphConfig;
 
       for (let i = 0; i < nodeCount; i++) {
         const angle = (i / nodeCount) * 2 * Math.PI - Math.PI / 2;
         nodes.push({
           id: String(i),
-          x: centerX + radius * Math.cos(angle),
-          y: centerY + radius * Math.sin(angle),
+          x: center.x + nodeRadius * Math.cos(angle),
+          y: center.y + nodeRadius * Math.sin(angle),
           label: String.fromCharCode('a'.charCodeAt(0) + i),
-          radius: 25,
-          color: nodeColor,
+          radius: nodeSize.radius,
+          color: nodeColors.default,
           state: 'default',
         });
       }
@@ -82,8 +78,8 @@ function BellmanFordContent() {
               target: String(j),
               weight: weight,
               directed: true,
-              color: edgeColor,
-              width: 2,
+              color: edgeColors.default,
+              width: edgeWidth,
               state: 'default',
             });
           }
