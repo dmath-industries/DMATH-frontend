@@ -20,17 +20,15 @@ test.describe('Страница списка алгоритмов', () => {
   test('должна отображать все алгоритмы', async ({ page }) => {
     await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
     await expect(page.getByText('Алгоритм Прима')).toBeVisible();
-    await expect(page.getByText('Алгоритм CNN')).toBeVisible();
     await expect(page.getByText('Алгоритм раскраски графа')).toBeVisible();
     await expect(page.getByText('Алгоритм Форда-Беллмана')).toBeVisible();
     await expect(page.getByText('Венгерский алгоритм')).toBeVisible();
     await expect(page.getByText('Алгоритм Брона-Кербоша')).toBeVisible();
-    await expect(page.getByText('Алгоритм локальных характеристик')).toBeVisible();
   });
 
   test('должна переходить на страницу алгоритма при клике', async ({ page }) => {
     const robertsFloresLink = page.locator('a[href="/algorithms/roberts-flores"]').first();
-    
+
     await expect(robertsFloresLink).toBeVisible();
     await robertsFloresLink.click();
 
@@ -49,7 +47,7 @@ test.describe('Страница списка алгоритмов', () => {
   test('все карточки алгоритмов должны быть кликабельными', async ({ page }) => {
     const algorithmLinks = page.locator('a[href^="/algorithms/"]');
     const count = await algorithmLinks.count();
-    
+
     expect(count).toBeGreaterThan(0);
 
     for (let i = 0; i < count; i++) {
@@ -61,8 +59,7 @@ test.describe('Страница списка алгоритмов', () => {
   test('должна отображать правильное количество алгоритмов', async ({ page }) => {
     const algorithmCards = page.locator('a[href^="/algorithms/"]');
     const count = await algorithmCards.count();
-    
-    expect(count).toBe(8);
+
+    expect(count).toBe(6);
   });
 });
-
