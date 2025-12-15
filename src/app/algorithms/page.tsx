@@ -24,11 +24,6 @@ export default function AlgorithmsPage() {
       href: '/algorithms/prim',
     },
     {
-      title: 'Алгоритм CNN',
-      img: '',
-      href: '/algorithms/cnn',
-    },
-    {
       title: 'Алгоритм раскраски графа',
       img: '',
       href: '/algorithms/graph-coloring',
@@ -47,11 +42,6 @@ export default function AlgorithmsPage() {
       title: 'Алгоритм Брона-Кербоша',
       img: '',
       href: '/algorithms/bron-kerbosch',
-    },
-    {
-      title: 'Алгоритм локальных характеристик',
-      img: '',
-      href: '/algorithms/local-characteristics',
     },
   ];
 

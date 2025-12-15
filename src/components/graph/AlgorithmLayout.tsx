@@ -18,7 +18,8 @@ import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
-import { mobileConfig } from '@/shared/lib';
+import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
+import { usePathname } from 'next/navigation';
 
 interface AlgorithmLayoutContextType {
   loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
@@ -57,7 +58,8 @@ export function AlgorithmLayout({
   graphDescription,
 }: AlgorithmLayoutProps) {
   const dispatch = useAppDispatch();
-  const { playing, currentIndex, speedMs } = useAppSelector(state => state.steps);
+  const { playing, currentIndex, speedMs, totalSteps } = useAppSelector(state => state.steps);
+  const pathname = usePathname();
 
   const [graphModel] = useState(() => new GraphModel(true));
   const [applier] = useState(() => new Applier());
@@ -332,6 +334,14 @@ export function AlgorithmLayout({
 
     setHasRunAlgorithm(true);
 
+    const inputMethod = loadedSessionInfo ? 'history' : 'manual';
+    AnalyticsEvents.algorithmStarted(
+      algorithmName,
+      graphDTO.nodes.length,
+      graphDTO.edges.length,
+      inputMethod
+    );
+
     workerClient.runAlgorithm(algorithmName, graphDTO, {
       startNode: graphDTO.nodes[0]?.id || '0',
     });
@@ -470,6 +480,9 @@ export function AlgorithmLayout({
             minute: '2-digit',
           }),
         });
+
+        const sessionAgeDays = Math.floor((Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24));
+        AnalyticsEvents.sessionLoadedFromHistory(session.algorithmName, sessionAgeDays);
       } catch (error) {
         console.error('Failed to load session:', error);
         alert('Ошибка при загрузке сессии');
@@ -498,12 +511,13 @@ export function AlgorithmLayout({
       onDone: async (totalSteps, executionTime, requestId) => {
         if (currentAlgorithmRef.current && allSteps.length > 0) {
           const sessionId = requestId;
+          const graphDTO = currentGraphDTORef.current;
 
           try {
             await sessionRepository.saveSession(
               sessionId,
               currentAlgorithmRef.current,
-              currentGraphDTORef.current,
+              graphDTO,
               allSteps,
               {
                 totalSteps,
@@ -512,6 +526,16 @@ export function AlgorithmLayout({
             );
 
             dispatch(setSession({ sessionId, totalSteps }));
+
+            AnalyticsEvents.algorithmCompleted(
+              currentAlgorithmRef.current,
+              totalSteps,
+              executionTime,
+              graphDTO.nodes.length,
+              graphDTO.edges.length
+            );
+
+            AnalyticsEvents.sessionSaved(currentAlgorithmRef.current, totalSteps);
           } catch (error) {
             console.error('Failed to save session:', error);
           }
@@ -523,6 +547,17 @@ export function AlgorithmLayout({
       onError: error => {
         console.error('Worker error:', error);
         alert(`Ошибка выполнения: ${error}`);
+
+        if (currentAlgorithmRef.current) {
+          const graphDTO = currentGraphDTORef.current;
+          AnalyticsEvents.algorithmExecutionError(
+            currentAlgorithmRef.current,
+            String(error),
+            graphDTO.nodes.length,
+            graphDTO.edges.length
+          );
+        }
+
         allSteps = [];
         currentAlgorithmRef.current = null;
       },
@@ -549,13 +584,22 @@ export function AlgorithmLayout({
     const controllerIndex = controllerRef.current.getCurrentIndex();
     if (controllerIndex !== currentIndex) {
       controllerRef.current.goToIndex(currentIndex);
+
+      if (currentIndex >= 0 && totalSteps > 0) {
+        const viewMethod = playing ? 'auto' : 'manual';
+        AnalyticsEvents.stepViewed(algorithmName, currentIndex + 1, totalSteps, viewMethod);
+      }
     }
-  }, [currentIndex]);
+  }, [currentIndex, algorithmName, totalSteps, playing]);
 
   useEffect(() => {
     if (!controllerRef.current) return;
     controllerRef.current.setSpeed(speedMs);
   }, [speedMs]);
+
+  useEffect(() => {
+    AnalyticsEvents.algorithmViewed(algorithmName, pathname);
+  }, [algorithmName, pathname]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,

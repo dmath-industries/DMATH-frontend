@@ -8,6 +8,7 @@
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import type { EdgeDTO, GraphDTO, NodeDTO } from '@/types';
+import { AnalyticsEvents } from '@/shared/lib';
 
 function PrimContent() {
   const { loadGraph } = useAlgorithmLayout();
@@ -20,6 +21,7 @@ function PrimContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
+        AnalyticsEvents.matrixParseError('prim', 'empty');
         alert('Матрица пуста!');
         return;
       }
@@ -31,6 +33,7 @@ function PrimContent() {
 
       const size = rows.length;
       if (size === 0) {
+        AnalyticsEvents.matrixParseError('prim', 'empty');
         alert('Матрица пуста!');
         return;
       }
@@ -38,6 +41,7 @@ function PrimContent() {
       for (let i = 0; i < size; i++) {
         const row = rows[i];
         if (!row || row.length !== size) {
+          AnalyticsEvents.matrixParseError('prim', 'not_square');
           alert('Матрица должна быть квадратной!');
           return;
         }
@@ -95,6 +99,7 @@ function PrimContent() {
       }
 
       if (edges.length === 0) {
+        AnalyticsEvents.matrixParseError('prim', 'no_edges');
         alert('Не найдено ни одного ребра. Заполните веса > 0.');
         return;
       }
@@ -103,6 +108,7 @@ function PrimContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
+      AnalyticsEvents.matrixParseError('prim', 'invalid_format');
       alert('Ошибка при парсинге матрицы. Проверьте формат!');
     }
   };
