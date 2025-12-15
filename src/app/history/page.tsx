@@ -12,6 +12,7 @@ import { ChevronLeft } from 'lucide-react';
 import { HistoryItem } from '@/components/elements';
 import { sessionRepository } from '@/shared/persistence';
 import type { Session } from '@/shared/persistence';
+import { AnalyticsEvents } from '@/shared/lib';
 
 /**
  * Маппинг имён алгоритмов на их URL маршруты
@@ -40,6 +41,7 @@ export default function HistoryPage() {
       try {
         const allSessions = await sessionRepository.getAllSessions();
         setSessions(allSessions);
+        AnalyticsEvents.historyPageViewed(allSessions.length);
       } catch (error) {
         console.error('Failed to load sessions:', error);
       } finally {
@@ -68,6 +70,10 @@ export default function HistoryPage() {
     if (route) {
       // Сохраняем ID сессии в localStorage для загрузки на странице алгоритма
       localStorage.setItem('loadSessionId', session.id);
+
+      const sessionAgeDays = Math.floor((Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24));
+      AnalyticsEvents.sessionLoadedFromHistory(session.algorithmName, sessionAgeDays);
+
       router.push(route);
     } else {
       alert(`Не найден маршрут для алгоритма: ${session.algorithmName}`);
@@ -86,6 +92,11 @@ export default function HistoryPage() {
 
     try {
       await sessionRepository.deleteSession(sessionId);
+
+      if (sessionToDelete) {
+        AnalyticsEvents.sessionDeleted(sessionToDelete.algorithmName);
+      }
+
       // Обновляем список сессий с плавным удалением
       setSessions(prevSessions => prevSessions.filter(s => s.id !== sessionId));
 

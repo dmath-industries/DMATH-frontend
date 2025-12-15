@@ -1,11 +1,23 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { IAlgorithmsItem } from '@/types';
+import { AnalyticsEvents } from '@/shared/lib';
 
 const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
+  const getAlgorithmName = (): string => {
+    if (!href) return 'unknown';
+    const match = href.match(/\/algorithms\/([^/]+)/);
+    return match && match[1] ? match[1] : 'unknown';
+  };
+
+  const handleClick = () => {
+    AnalyticsEvents.algorithmSelected(getAlgorithmName());
+  };
+
   return (
     <Link
       href={href || '#'}
+      onClick={handleClick}
       className={`
         group relative w-full rounded-3xl overflow-hidden min-h-[380px]
         cursor-pointer backdrop-blur-sm no-underline
@@ -143,4 +155,3 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
 };
 
 export default AlgorithmsItem;
-
