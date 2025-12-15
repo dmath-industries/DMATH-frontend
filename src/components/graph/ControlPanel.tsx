@@ -1,13 +1,6 @@
 'use client';
 
-import { 
-  Play, 
-  Pause, 
-  SkipBack, 
-  SkipForward, 
-  Rewind,
-  FastForward,
-} from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Rewind, FastForward } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { play, pause, nextStep, prevStep, setSpeed, setIndex } from '@/shared/store';
 
@@ -16,7 +9,7 @@ import { play, pause, nextStep, prevStep, setSpeed, setIndex } from '@/shared/st
  */
 export function ControlPanel() {
   const dispatch = useAppDispatch();
-  const { currentIndex, totalSteps, playing, speedMs } = useAppSelector((state) => state.steps);
+  const { currentIndex, totalSteps, playing, speedMs } = useAppSelector(state => state.steps);
 
   const handlePlay = () => {
     dispatch(play());
@@ -43,9 +36,7 @@ export function ControlPanel() {
     dispatch(setSpeed(speed));
   };
 
-  const progress = totalSteps > 0 
-    ? ((currentIndex + 1) / totalSteps) * 100 
-    : 0;
+  const progress = totalSteps > 0 ? ((currentIndex + 1) / totalSteps) * 100 : 0;
 
   return (
     <div className="space-y-4">
@@ -123,11 +114,9 @@ export function ControlPanel() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-neutral-300">
-          Скорость: {speedMs}ms
-        </label>
+        <label className="text-sm font-medium text-neutral-300">Скорость: {speedMs}ms</label>
         <div className="flex items-center gap-2">
-          {[2000, 1000, 500, 250].map((speed) => (
+          {[4000, 2000, 1000, 500, 250].map(speed => (
             <button
               key={speed}
               onClick={() => handleSpeedChange(speed)}
@@ -137,7 +126,15 @@ export function ControlPanel() {
                   : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
               }`}
             >
-              {speed === 2000 ? '0.5x' : speed === 1000 ? '1x' : speed === 500 ? '2x' : '4x'}
+              {speed === 4000
+                ? '0.25x'
+                : speed === 2000
+                  ? '0.5x'
+                  : speed === 1000
+                    ? '1x'
+                    : speed === 500
+                      ? '2x'
+                      : '4x'}
             </button>
           ))}
         </div>
@@ -145,4 +142,3 @@ export function ControlPanel() {
     </div>
   );
 }
-
