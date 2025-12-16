@@ -5,6 +5,7 @@
  * Страница со списком доступных алгоритмов
  */
 
+import { Box, Container, Grid } from '@mui/material';
 import { AlgorithmsItem } from '@/components/elements';
 import type { IAlgorithmsItem } from '@/types';
 
@@ -46,21 +47,23 @@ export default function AlgorithmsPage() {
   ];
 
   return (
-    <div className="App min-h-screen">
-      <div className="container pt-6 md:pt-10 m-auto px-4 sm:px-6 lg:px-8 w-full max-w-7xl">
-        <div className="w-full">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-10 lg:gap-12 pb-16">
-            {algorithms.map((algorithm, index) => (
-              <AlgorithmsItem
-                key={index}
-                title={algorithm.title}
-                img={algorithm.img}
-                href={algorithm.href}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    <Box sx={{ minHeight: '100vh' }}>
+      <Container
+        maxWidth="xl"
+        sx={{
+          pt: { xs: 3, md: 5 },
+          px: { xs: 2, sm: 3, lg: 4 },
+          pb: 8,
+        }}
+      >
+        <Grid container spacing={{ xs: 4, md: 5, lg: 6 }}>
+          {algorithms.map((algorithm, index) => (
+            <Grid item xs={12} sm={6} lg={3} xl={3} key={index}>
+              <AlgorithmsItem title={algorithm.title} img={algorithm.img} href={algorithm.href} />
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    </Box>
   );
 }
