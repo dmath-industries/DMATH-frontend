@@ -2,7 +2,18 @@
 
 import { useState } from 'react';
 import { Plus, Minus, Network } from 'lucide-react';
-import '@/styles/global.css';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  Stack,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface GraphEditorProps {
   onAddNode: (id: string, x?: number, y?: number) => void;
@@ -43,128 +54,150 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
   };
 
   return (
-    <div className="p-3">
-      <div className="flex items-center justify-center gap-2 flex-wrap max-w-[400px] mx-auto">
-        <button
+    <Box sx={{ p: 3 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          maxWidth: 400,
+          mx: 'auto',
+        }}
+      >
+        <Button
+          variant="contained"
+          startIcon={<Plus size={16} />}
           onClick={() => setShowNodeDialog(true)}
-          className="flex justify-center custom-btn btn-3 text-black transition"
           title="Добавить вершину"
         >
-          <span>
-            <Plus className="w-3.5 h-3.5" />
-            Вершина
-          </span>
-        </button>
+          Вершина
+        </Button>
 
-        <button
+        <Button
+          variant="contained"
+          startIcon={<Network size={16} />}
           onClick={() => setShowEdgeDialog(true)}
-          className="flex justify-center custom-btn btn-3 text-black transition"
           title="Добавить ребро"
+          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
         >
-          <span className="hidden sm:inline">
-            <Network className="w-3.5 h-3.5" />
-            Ребро
-          </span>
-        </button>
+          Ребро
+        </Button>
 
         {onLoadSample && (
-          <button
-            onClick={onLoadSample}
-            className="flex justify-center custom-btn btn-3 text-black transition"
-            title="Загрузить пример"
-          >
-            <span>Пример</span>
-          </button>
+          <Button variant="contained" onClick={onLoadSample} title="Загрузить пример">
+            Пример
+          </Button>
         )}
 
-        <button
+        <Button
+          variant="contained"
+          color="error"
+          startIcon={<Minus size={16} />}
           onClick={onClear}
-          className="flex justify-center custom-btn btn-5 text-black transition"
           title="Очистить граф"
         >
-          <span>
-            <Minus className="w-3.5 h-3.5" />
-            Очистить
-          </span>
-        </button>
-      </div>
+          Очистить
+        </Button>
+      </Stack>
 
-      {showNodeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999]">
-          <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-96 shadow-2xl">
-            <h4 className="text-lg font-semibold mb-4 text-neutral-200">Добавить вершину</h4>
-            <input
-              type="text"
-              value={nodeId}
-              onChange={e => setNodeId(e.target.value)}
-              placeholder="ID вершины (0, 1, 2, ...)"
-              className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <Dialog
+        open={showNodeDialog}
+        onClose={() => setShowNodeDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: 'background.paper',
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          Добавить вершину
+          <IconButton
+            aria-label="close"
+            onClick={() => setShowNodeDialog(false)}
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="ID вершины"
+            placeholder="0, 1, 2, ..."
+            value={nodeId}
+            onChange={e => setNodeId(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAddNode()}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNodeDialog(false)}>Отмена</Button>
+          <Button onClick={handleAddNode} variant="contained">
+            Добавить
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={showEdgeDialog}
+        onClose={() => setShowEdgeDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: 'background.paper',
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          Добавить ребро
+          <IconButton
+            aria-label="close"
+            onClick={() => setShowEdgeDialog(false)}
+            sx={{ color: 'text.secondary' }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
               autoFocus
-              onKeyDown={e => e.key === 'Enter' && handleAddNode()}
+              fullWidth
+              label="Из вершины"
+              value={edgeSource}
+              onChange={e => setEdgeSource(e.target.value)}
             />
-            <div className="flex gap-2">
-              <button
-                onClick={handleAddNode}
-                className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-              >
-                Добавить
-              </button>
-              <button
-                onClick={() => setShowNodeDialog(false)}
-                className="flex-1 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-neutral-300 rounded-lg transition-colors"
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showEdgeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[9999]">
-          <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 w-96 shadow-2xl">
-            <h4 className="text-lg font-semibold mb-4 text-neutral-200">Добавить ребро</h4>
-            <div className="space-y-3">
-              <input
-                type="text"
-                value={edgeSource}
-                onChange={e => setEdgeSource(e.target.value)}
-                placeholder="Из вершины"
-                className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                autoFocus
-              />
-              <input
-                type="text"
-                value={edgeTarget}
-                onChange={e => setEdgeTarget(e.target.value)}
-                placeholder="В вершину"
-                className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number"
-                value={edgeWeight}
-                onChange={e => setEdgeWeight(e.target.value)}
-                placeholder="Вес (опционально)"
-                className="w-full px-3 py-2 border border-neutral-600 bg-neutral-900 text-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={handleAddEdge}
-                className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
-              >
-                Добавить
-              </button>
-              <button
-                onClick={() => setShowEdgeDialog(false)}
-                className="flex-1 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-neutral-300 rounded-lg transition-colors"
-              >
-                Отмена
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            <TextField
+              fullWidth
+              label="В вершину"
+              value={edgeTarget}
+              onChange={e => setEdgeTarget(e.target.value)}
+            />
+            <TextField
+              fullWidth
+              type="number"
+              label="Вес (опционально)"
+              value={edgeWeight}
+              onChange={e => setEdgeWeight(e.target.value)}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowEdgeDialog(false)}>Отмена</Button>
+          <Button onClick={handleAddEdge} variant="contained" color="success">
+            Добавить
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
