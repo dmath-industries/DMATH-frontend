@@ -1,13 +1,13 @@
+import { Button } from '@mui/material';
+import type { ButtonProps } from '@mui/material/Button';
 import { IBtn } from '@/types';
-import { cn } from '@/shared/lib/utils';
 
-const Btn = ({ title, className, onClick }: IBtn) => {
+const Btn = ({ title, className, onClick, ...props }: IBtn & Omit<ButtonProps, 'children'>) => {
   return (
-    <button className={cn('btn-primary', className)} onClick={onClick}>
+    <Button variant="contained" color="primary" onClick={onClick} className={className} {...props}>
       {title}
-    </button>
+    </Button>
   );
 };
 
 export default Btn;
-
