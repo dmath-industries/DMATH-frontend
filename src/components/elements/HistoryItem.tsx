@@ -1,5 +1,6 @@
 import { IHistory } from '@/types';
 import { Trash2, ExternalLink } from 'lucide-react';
+import { Paper, Box, Typography, Button, Stack } from '@mui/material';
 
 interface HistoryItemProps extends IHistory {
   onOpen?: () => void;
@@ -8,84 +9,110 @@ interface HistoryItemProps extends IHistory {
 
 const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
   return (
-    <div
-      className="
-        bg-[#B5B5B5] text-black 
-        w-full px-3 sm:px-4 md:px-5 py-3 sm:py-4 md:py-5 
-        rounded-xl 
-        flex flex-col sm:flex-row 
-        justify-between items-start sm:items-center
-        gap-3 sm:gap-4
-        transition-all duration-200
-        hover:bg-[#C5C5C5] hover:shadow-md
-      "
+    <Paper
+      sx={{
+        backgroundColor: '#B5B5B5',
+        color: 'text.primary',
+        width: '100%',
+        px: { xs: 3, sm: 4, md: 5 },
+        py: { xs: 3, sm: 4, md: 5 },
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        gap: { xs: 3, sm: 4 },
+        transition: 'all 0.2s',
+        '&:hover': {
+          backgroundColor: '#C5C5C5',
+          boxShadow: 4,
+        },
+      }}
     >
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 flex-1 w-full">
-        <h1
-          className="
-            text-base sm:text-lg md:text-xl lg:text-2xl 
-            font-medium
-            text-center sm:text-left
-            break-words
-          "
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 2, sm: 4 },
+          flex: 1,
+          width: '100%',
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem', lg: '1.5rem' },
+            fontWeight: 500,
+            textAlign: { xs: 'center', sm: 'left' },
+            wordBreak: 'break-word',
+            color: '#000000',
+          }}
         >
           {title}
-        </h1>
+        </Typography>
 
-        <p
-          className="
-            text-sm sm:text-base md:text-lg lg:text-xl
-            text-gray-700
-            whitespace-nowrap
-            text-center sm:text-right
-          "
+        <Typography
+          variant="body1"
+          sx={{
+            fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem', lg: '1.25rem' },
+            color: '#374151',
+            whiteSpace: 'nowrap',
+            textAlign: { xs: 'center', sm: 'right' },
+          }}
         >
           {date}
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{
+          width: { xs: '100%', sm: 'auto' },
+          justifyContent: { xs: 'center', sm: 'flex-end' },
+        }}
+      >
         {onOpen && (
-          <button
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<ExternalLink size={16} />}
             onClick={onOpen}
-            className="
-              flex items-center gap-2
-              px-3 sm:px-4 py-2
-              bg-blue-500 hover:bg-blue-600
-              text-white
-              rounded-lg
-              transition-colors
-              text-sm sm:text-base
-            "
             title="Открыть"
+            sx={{
+              '& .MuiButton-startIcon': {
+                marginRight: { xs: 0.5, sm: 1 },
+              },
+            }}
           >
-            <ExternalLink className="w-4 h-4" />
-            <span className="hidden sm:inline">Открыть</span>
-          </button>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Открыть
+            </Box>
+          </Button>
         )}
-        
+
         {onDelete && (
-          <button
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<Trash2 size={16} />}
             onClick={onDelete}
-            className="
-              flex items-center gap-2
-              px-3 sm:px-4 py-2
-              bg-red-500 hover:bg-red-600
-              text-white
-              rounded-lg
-              transition-colors
-              text-sm sm:text-base
-            "
             title="Удалить"
+            sx={{
+              '& .MuiButton-startIcon': {
+                marginRight: { xs: 0.5, sm: 1 },
+              },
+            }}
           >
-            <Trash2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Удалить</span>
-          </button>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Удалить
+            </Box>
+          </Button>
         )}
-      </div>
-    </div>
+      </Stack>
+    </Paper>
   );
 };
 
 export default HistoryItem;
-
