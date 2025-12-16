@@ -1,6 +1,12 @@
 'use client';
 
-import { Play, Pause, SkipBack, SkipForward, Rewind, FastForward } from 'lucide-react';
+import { Box, Typography, IconButton, LinearProgress, Button, ButtonGroup } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import FastRewindIcon from '@mui/icons-material/FastRewind';
+import FastForwardIcon from '@mui/icons-material/FastForward';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { play, pause, nextStep, prevStep, setSpeed, setIndex } from '@/shared/store';
 
@@ -38,107 +44,148 @@ export function ControlPanel() {
 
   const progress = totalSteps > 0 ? ((currentIndex + 1) / totalSteps) * 100 : 0;
 
+  const speedLabels: Record<number, string> = {
+    4000: '0.25x',
+    2000: '0.5x',
+    1000: '1x',
+    500: '2x',
+    250: '4x',
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-neutral-200">Управление воспроизведением</h3>
-        <span className="text-sm text-neutral-400">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Управление воспроизведением
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {currentIndex === -1 ? 'Начало' : `Шаг ${currentIndex + 1} / ${totalSteps}`}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
-      <div className="w-full h-2 bg-neutral-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-500 transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <LinearProgress
+        variant="determinate"
+        value={progress}
+        sx={{
+          height: 8,
+          borderRadius: 1,
+          bgcolor: 'action.disabledBackground',
+          '& .MuiLinearProgress-bar': {
+            bgcolor: 'primary.main',
+          },
+        }}
+      />
 
-      <div className="flex items-center justify-center gap-2">
-        <button
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+        <IconButton
           onClick={handleReset}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={currentIndex === -1}
           title="В начало"
-          disabled={currentIndex === -1}
+          sx={{
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
         >
-          <Rewind className="w-5 h-5 text-neutral-300" />
-        </button>
+          <FastRewindIcon />
+        </IconButton>
 
-        <button
+        <IconButton
           onClick={handlePrev}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Предыдущий шаг"
           disabled={currentIndex === -1}
+          title="Предыдущий шаг"
+          sx={{
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
         >
-          <SkipBack className="w-5 h-5 text-neutral-300" />
-        </button>
+          <SkipPreviousIcon />
+        </IconButton>
 
         {playing ? (
-          <button
+          <IconButton
             onClick={handlePause}
-            className="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
             title="Пауза"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+            }}
           >
-            <Pause className="w-6 h-6 text-white" fill="white" />
-          </button>
+            <PauseIcon />
+          </IconButton>
         ) : (
-          <button
+          <IconButton
             onClick={handlePlay}
-            className="p-3 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Воспроизвести"
             disabled={totalSteps === 0}
+            title="Воспроизвести"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+              '&:disabled': {
+                bgcolor: 'action.disabledBackground',
+                color: 'action.disabled',
+              },
+            }}
           >
-            <Play className="w-6 h-6 text-white" fill="white" />
-          </button>
+            <PlayArrowIcon />
+          </IconButton>
         )}
 
-        <button
+        <IconButton
           onClick={handleNext}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Следующий шаг"
           disabled={currentIndex >= totalSteps - 1}
+          title="Следующий шаг"
+          sx={{
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
         >
-          <SkipForward className="w-5 h-5 text-neutral-300" />
-        </button>
+          <SkipNextIcon />
+        </IconButton>
 
-        <button
+        <IconButton
           onClick={() => {
             dispatch(setIndex(totalSteps - 1));
           }}
-          className="p-2 rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="В конец"
           disabled={currentIndex >= totalSteps - 1}
+          title="В конец"
+          sx={{
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
         >
-          <FastForward className="w-5 h-5 text-neutral-300" />
-        </button>
-      </div>
+          <FastForwardIcon />
+        </IconButton>
+      </Box>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-neutral-300">Скорость: {speedMs}ms</label>
-        <div className="flex items-center gap-2">
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          Скорость: {speedMs}ms
+        </Typography>
+        <ButtonGroup variant="outlined" size="small" fullWidth>
           {[4000, 2000, 1000, 500, 250].map(speed => (
-            <button
+            <Button
               key={speed}
               onClick={() => handleSpeedChange(speed)}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
-                speedMs === speed
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-neutral-700 hover:bg-neutral-600 text-neutral-300'
-              }`}
+              variant={speedMs === speed ? 'contained' : 'outlined'}
+              sx={{
+                flex: 1,
+              }}
             >
-              {speed === 4000
-                ? '0.25x'
-                : speed === 2000
-                  ? '0.5x'
-                  : speed === 1000
-                    ? '1x'
-                    : speed === 500
-                      ? '2x'
-                      : '4x'}
-            </button>
+              {speedLabels[speed]}
+            </Button>
           ))}
-        </div>
-      </div>
-    </div>
+        </ButtonGroup>
+      </Box>
+    </Box>
   );
 }
