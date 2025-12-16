@@ -1,5 +1,6 @@
 'use client';
 
+import { Box, Paper, Typography, Alert } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import { graphConfig } from '@/shared/lib/config';
@@ -96,54 +97,69 @@ function BellmanFordContent() {
 
   return (
     <>
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
-        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Ввод матрицы весов
-        </h3>
+        </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
           placeholder="Введите квадратную матрицу весов построчно. Используйте запятую как разделитель. Числа представляют веса рёбер. Используйте 'inf' или '∞' для отсутствующих рёбер."
         />
-      </div>
+      </Paper>
 
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
-        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           О алгоритме
-        </h3>
-        <div className="text-xs sm:text-sm text-neutral-300 space-y-2 leading-relaxed">
-          <p>
-            <strong className="text-white">Алгоритм Форда-Беллмана</strong> — это алгоритм поиска
-            кратчайших путей от одной вершины до всех остальных в ориентированном взвешенном графе.
-            В отличие от алгоритма Дейкстры, он может работать с рёбрами отрицательного веса и
-            обнаруживать отрицательные циклы.
-          </p>
-          <p>
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2">
+            <strong>Алгоритм Форда-Беллмана</strong> — это алгоритм поиска кратчайших путей от одной
+            вершины до всех остальных в ориентированном взвешенном графе. В отличие от алгоритма
+            Дейкстры, он может работать с рёбрами отрицательного веса и обнаруживать отрицательные
+            циклы.
+          </Typography>
+          <Typography variant="body2">
             Алгоритм выполняет V-1 итераций релаксации всех рёбер, где V — количество вершин. После
             этого выполняется дополнительная проверка на наличие отрицательных циклов.
-          </p>
-          <p>Временная сложность: O(V × E), где V — количество вершин, E — количество рёбер.</p>
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <p className="text-blue-300 text-xs font-medium">
+          </Typography>
+          <Typography variant="body2">
+            Временная сложность: O(V × E), где V — количество вершин, E — количество рёбер.
+          </Typography>
+          <Alert severity="info" sx={{ mt: 1 }}>
+            <Typography variant="body2">
               💡 Совет: Используйте матрицу весов, где элемент [i][j] — вес ребра от вершины i к
               вершине j. Используйте 0 для отсутствия ребра или 'inf' для бесконечности.
-            </p>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Alert>
+        </Box>
+      </Paper>
 
-      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-500/30">
-        <h3 className="text-sm sm:text-base font-semibold text-blue-200 mb-2 sm:mb-3">
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 3 },
+          background:
+            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
           Как использовать
-        </h3>
-        <ol className="text-xs sm:text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
-          <li>
+        </Typography>
+        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography component="li" variant="body2">
             Введите квадратную матрицу весов (числа — веса рёбер, 0 или 'inf' — отсутствие ребра)
-          </li>
-          <li>Нажмите "Отправить" чтобы построить граф</li>
-          <li>Нажмите "Запустить" чтобы выполнить алгоритм (начнётся с первой вершины)</li>
-          <li>Просмотрите результаты: кратчайшие расстояния и пути от стартовой вершины</li>
-        </ol>
-      </div>
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите "Отправить" чтобы построить граф
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите "Запустить" чтобы выполнить алгоритм (начнётся с первой вершины)
+          </Typography>
+          <Typography component="li" variant="body2">
+            Просмотрите результаты: кратчайшие расстояния и пути от стартовой вершины
+          </Typography>
+        </Box>
+      </Paper>
     </>
   );
 }

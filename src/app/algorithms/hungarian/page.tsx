@@ -1,5 +1,6 @@
 'use client';
 
+import { Box, Paper, Typography, Alert } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import { graphConfig } from '@/shared/lib/config';
@@ -120,10 +121,10 @@ function HungarianContent() {
 
   return (
     <>
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
-        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Ввод матрицы стоимостей
-        </h3>
+        </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
           placeholder="Введите квадратную матрицу стоимостей построчно. Используйте запятую как разделитель. Числа представляют стоимость назначения источника на цель."
@@ -131,45 +132,61 @@ function HungarianContent() {
 1,0,2
 1,3,5`}
         />
-      </div>
+      </Paper>
 
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-neutral-700/50">
-        <h3 className="text-sm sm:text-base font-semibold text-neutral-200 mb-2 sm:mb-3">
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           О алгоритме
-        </h3>
-        <div className="text-xs sm:text-sm text-neutral-300 space-y-2 leading-relaxed">
-          <p>
-            <strong className="text-white">Венгерский алгоритм</strong> — это алгоритм решения
-            задачи о назначениях (assignment problem), которая заключается в нахождении оптимального
-            назначения элементов одного множества элементам другого множества с минимальной общей
-            стоимостью.
-          </p>
-          <p>
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2">
+            <strong>Венгерский алгоритм</strong> — это алгоритм решения задачи о назначениях
+            (assignment problem), которая заключается в нахождении оптимального назначения элементов
+            одного множества элементам другого множества с минимальной общей стоимостью.
+          </Typography>
+          <Typography variant="body2">
             Алгоритм работает с квадратной матрицей стоимостей и находит такое назначение, при
             котором каждый элемент первого множества назначается ровно одному элементу второго
             множества, и общая стоимость минимальна.
-          </p>
-          <p>Временная сложность: O(n³), где n — размер матрицы.</p>
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <p className="text-blue-300 text-xs font-medium">
+          </Typography>
+          <Typography variant="body2">
+            Временная сложность: O(n³), где n — размер матрицы.
+          </Typography>
+          <Alert severity="info" sx={{ mt: 1 }}>
+            <Typography variant="body2">
               💡 Совет: Используйте квадратную матрицу стоимостей. Граф будет представлен как
               двудольный граф, где левая часть — источники, правая — цели.
-            </p>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Alert>
+        </Box>
+      </Paper>
 
-      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-blue-500/30">
-        <h3 className="text-sm sm:text-base font-semibold text-blue-200 mb-2 sm:mb-3">
+      <Paper
+        sx={{
+          p: { xs: 2, sm: 3 },
+          background:
+            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
           Как использовать
-        </h3>
-        <ol className="text-xs sm:text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
-          <li>Введите квадратную матрицу стоимостей (числа — стоимости назначений)</li>
-          <li>Нажмите "Отправить" чтобы построить двудольный граф</li>
-          <li>Нажмите "Запустить" чтобы выполнить алгоритм</li>
-          <li>Просмотрите результаты: оптимальное назначение и общая стоимость</li>
-        </ol>
-      </div>
+        </Typography>
+        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography component="li" variant="body2">
+            Введите квадратную матрицу стоимостей (числа — стоимости назначений)
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите "Отправить" чтобы построить двудольный граф
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите "Запустить" чтобы выполнить алгоритм
+          </Typography>
+          <Typography component="li" variant="body2">
+            Просмотрите результаты: оптимальное назначение и общая стоимость
+          </Typography>
+        </Box>
+      </Paper>
     </>
   );
 }

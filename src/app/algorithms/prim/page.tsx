@@ -5,6 +5,7 @@
  * Страница визуализации алгоритма Прима
  */
 
+import { Box, Paper, Typography, Alert } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import type { EdgeDTO, GraphDTO, NodeDTO } from '@/types';
@@ -115,39 +116,62 @@ function PrimContent() {
 
   return (
     <>
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-        <h3 className="text-base font-semibold text-neutral-200 mb-3">Ввод матрицы весов</h3>
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          Ввод матрицы весов
+        </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
           placeholder="Введите симметричную матрицу весов (0 или пусто — нет ребра)"
         />
-      </div>
+      </Paper>
 
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-        <h3 className="text-base font-semibold text-neutral-200 mb-3">О алгоритме</h3>
-        <div className="text-sm text-neutral-300 space-y-2 leading-relaxed">
-          <p>
-            <strong className="text-white">Алгоритм Прима</strong> строит минимальное остовное
-            дерево, постепенно расширяя остов вершинами через ребро минимального веса.
-          </p>
-          <p>Работает с неориентированным взвешенным графом без отрицательных весов.</p>
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <p className="text-blue-300 text-xs font-medium">
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          О алгоритме
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2">
+            <strong>Алгоритм Прима</strong> строит минимальное остовное дерево, постепенно расширяя
+            остов вершинами через ребро минимального веса.
+          </Typography>
+          <Typography variant="body2">
+            Работает с неориентированным взвешенным графом без отрицательных весов.
+          </Typography>
+          <Alert severity="info" sx={{ mt: 1 }}>
+            <Typography variant="body2">
               💡 Совет: используйте симметричную матрицу с весами &gt; 0. Диагональ — 0.
-            </p>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Alert>
+        </Box>
+      </Paper>
 
-      <div className="bg-gradient-to-br from-blue-500/10 to-emerald-500/10 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
-        <h3 className="text-base font-semibold text-blue-200 mb-3">Как использовать</h3>
-        <ol className="text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
-          <li>Введите симметричную матрицу весов (0 — нет ребра)</li>
-          <li>Нажмите «Отправить», чтобы построить граф</li>
-          <li>Нажмите «Запустить», чтобы выполнить алгоритм Прима</li>
-          <li>Шаги и подсветка появятся на холсте и в панели управления</li>
-        </ol>
-      </div>
+      <Paper
+        sx={{
+          p: 3,
+          background:
+            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1))',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
+          Как использовать
+        </Typography>
+        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography component="li" variant="body2">
+            Введите симметричную матрицу весов (0 — нет ребра)
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите «Отправить», чтобы построить граф
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите «Запустить», чтобы выполнить алгоритм Прима
+          </Typography>
+          <Typography component="li" variant="body2">
+            Шаги и подсветка появятся на холсте и в панели управления
+          </Typography>
+        </Box>
+      </Paper>
     </>
   );
 }
