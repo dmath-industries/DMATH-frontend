@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Box, TextField, Button, Typography } from '@mui/material';
 
 interface GraphMatrixInputProps {
   onSubmit: (matrix: string) => void;
@@ -16,22 +17,36 @@ export function GraphMatrixInput({ onSubmit, placeholder, defaultValue }: GraphM
   };
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-neutral-400">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {placeholder || 'Задайте матрицу смежности. Используйте запятую в качестве разделителя'}
-      </p>
-      <textarea
+      </Typography>
+      <TextField
+        multiline
+        rows={8}
         value={matrixText}
         onChange={e => setMatrixText(e.target.value)}
-        className="w-full h-48 bg-neutral-900 border border-neutral-600 rounded-lg p-4 font-mono text-sm text-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         placeholder="0,1,0,1,0&#10;1,0,1,1,0&#10;0,1,0,0,1"
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            fontFamily: 'monospace',
+            fontSize: '0.875rem',
+          },
+        }}
       />
-      <button
+      <Button
+        variant="contained"
         onClick={handleSubmit}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-medium py-2.5 px-6 rounded-lg transition-all shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40"
+        fullWidth
+        sx={{
+          background: 'linear-gradient(to right, #9333ea, #a855f7)',
+          '&:hover': {
+            background: 'linear-gradient(to right, #a855f7, #c084fc)',
+          },
+        }}
       >
         Отправить
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 }
