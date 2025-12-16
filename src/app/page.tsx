@@ -1,60 +1,148 @@
 'use client';
 
+import { Box, Container, Typography, Button, Link as MuiLink } from '@mui/material';
 import Link from 'next/link';
 import { AnalyticsEvents } from '@/shared/lib';
 
 export default function Home() {
   return (
-    <div className="App min-h-screen">
-      <div className="min-h-screen flex items-center justify-center py-8">
-        <div className="container flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 md:px-[10%]">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-[400] mb-4 sm:mb-6 text-center sm:text-left leading-tight">
-            Добро пожаловать в интерактивный учебный инструмент для изучения ключевых алгоритмов
-            дискретной математики и сетей
-          </h1>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 4,
+      }}
+    >
+      <Container
+        maxWidth="lg"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: { xs: 2, sm: 3 },
+          px: { xs: 2, sm: 3, md: '10%' },
+        }}
+      >
+        <Typography
+          variant="h1"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.25rem', lg: '3rem' },
+            fontWeight: 400,
+            mb: { xs: 2, sm: 3 },
+            textAlign: { xs: 'center', sm: 'left' },
+            lineHeight: 1.2,
+          }}
+        >
+          Добро пожаловать в интерактивный учебный инструмент для изучения ключевых алгоритмов
+          дискретной математики и сетей
+        </Typography>
 
-          <div className="space-y-3 sm:space-y-4">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-center sm:text-left">
-              Здесь вы можете:
-            </h2>
-            <ul className="list-disc pl-6 sm:pl-10 flex flex-col gap-2 sm:gap-3 text-base sm:text-lg md:text-xl">
-              <li className="leading-relaxed">Запускать алгоритмы шаг за шагом</li>
-              <li className="leading-relaxed">Видеть, как они работают — визуально и понятно</li>
-              <li className="leading-relaxed">Анализировать каждый этап решения</li>
-            </ul>
-          </div>
-
-          <div className="space-y-3 sm:space-y-4">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-center sm:text-left">
-              Что можно изучать:
-            </h2>
-            <ul className="list-disc pl-6 sm:pl-10 flex flex-col gap-2 sm:gap-3 text-base sm:text-lg md:text-xl">
-              <li className="leading-relaxed">
-                <span className="font-medium">Графы:</span> обход в ширину (BFS), в глубину (DFS),
-                алгоритм Дейкстры, минимальное остовное дерево
-              </li>
-              <li className="leading-relaxed">
-                <span className="font-medium">Транспортные задачи:</span> метод минимальной
-                стоимости, распределение ресурсов
-              </li>
-              <li className="leading-relaxed">
-                <span className="font-medium">Нейросети:</span> распространение сигнала в простой
-                нейронной сети (MLP) — без формул, но с пониманием процесса
-              </li>
-            </ul>
-          </div>
-
-          <div className="mt-6 sm:mt-8 flex justify-center sm:justify-start">
-            <Link
-              href="/algorithms"
-              className="btn-primary-lg"
-              onClick={() => AnalyticsEvents.navigateToAlgorithms()}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 } }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.875rem' },
+              fontWeight: 600,
+              textAlign: { xs: 'center', sm: 'left' },
+            }}
+          >
+            Здесь вы можете:
+          </Typography>
+          <Box
+            component="ul"
+            sx={{ pl: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', gap: 1 }}
+          >
+            <Typography
+              component="li"
+              variant="body1"
+              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
             >
-              Перейти к алгоритмам
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
+              Запускать алгоритмы шаг за шагом
+            </Typography>
+            <Typography
+              component="li"
+              variant="body1"
+              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+            >
+              Видеть, как они работают — визуально и понятно
+            </Typography>
+            <Typography
+              component="li"
+              variant="body1"
+              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+            >
+              Анализировать каждый этап решения
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 } }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.875rem' },
+              fontWeight: 600,
+              textAlign: { xs: 'center', sm: 'left' },
+            }}
+          >
+            Что можно изучать:
+          </Typography>
+          <Box
+            component="ul"
+            sx={{ pl: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', gap: 1 }}
+          >
+            <Typography
+              component="li"
+              variant="body1"
+              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+            >
+              <strong>Графы:</strong> обход в ширину (BFS), в глубину (DFS), алгоритм Дейкстры,
+              минимальное остовное дерево
+            </Typography>
+            <Typography
+              component="li"
+              variant="body1"
+              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+            >
+              <strong>Транспортные задачи:</strong> метод минимальной стоимости, распределение
+              ресурсов
+            </Typography>
+            <Typography
+              component="li"
+              variant="body1"
+              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+            >
+              <strong>Нейросети:</strong> распространение сигнала в простой нейронной сети (MLP) —
+              без формул, но с пониманием процесса
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            mt: { xs: 3, sm: 4 },
+            display: 'flex',
+            justifyContent: { xs: 'center', sm: 'flex-start' },
+          }}
+        >
+          <Button
+            component={Link}
+            href="/algorithms"
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={() => AnalyticsEvents.navigateToAlgorithms()}
+            sx={{
+              px: { xs: 4, sm: 5 },
+              py: { xs: 2, sm: 2.5 },
+              fontSize: { xs: '1rem', sm: '1.125rem' },
+            }}
+          >
+            Перейти к алгоритмам
+          </Button>
+        </Box>
+      </Container>
+    </Box>
   );
 }
