@@ -13,6 +13,8 @@ import type {
   AlgorithmParams,
   ElementState,
 } from '@/types';
+import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
+import '@/services/explanations/registry'; // Инициализация реестра генераторов
 
 const formatNodeLabel = (nodeId: string | number): string => {
   const numericId =
@@ -39,6 +41,8 @@ export class RobertsFloresStepGenerator {
   private stepCounter = 0;
   private graphModel!: GraphModel;
   private graph!: Graph;
+  private totalNodes: number = 0;
+  private startNode: string | null = null;
 
   /**
    * Генерировать шаги для алгоритма Roberts-Flores
@@ -53,12 +57,14 @@ export class RobertsFloresStepGenerator {
     this.graph = this.graphModel.getGraph();
 
     const totalNodes = this.graph.order;
+    this.totalNodes = totalNodes;
     if (totalNodes === 0) {
       return this.steps;
     }
 
     const firstNode = this.graph.nodes()[0];
     const startNode = params.startNode ?? firstNode ?? '0';
+    this.startNode = startNode;
 
     if (!this.graph.hasNode(startNode)) {
       return this.steps;
@@ -69,7 +75,8 @@ export class RobertsFloresStepGenerator {
     this.addHighlightNodeStep(
       startNode,
       'current',
-      `Начало: добавлена вершина ${formatNodeLabel(startNode)}`
+      `Начало: добавлена вершина ${formatNodeLabel(startNode)}`,
+      { path: [...path], startNode, totalNodes: this.totalNodes, isInitial: true }
     );
 
     this.findHamiltonianCycles(path, startNode, totalNodes);
@@ -92,33 +99,68 @@ export class RobertsFloresStepGenerator {
       if (hasCycleEdge) {
         const edgeId = this.getEdgeId(current, firstNode);
         if (edgeId) {
-          this.addHighlightEdgeStep(edgeId, 'path', `Найден Гамильтонов цикл: ${formatPath(path)}`);
+          this.addHighlightEdgeStep(
+            edgeId,
+            'path',
+            `Найден Гамильтонов цикл: ${formatPath(path)}`,
+            {
+              from: current,
+              to: firstNode,
+              path: [...path],
+              totalNodes: this.totalNodes,
+              isCycle: true,
+            }
+          );
         }
 
         for (const nodeId of path) {
-          this.addHighlightNodeStep(nodeId, 'path');
+          this.addHighlightNodeStep(nodeId, 'path', undefined, {
+            path: [...path],
+            cyclePath: [...path],
+            totalNodes: this.totalNodes,
+            startNode: this.startNode,
+          });
         }
       } else {
-        this.addHighlightNodeStep(current, 'rejected', `Путь ${formatPath(path)} не образует цикл`);
+        this.addHighlightNodeStep(
+          current,
+          'rejected',
+          `Путь ${formatPath(path)} не образует цикл`,
+          {
+            path: [...path],
+            current,
+            firstNode,
+            totalNodes: this.totalNodes,
+            hasCycleEdge: false,
+          }
+        );
       }
 
       return;
     }
 
     // Используем outNeighbors для получения соседей
-    for (const next of this.graph.outNeighbors(current)) {
+    const neighbors = this.graph.outNeighbors(current);
+    for (const next of neighbors) {
       if (!path.includes(next)) {
         path.push(next);
 
         this.addHighlightNodeStep(
           next,
           'current',
-          `Добавлена вершина ${formatNodeLabel(next)}: ${formatPath(path)}`
+          `Добавлена вершина ${formatNodeLabel(next)}: ${formatPath(path)}`,
+          {
+            path: [...path],
+            current,
+            next,
+            neighbors: neighbors.map(String),
+            totalNodes: this.totalNodes,
+          }
         );
 
         const edgeId = this.getEdgeId(current, next);
         if (edgeId) {
-          this.addHighlightEdgeStep(edgeId, 'active');
+          this.addHighlightEdgeStep(edgeId, 'active', undefined, { from: current, to: next });
         }
 
         this.findHamiltonianCycles(path, next, totalNodes);
@@ -128,11 +170,12 @@ export class RobertsFloresStepGenerator {
         this.addHighlightNodeStep(
           next,
           'visited',
-          `Удалена вершина ${formatNodeLabel(next)}: ${formatPath(path)}`
+          `Удалена вершина ${formatNodeLabel(next)}: ${formatPath(path)}`,
+          { path: [...path], current, next, totalNodes: this.totalNodes, isBacktrack: true }
         );
 
         if (edgeId) {
-          this.addHighlightEdgeStep(edgeId, 'default');
+          this.addHighlightEdgeStep(edgeId, 'default', undefined, { from: current, to: next });
         }
       }
     }
@@ -141,7 +184,12 @@ export class RobertsFloresStepGenerator {
   /**
    * Добавить шаг для подсветки узла
    */
-  private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
+  private addHighlightNodeStep(
+    nodeId: string,
+    state: ElementState,
+    description?: string,
+    context?: Record<string, unknown>
+  ): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -151,12 +199,29 @@ export class RobertsFloresStepGenerator {
       description,
     };
     this.steps.push(step);
+
+    // Добавляем пояснение через генератор
+    if (context) {
+      const explanation = explanationGeneratorRegistry.generate(
+        step,
+        'roberts-flores',
+        context as AlgorithmContext
+      );
+      if (explanation) {
+        step.explanation = explanation;
+      }
+    }
   }
 
   /**
    * Добавить шаг для подсветки ребра
    */
-  private addHighlightEdgeStep(edgeId: string, state: ElementState, description?: string): void {
+  private addHighlightEdgeStep(
+    edgeId: string,
+    state: ElementState,
+    description?: string,
+    context?: Record<string, unknown>
+  ): void {
     const step: HighlightEdgeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -166,6 +231,18 @@ export class RobertsFloresStepGenerator {
       description,
     };
     this.steps.push(step);
+
+    // Добавляем пояснение через генератор
+    if (context) {
+      const explanation = explanationGeneratorRegistry.generate(
+        step,
+        'roberts-flores',
+        context as AlgorithmContext
+      );
+      if (explanation) {
+        step.explanation = explanation;
+      }
+    }
   }
 
   /**
