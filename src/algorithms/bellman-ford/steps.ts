@@ -7,6 +7,8 @@ import type {
   AlgorithmParams,
   ElementState,
 } from '@/types';
+import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
+import '@/services/explanations/registry'; // Инициализация реестра генераторов
 
 interface Edge {
   source: string;
@@ -21,6 +23,7 @@ export class BellmanFordStepGenerator {
   private distances: Map<string, number> = new Map();
   private predecessors: Map<string, string | null> = new Map();
   private pendingDescription: string | undefined;
+  private startNode: string | null = null;
 
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
@@ -35,6 +38,7 @@ export class BellmanFordStepGenerator {
 
     const firstNode = graphDTO.nodes[0];
     const startNode = params.startNode ?? firstNode?.id ?? '0';
+    this.startNode = startNode;
 
     if (!graphDTO.nodes.some(n => n.id === startNode)) {
       return this.steps;
@@ -84,7 +88,8 @@ export class BellmanFordStepGenerator {
         this.addHighlightEdgeStep(
           edge.edgeId,
           'active',
-          `Проверка ребра ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} (вес: ${w})`
+          `Проверка ребра ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} (вес: ${w})`,
+          { from: u, to: v, weight: w }
         );
 
         if (distU !== Infinity && distU + w < distV) {
@@ -106,17 +111,19 @@ export class BellmanFordStepGenerator {
           this.addHighlightEdgeStep(
             edge.edgeId,
             'path',
-            `Релаксация выполнена: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)}`
+            `Релаксация выполнена: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)}`,
+            { from: u, to: v, weight: w }
           );
         } else {
           this.addHighlightEdgeStep(
             edge.edgeId,
             'visited',
-            `Релаксация не требуется: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)}`
+            `Релаксация не требуется: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)}`,
+            { from: u, to: v, weight: w }
           );
         }
 
-        this.addHighlightEdgeStep(edge.edgeId, 'default');
+        this.addHighlightEdgeStep(edge.edgeId, 'default', undefined, { from: u, to: v, weight: w });
       }
 
       for (const node of graphDTO.nodes) {
@@ -151,7 +158,8 @@ export class BellmanFordStepGenerator {
       this.addHighlightEdgeStep(
         edge.edgeId,
         'active',
-        `Проверка ребра ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} на отрицательный цикл`
+        `Проверка ребра ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} на отрицательный цикл`,
+        { from: u, to: v, weight: w }
       );
 
       if (distU !== Infinity && distU + w < distV) {
@@ -160,7 +168,8 @@ export class BellmanFordStepGenerator {
         this.addHighlightEdgeStep(
           edge.edgeId,
           'rejected',
-          `Обнаружено: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} указывает на отрицательный цикл!`
+          `Обнаружено: ${this.getNodeLabel(u)} → ${this.getNodeLabel(v)} указывает на отрицательный цикл!`,
+          { from: u, to: v, weight: w }
         );
         this.addHighlightNodeStep(
           u,
@@ -173,7 +182,7 @@ export class BellmanFordStepGenerator {
           `Вершина ${this.getNodeLabel(v)} в отрицательном цикле`
         );
       } else {
-        this.addHighlightEdgeStep(edge.edgeId, 'default');
+        this.addHighlightEdgeStep(edge.edgeId, 'default', undefined, { from: u, to: v, weight: w });
       }
     }
 
@@ -197,7 +206,8 @@ export class BellmanFordStepGenerator {
               this.addHighlightNodeStep(
                 node.id,
                 'path',
-                `Кратчайшее расстояние: ${dist}, путь: ${path.map(n => this.getNodeLabel(n)).join(' → ')}`
+                `Кратчайшее расстояние: ${dist}, путь: ${path.map(n => this.getNodeLabel(n)).join(' → ')}`,
+                { path, distance: dist }
               );
             }
           }
@@ -212,7 +222,8 @@ export class BellmanFordStepGenerator {
             this.addHighlightEdgeStep(
               edge.edgeId,
               'path',
-              `Ребро в кратчайшем пути: ${this.getNodeLabel(pred)} → ${this.getNodeLabel(node.id)}`
+              `Ребро в кратчайшем пути: ${this.getNodeLabel(pred)} → ${this.getNodeLabel(node.id)}`,
+              { from: pred, to: node.id }
             );
           }
         }
@@ -266,7 +277,12 @@ export class BellmanFordStepGenerator {
     return 'default';
   }
 
-  private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
+  private addHighlightNodeStep(
+    nodeId: string,
+    state: ElementState,
+    description?: string,
+    context?: AlgorithmContext
+  ): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -275,13 +291,30 @@ export class BellmanFordStepGenerator {
       state,
       description: description || this.pendingDescription,
     };
+
+    // Генерируем пояснение
+    const explanation = explanationGeneratorRegistry.generate(step, 'bellman-ford', {
+      ...context,
+      isStartNode: nodeId === this.startNode,
+      distances: this.distances,
+      predecessors: this.predecessors,
+    });
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     if (this.pendingDescription) {
       this.pendingDescription = undefined;
     }
     this.steps.push(step);
   }
 
-  private addHighlightEdgeStep(edgeId: string, state: ElementState, description?: string): void {
+  private addHighlightEdgeStep(
+    edgeId: string,
+    state: ElementState,
+    description?: string,
+    context?: { from?: string; to?: string; weight?: number }
+  ): void {
     const step: HighlightEdgeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -290,6 +323,24 @@ export class BellmanFordStepGenerator {
       state,
       description: description || this.pendingDescription,
     };
+
+    // Генерируем пояснение с контекстом ребра
+    const algorithmContext: AlgorithmContext = {
+      edgeFrom: context?.from,
+      edgeTo: context?.to,
+      edgeWeight: context?.weight,
+      distanceFrom: context?.from ? this.distances.get(context.from) : undefined,
+      distanceTo: context?.to ? this.distances.get(context.to) : undefined,
+    };
+    const explanation = explanationGeneratorRegistry.generate(
+      step,
+      'bellman-ford',
+      algorithmContext
+    );
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     if (this.pendingDescription) {
       this.pendingDescription = undefined;
     }
@@ -305,6 +356,16 @@ export class BellmanFordStepGenerator {
       attrs,
       description: description || this.pendingDescription,
     };
+
+    // Генерируем пояснение
+    const explanation = explanationGeneratorRegistry.generate(step, 'bellman-ford', {
+      distances: this.distances,
+      predecessors: this.predecessors,
+    });
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     if (this.pendingDescription) {
       this.pendingDescription = undefined;
     }

@@ -14,6 +14,8 @@ import type {
   HighlightNodeStep,
   Step,
 } from '@/types';
+import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
+import '@/services/explanations/registry'; // Инициализация реестра генераторов
 
 type CandidateEdge = {
   edgeId: string;
@@ -90,7 +92,8 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edgeId,
         'active',
-        `Выбрано ребро ${this.formatEdgeLabel(from, to)} с весом ${this.formatWeight(weight)}`
+        `Выбрано ребро ${this.formatEdgeLabel(from, to)} с весом ${this.formatWeight(weight)}`,
+        { from, to, weight }
       );
 
       this.addHighlightNodeStep(
@@ -104,7 +107,8 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edgeId,
         'path',
-        `Ребро ${this.formatEdgeLabel(from, to)} зафиксировано в MST`
+        `Ребро ${this.formatEdgeLabel(from, to)} зафиксировано в MST`,
+        { from, to, weight }
       );
       this.addHighlightNodeStep(nextNode, 'path');
 
@@ -147,7 +151,8 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edgeId,
         'candidate',
-        `Ребро ${this.formatEdgeLabel(nodeId, neighborId)} кандидат с весом ${this.formatWeight(weight)}`
+        `Ребро ${this.formatEdgeLabel(nodeId, neighborId)} кандидат с весом ${this.formatWeight(weight)}`,
+        { from: nodeId, to: neighborId, weight }
       );
     }
   }
@@ -174,7 +179,8 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edge.edgeId,
         'rejected',
-        'Ребро больше не расширяет остов и пропускается'
+        'Ребро больше не расширяет остов и пропускается',
+        { from: edge.from, to: edge.to, weight: edge.weight }
       );
     }
 
@@ -211,13 +217,25 @@ export class PrimStepGenerator {
       state,
       description,
     };
+
+    // Генерируем пояснение
+    const explanation = explanationGeneratorRegistry.generate(step, 'prim');
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     this.steps.push(step);
   }
 
   /**
    * Добавить шаг подсветки ребра
    */
-  private addHighlightEdgeStep(edgeId: string, state: ElementState, description?: string): void {
+  private addHighlightEdgeStep(
+    edgeId: string,
+    state: ElementState,
+    description?: string,
+    context?: { from?: string; to?: string; weight?: number }
+  ): void {
     const step: HighlightEdgeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -226,6 +244,18 @@ export class PrimStepGenerator {
       state,
       description,
     };
+
+    // Генерируем пояснение с контекстом ребра
+    const algorithmContext: AlgorithmContext = {
+      edgeFrom: context?.from,
+      edgeTo: context?.to,
+      edgeWeight: context?.weight,
+    };
+    const explanation = explanationGeneratorRegistry.generate(step, 'prim', algorithmContext);
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     this.steps.push(step);
   }
 

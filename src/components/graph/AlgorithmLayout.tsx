@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, createContext, useCont
 import { GraphCanvas } from './GraphCanvas';
 import { ControlPanel } from './ControlPanel';
 import { GraphEditor } from './GraphEditor';
+import { StepExplanationPanel } from './StepExplanationPanel';
 import {
   GraphModel,
   Renderer,
@@ -16,7 +17,14 @@ import { GraphDTO, Step } from '@/types';
 import { ChevronLeft, X, Info, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
-import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
+import {
+  pause,
+  updateTotalSteps,
+  reset,
+  setSession,
+  setIndex,
+  setCurrentStep,
+} from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
 import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
 import { getAlgorithmConfig } from '@/algorithms';
@@ -32,6 +40,7 @@ import {
   Paper,
 } from '@mui/material';
 import { Alert } from '@/components/elements';
+import '@/services/explanations/registry'; // Инициализация реестра генераторов пояснений
 
 const STORAGE_KEYS = {
   SESSION: (algorithmName: string) => `currentSession-${algorithmName}`,
@@ -349,6 +358,9 @@ export function AlgorithmLayout({
       renderer,
       onIndexChange: index => {
         dispatch(setIndex(index));
+        // Обновляем currentStep в store
+        const step = controller.getStepByIndex(index);
+        dispatch(setCurrentStep(step));
       },
       onComplete: () => {
         dispatch(pause());
@@ -679,6 +691,10 @@ export function AlgorithmLayout({
     if (controllerIndex !== currentIndex) {
       controllerRef.current.goToIndex(currentIndex);
 
+      // Обновляем currentStep при изменении индекса
+      const step = controllerRef.current.getStepByIndex(currentIndex);
+      dispatch(setCurrentStep(step));
+
       if (currentIndex >= 0 && totalSteps > 0) {
         const viewMethod = playing ? 'auto' : 'manual';
         AnalyticsEvents.stepViewed(algorithmName, currentIndex + 1, totalSteps, viewMethod);
@@ -730,6 +746,13 @@ export function AlgorithmLayout({
     sessionStorage.setItem(STORAGE_KEYS.LAST_ALGORITHM, algorithmName);
     prevAlgorithmNameRef.current = algorithmName;
   }, [algorithmName, graphModel, dispatch]);
+
+  // Синхронизация currentStep при инициализации или изменении индекса извне
+  useEffect(() => {
+    if (!controllerRef.current) return;
+    const step = controllerRef.current.getStepByIndex(currentIndex);
+    dispatch(setCurrentStep(step));
+  }, [currentIndex, dispatch]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
@@ -858,6 +881,8 @@ export function AlgorithmLayout({
                     </Typography>
                   </MuiAlert>
                 )}
+
+                {hasRunAlgorithm && currentIndex >= 0 && totalSteps > 0 && <StepExplanationPanel />}
 
                 <Paper
                   ref={canvasContainerRef}
