@@ -17,14 +17,7 @@ import { GraphDTO, Step } from '@/types';
 import { ChevronLeft, X, Info, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
-import {
-  pause,
-  updateTotalSteps,
-  reset,
-  setSession,
-  setIndex,
-  setCurrentStep,
-} from '@/shared/store';
+import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
 import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
 import { getAlgorithmConfig } from '@/algorithms';
@@ -121,6 +114,7 @@ export function AlgorithmLayout({
     message: '',
     variant: 'info',
   });
+  const [currentStep, setCurrentStep] = useState<Step | null>(null);
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -358,9 +352,9 @@ export function AlgorithmLayout({
       renderer,
       onIndexChange: index => {
         dispatch(setIndex(index));
-        // Обновляем currentStep в store
+        // Обновляем currentStep при изменении индекса
         const step = controller.getStepByIndex(index);
-        dispatch(setCurrentStep(step));
+        setCurrentStep(step);
       },
       onComplete: () => {
         dispatch(pause());
@@ -693,7 +687,7 @@ export function AlgorithmLayout({
 
       // Обновляем currentStep при изменении индекса
       const step = controllerRef.current.getStepByIndex(currentIndex);
-      dispatch(setCurrentStep(step));
+      setCurrentStep(step);
 
       if (currentIndex >= 0 && totalSteps > 0) {
         const viewMethod = playing ? 'auto' : 'manual';
@@ -751,8 +745,8 @@ export function AlgorithmLayout({
   useEffect(() => {
     if (!controllerRef.current) return;
     const step = controllerRef.current.getStepByIndex(currentIndex);
-    dispatch(setCurrentStep(step));
-  }, [currentIndex, dispatch]);
+    setCurrentStep(step);
+  }, [currentIndex]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
@@ -848,7 +842,11 @@ export function AlgorithmLayout({
             <Grid item xs={12} lg sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {loadedSessionInfo && (
+<<<<<<< HEAD
                   <MuiAlert
+=======
+                  <Alert
+>>>>>>> 54a7587 (refactor: DMATH-42 convert AlgorithmLayout to Material UI and integrate StepExplanationPanel with local state)
                     severity="info"
                     icon={<Info size={20} />}
                     action={
@@ -879,6 +877,7 @@ export function AlgorithmLayout({
                     <Typography variant="caption" sx={{ color: 'info.light' }}>
                       {loadedSessionInfo.name} • {loadedSessionInfo.date}
                     </Typography>
+<<<<<<< HEAD
                   </MuiAlert>
                 )}
 
@@ -975,7 +974,7 @@ export function AlgorithmLayout({
                     />
                   </Box>
 
-                  {hasRunAlgorithm && !playing && currentIndex === -1 && (
+                  {hasRunAlgorithm && !playing && currentIndex === -1 && totalSteps > 0 && (
                     <MuiAlert
                       severity="success"
                       icon={<CheckCircle size={20} />}
@@ -997,6 +996,12 @@ export function AlgorithmLayout({
                         снова, загрузите новую матрицу или нажмите кнопку "Очистить".
                       </Typography>
                     </MuiAlert>
+                  )}
+
+                  {hasRunAlgorithm && currentIndex >= 0 && totalSteps > 0 && (
+                    <Box sx={{ px: 3, pb: 3 }}>
+                      <StepExplanationPanel currentStep={currentStep} />
+                    </Box>
                   )}
                 </Paper>
 
