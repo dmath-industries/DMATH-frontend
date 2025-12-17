@@ -20,7 +20,7 @@ import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/s
 import { sessionRepository } from '@/shared/persistence';
 import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
 import { usePathname } from 'next/navigation';
-import { Box, Container, Typography, Button, Alert, IconButton, Grid, Paper } from '@mui/material';
+import { Box, Container, Typography, Button, Alert, IconButton, GridLegacy as Grid, Paper } from '@mui/material';
 
 interface AlgorithmLayoutContextType {
   loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
