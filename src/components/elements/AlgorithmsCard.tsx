@@ -23,19 +23,17 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
       sx={{
         position: 'relative',
         width: '100%',
-        height: '100%',
         borderRadius: 4,
         overflow: 'hidden',
-        minHeight: 280,
-        maxHeight: 280,
+        minHeight: 380,
         cursor: 'pointer',
         backdropFilter: 'blur(8px)',
         textDecoration: 'none',
         background: 'linear-gradient(to bottom right, #2a2a2a, #1f1f1f, #151515)',
         border: '2px solid #3a3a3a',
         boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-        px: 4,
-        py: 5,
+        px: 8,
+        py: 10,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -171,9 +169,9 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
           justifyContent: 'center',
           alignItems: 'center',
           width: '100%',
-          height: 140,
+          height: 192,
           borderRadius: 3,
-          p: 3,
+          p: 6,
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
           background: 'linear-gradient(to bottom right, #2a2a2a, #1a1a1a)',
           border: '1px solid rgba(58, 58, 58, 0.5)',
@@ -203,8 +201,8 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
           <Image
             src={img || '/images/svg/Rectangle.svg'}
             alt={title}
-            width={120}
-            height={120}
+            width={200}
+            height={200}
             style={{ objectFit: 'contain' }}
           />
         </Box>
@@ -216,22 +214,22 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
           position: 'relative',
           zIndex: 10,
           width: '100%',
-          mt: 4,
+          mt: 8,
         }}
       >
         <Typography
           className="title"
           variant="h5"
           sx={{
-            fontSize: { xs: '1rem', md: '1.125rem', lg: '1.25rem' },
+            fontSize: { xs: '1.125rem', md: '1.25rem', lg: '1.5rem' },
             textAlign: 'center',
             fontWeight: 700,
             color: '#ffffff',
             display: '-webkit-box',
-            WebkitLineClamp: 2,
+            WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            lineHeight: 1.3,
+            lineHeight: 1.25,
             transition: 'all 0.5s',
             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
           }}
