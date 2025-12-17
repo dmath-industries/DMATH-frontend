@@ -34,14 +34,24 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
 
     switch (state) {
       case 'current':
-        return this.createExplanation('general', `Обрабатываем строку/столбец ${nodeLabel}`, {
-          nodes: [nodeId],
-        });
+        return this.createExplanation(
+          'general',
+          `Обрабатываем строку/столбец ${nodeLabel}`,
+          { nodes: [nodeId] },
+          {
+            reason: `Венгерский алгоритм последовательно обрабатывает строки и столбцы матрицы, выполняя приведение матрицы (вычитание минимумов) и поиск полного паросочетания в графе назначений`,
+          }
+        );
 
       case 'path':
-        return this.createExplanation('selection', `Назначение: строка ${nodeLabel}`, {
-          nodes: [nodeId],
-        });
+        return this.createExplanation(
+          'selection',
+          `Назначение: строка ${nodeLabel}`,
+          { nodes: [nodeId] },
+          {
+            reason: `Строка ${nodeLabel} включена в текущее частичное назначение. Алгоритм строит паросочетание (назначения), где каждая строка и каждый столбец используются ровно один раз`,
+          }
+        );
 
       default:
         if (step.description) {
@@ -77,28 +87,38 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
     switch (state) {
       case 'active':
         if (row !== undefined && col !== undefined) {
+          const formula = `c[${row}][${col}] - u[${row}] - v[${col}] = ${costStr}`;
           return this.createExplanation(
             'matrix',
-            `По формуле c[${row}][${col}] - u[${row}] - v[${col}] рассматриваем элемент (${row}, ${col}) = ${costStr}`,
+            `Рассматриваем элемент матрицы (${row}, ${col})`,
             {
               edges: [edgeId],
               values: { row: row.toString(), col: col.toString(), cost: costStr },
               matrix: { row, col },
-              formula: 'c[i][j] - u[i] - v[j]',
+            },
+            {
+              reason: `Венгерский алгоритм работает с приведённой матрицей стоимостей. Элементы вычисляются как c[i][j] - u[i] - v[j], где u[i] и v[j] - потенциалы строки и столбца. Нулевые элементы в приведённой матрице соответствуют возможным оптимальным назначениям`,
+              formula: formula,
             }
           );
         }
         return this.createExplanation(
           'general',
-          `Рассматриваем назначение: ${fromLabel} → ${toLabel} (стоимость: ${costStr})`,
-          { edges: [edgeId], values: { cost: costStr } }
+          `Рассматриваем назначение: ${fromLabel} → ${toLabel}`,
+          { edges: [edgeId], values: { cost: costStr } },
+          {
+            reason: `Проверяем возможность назначения строки ${fromLabel} на столбец ${toLabel} с учётом текущей приведённой матрицы стоимостей`,
+          }
         );
 
       case 'path':
         return this.createExplanation(
           'selection',
-          `Выбрано назначение: ${fromLabel} → ${toLabel} (стоимость: ${costStr})`,
-          { edges: [edgeId], values: { cost: costStr } }
+          `Выбрано назначение: ${fromLabel} → ${toLabel}`,
+          { edges: [edgeId], values: { cost: costStr } },
+          {
+            reason: `Это назначение соответствует нулевому элементу в приведённой матрице стоимостей, что означает его оптимальность при текущих потенциалах. Назначения с нулевой приведённой стоимостью не увеличивают общую стоимость решения`,
+          }
         );
 
       default:
