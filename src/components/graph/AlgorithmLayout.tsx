@@ -338,6 +338,43 @@ export function AlgorithmLayout({
   };
 
   /**
+   * Получить шаг с пояснением, проверяя предыдущие шаги если у текущего нет пояснения
+   */
+  const getStepWithExplanation = useCallback(
+    (controller: StepController, index: number): Step | null => {
+      if (!controller || index < 0) {
+        return null;
+      }
+
+      const currentStep = controller.getStepByIndex(index);
+      if (!currentStep) {
+        return null;
+      }
+
+      // Если у текущего шага есть пояснение, возвращаем его как есть
+      if (currentStep.explanation) {
+        return currentStep;
+      }
+
+      // Иначе ищем пояснение в предыдущих шагах (проверяем до 5 предыдущих)
+      for (let i = index - 1; i >= Math.max(0, index - 5); i--) {
+        const prevStep = controller.getStepByIndex(i);
+        if (prevStep?.explanation) {
+          // Возвращаем текущий шаг, но с пояснением из предыдущего
+          return {
+            ...currentStep,
+            explanation: prevStep.explanation,
+          };
+        }
+      }
+
+      // Если не нашли пояснение в предыдущих шагах, возвращаем текущий шаг без пояснения
+      return currentStep;
+    },
+    []
+  );
+
+  /**
    * Обработчик готовности renderer и viewport
    */
   const handleRendererReady = (renderer: Renderer, viewport: ViewportAdapter) => {
@@ -352,8 +389,8 @@ export function AlgorithmLayout({
       renderer,
       onIndexChange: index => {
         dispatch(setIndex(index));
-        // Обновляем currentStep при изменении индекса
-        const step = controller.getStepByIndex(index);
+        // Обновляем currentStep при изменении индекса с проверкой предыдущих пояснений
+        const step = getStepWithExplanation(controller, index);
         setCurrentStep(step);
       },
       onComplete: () => {
@@ -685,8 +722,8 @@ export function AlgorithmLayout({
     if (controllerIndex !== currentIndex) {
       controllerRef.current.goToIndex(currentIndex);
 
-      // Обновляем currentStep при изменении индекса
-      const step = controllerRef.current.getStepByIndex(currentIndex);
+      // Обновляем currentStep при изменении индекса с проверкой предыдущих пояснений
+      const step = getStepWithExplanation(controllerRef.current, currentIndex);
       setCurrentStep(step);
 
       if (currentIndex >= 0 && totalSteps > 0) {
@@ -698,7 +735,7 @@ export function AlgorithmLayout({
     if (totalSteps > 0) {
       localStorage.setItem(STORAGE_KEYS.STEP(algorithmName), currentIndex.toString());
     }
-  }, [currentIndex, algorithmName, totalSteps, playing]);
+  }, [currentIndex, algorithmName, totalSteps, playing, getStepWithExplanation]);
 
   useEffect(() => {
     if (!controllerRef.current) return;
@@ -744,9 +781,9 @@ export function AlgorithmLayout({
   // Синхронизация currentStep при инициализации или изменении индекса извне
   useEffect(() => {
     if (!controllerRef.current) return;
-    const step = controllerRef.current.getStepByIndex(currentIndex);
+    const step = getStepWithExplanation(controllerRef.current, currentIndex);
     setCurrentStep(step);
-  }, [currentIndex]);
+  }, [currentIndex, getStepWithExplanation]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
@@ -842,11 +879,7 @@ export function AlgorithmLayout({
             <Grid item xs={12} lg sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {loadedSessionInfo && (
-<<<<<<< HEAD
                   <MuiAlert
-=======
-                  <Alert
->>>>>>> 54a7587 (refactor: DMATH-42 convert AlgorithmLayout to Material UI and integrate StepExplanationPanel with local state)
                     severity="info"
                     icon={<Info size={20} />}
                     action={
@@ -877,11 +910,8 @@ export function AlgorithmLayout({
                     <Typography variant="caption" sx={{ color: 'info.light' }}>
                       {loadedSessionInfo.name} • {loadedSessionInfo.date}
                     </Typography>
-<<<<<<< HEAD
                   </MuiAlert>
                 )}
-
-                {hasRunAlgorithm && currentIndex >= 0 && totalSteps > 0 && <StepExplanationPanel />}
 
                 <Paper
                   ref={canvasContainerRef}

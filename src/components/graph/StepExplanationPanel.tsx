@@ -81,7 +81,7 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
             <p className="text-sm text-neutral-400">
               {currentIndex < 0
                 ? 'Используйте панель управления для просмотра шагов алгоритма'
-                : 'Нет пояснения для текущего шага'}
+                : ''}
             </p>
           )}
         </div>
