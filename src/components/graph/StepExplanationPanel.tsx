@@ -1,14 +1,18 @@
 'use client';
 
 import { useAppSelector } from '@/shared/store';
-import type { StepExplanation } from '@/types';
+import type { Step, StepExplanation } from '@/types';
 import { Info, Calculator } from 'lucide-react';
+
+interface StepExplanationPanelProps {
+  currentStep: Step | null;
+}
 
 /**
  * Компонент панели пояснений к текущему шагу алгоритма
  */
-export function StepExplanationPanel() {
-  const { currentStep, currentIndex, totalSteps } = useAppSelector(state => state.steps);
+export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps) {
+  const { currentIndex, totalSteps } = useAppSelector(state => state.steps);
 
   // Показываем панель всегда, когда есть шаги алгоритма
   // Если нет активного шага, показываем пустое состояние
