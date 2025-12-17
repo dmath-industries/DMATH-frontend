@@ -6,13 +6,45 @@
 import type { NodeDTO, EdgeDTO, ElementState } from './dto.types';
 
 /**
+ * Типы пояснений для шагов алгоритма
+ */
+export type ExplanationType =
+  | 'comparison' // Сравнение весов/значений
+  | 'formula' // Математическая формула
+  | 'matrix' // Работа с матрицей
+  | 'selection' // Выбор элемента
+  | 'update' // Обновление значения
+  | 'iteration' // Итерация алгоритма
+  | 'decision' // Принятие решения
+  | 'path' // Работа с путём
+  | 'general'; // Общее пояснение
+
+/**
+ * Структурированное пояснение для шага алгоритма
+ */
+export interface StepExplanation {
+  type: ExplanationType;
+  text: string; // "Что делаем?" - краткое описание действия
+  reason?: string; // "Почему так?" - объяснение принципа/правила
+  formula?: string; // Математическая формула (если есть)
+  currentPath?: string; // Текущий путь для отображения в оранжевом блоке
+  context?: {
+    nodes?: string[];
+    edges?: string[];
+    values?: Record<string, number | string>;
+    matrix?: { row?: number; col?: number };
+  };
+}
+
+/**
  * Базовый тип для всех шагов
  */
 export interface BaseStep {
   id: string;
   timestamp: number;
   type: string;
-  description?: string; // опциональное текстовое описание для UI
+  description?: string; // опциональное текстовое описание для UI (для обратной совместимости)
+  explanation?: StepExplanation; // структурированное пояснение для шага
 }
 
 /**
