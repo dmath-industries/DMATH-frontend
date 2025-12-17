@@ -20,6 +20,7 @@ import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/s
 import { sessionRepository } from '@/shared/persistence';
 import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
 import { usePathname } from 'next/navigation';
+import { Box, Container, Typography, Button, Alert, IconButton, GridLegacy as Grid, Paper } from '@mui/material';
 
 interface AlgorithmLayoutContextType {
   loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
@@ -610,142 +611,286 @@ export function AlgorithmLayout({
 
   return (
     <AlgorithmLayoutContext.Provider value={contextValue}>
-      <div className="min-h-screen text-white bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-900">
-        <div className="max-w-[1920px] mx-auto px-2 sm:px-4 py-2 sm:py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-4">
-            <Link
+      <Box
+        sx={{
+          minHeight: '100vh',
+          color: 'text.primary',
+          background: 'linear-gradient(145deg, rgba(23, 23, 23, 1) 1%, rgba(38, 38, 38, 1) 100%)',
+        }}
+      >
+        <Container
+          maxWidth={false}
+          sx={{
+            maxWidth: '1920px',
+            px: { xs: 2, sm: 4 },
+            py: { xs: 2, sm: 4 },
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: { xs: 2, sm: 4 },
+              mb: 4,
+            }}
+          >
+            <Box
+              component={Link}
               href="/algorithms"
-              className="inline-flex items-center text-neutral-400 hover:text-white transition-colors group text-xs sm:text-sm"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: 'text.secondary',
+                textDecoration: 'none',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                transition: 'color 0.2s',
+                '&:hover': {
+                  color: 'text.primary',
+                  '& svg': {
+                    transform: 'translateX(-4px)',
+                  },
+                },
+              }}
             >
-              <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="hidden sm:inline">Назад к списку алгоритмов</span>
-              <span className="sm:hidden">Назад</span>
-            </Link>
-
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent text-center sm:text-left w-full sm:w-auto">
-              {algorithmTitle}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_380px] gap-3 sm:gap-4">
-            <div className="space-y-4">
-              <div>
-                {loadedSessionInfo && (
-                  <div className="bg-blue-500/10 backdrop-blur-sm rounded-xl p-3 border border-blue-500/30">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                        <Info className="w-5 h-5 text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-blue-200 mb-1">
-                          Загружена сессия из истории
-                        </h4>
-                        <p className="text-xs text-blue-300">
-                          {loadedSessionInfo.name} • {loadedSessionInfo.date}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setLoadedSessionInfo(null)}
-                        className="flex-shrink-0 text-blue-300 hover:text-blue-200 transition-colors"
-                        title="Закрыть"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div
-                ref={canvasContainerRef}
-                className="bg-neutral-800/50 backdrop-blur-sm rounded-xl border border-neutral-700/50 overflow-hidden"
+              <ChevronLeft size={18} style={{ transition: 'transform 0.2s' }} />
+              <Typography
+                component="span"
+                sx={{
+                  display: { xs: 'none', sm: 'inline' },
+                  ml: 0.5,
+                }}
               >
-                <div className="px-2 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 border-b border-neutral-700/50">
-                  <div className="flex-1">
-                    <h3 className="text-sm sm:text-base font-semibold text-neutral-200">Граф</h3>
-                    {graphDescription && (
-                      <div className="mt-1 text-xs sm:text-sm text-neutral-400">
-                        {typeof graphDescription === 'string' ? (
-                          <p>{graphDescription}</p>
-                        ) : (
-                          graphDescription
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={handleRunAlgorithm}
-                      disabled={!hasGraph || isRunning || playing || hasRunAlgorithm}
-                      className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-neutral-700 disabled:to-neutral-700 disabled:text-neutral-500 text-white font-medium py-2 px-3 sm:px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:shadow-none text-sm sm:text-base w-full sm:w-auto"
-                      title={
-                        hasRunAlgorithm
-                          ? 'Алгоритм уже выполнен для этого графа'
-                          : 'Запустить алгоритм'
-                      }
-                    >
-                      {hasRunAlgorithm ? 'Алгоритм выполнен' : 'Запустить алгоритм'}
-                    </button>
-                    <button
-                      onClick={handleReset}
-                      disabled={!hasGraph}
-                      className="bg-neutral-700 hover:bg-neutral-600 disabled:bg-neutral-800 disabled:text-neutral-500 text-white font-medium py-2 px-3 sm:px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
-                    >
-                      <RotateCcw size={16} />
-                      <span className="hidden sm:inline">Сброс</span>
-                      <span className="sm:hidden">Сброс</span>
-                    </button>
-                  </div>
-                </div>
+                Назад к списку алгоритмов
+              </Typography>
+              <Typography
+                component="span"
+                sx={{
+                  display: { xs: 'inline', sm: 'none' },
+                  ml: 0.5,
+                }}
+              >
+                Назад
+              </Typography>
+            </Box>
 
-                <div className="p-2 flex justify-center">
-                  <GraphCanvas
-                    model={graphModel}
-                    onRendererReady={handleRendererReady}
-                    width={canvasSize.width}
-                    height={canvasSize.height}
-                  />
-                </div>
+            <Typography
+              variant="h4"
+              sx={{
+                fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
+                fontWeight: 600,
+                background: 'linear-gradient(to right, #ffffff, rgba(229, 229, 229, 0.8))',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textAlign: { xs: 'center', sm: 'left' },
+                width: { xs: '100%', sm: 'auto' },
+              }}
+            >
+              {algorithmTitle}
+            </Typography>
+          </Box>
 
-                {hasRunAlgorithm && !playing && currentIndex === -1 && (
-                  <div className="bg-green-500/10 backdrop-blur-sm rounded-xl p-3 border border-green-500/30">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-green-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-sm font-semibold text-green-200 mb-1">
-                          Алгоритм выполнен
-                        </h4>
-                        <p className="text-xs text-green-300">
-                          Используйте панель управления для просмотра шагов. Чтобы запустить
-                          алгоритм снова, загрузите новую матрицу или нажмите "Сброс".
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+          <Grid container spacing={{ xs: 3, sm: 4 }}>
+            <Grid item xs={12} lg sx={{ minWidth: 0 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {loadedSessionInfo && (
+                  <Alert
+                    severity="info"
+                    icon={<Info size={20} />}
+                    action={
+                      <IconButton
+                        aria-label="close"
+                        color="inherit"
+                        size="small"
+                        onClick={() => setLoadedSessionInfo(null)}
+                      >
+                        <X size={20} />
+                      </IconButton>
+                    }
+                    sx={{
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(59, 130, 246, 0.3)',
+                      '& .MuiAlert-icon': {
+                        color: 'info.light',
+                      },
+                      '& .MuiAlert-message': {
+                        flex: 1,
+                      },
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      Загружена сессия из истории
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'info.light' }}>
+                      {loadedSessionInfo.name} • {loadedSessionInfo.date}
+                    </Typography>
+                  </Alert>
                 )}
-              </div>
 
-              <div className="space-y-4">{children}</div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-                <ControlPanel />
-              </div>
+                <Paper
+                  ref={canvasContainerRef}
+                  sx={{
+                    backgroundColor: 'rgba(42, 42, 42, 0.5)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(115, 115, 115, 0.5)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      px: { xs: 2, sm: 4 },
+                      py: { xs: 2, sm: 3 },
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      justifyContent: 'space-between',
+                      gap: { xs: 2, sm: 0 },
+                      borderBottom: '1px solid rgba(115, 115, 115, 0.5)',
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 600,
+                        }}
+                      >
+                        Граф
+                      </Typography>
+                      {graphDescription && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                              color: 'text.secondary',
+                            }}
+                          >
+                            {typeof graphDescription === 'string'
+                              ? graphDescription
+                              : graphDescription}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: 2,
+                        width: { xs: '100%', sm: 'auto' },
+                      }}
+                    >
+                      <Button
+                        onClick={handleRunAlgorithm}
+                        disabled={!hasGraph || isRunning || playing || hasRunAlgorithm}
+                        variant="contained"
+                        sx={{
+                          background: 'linear-gradient(to right, #2563eb, #3b82f6)',
+                          '&:hover': {
+                            background: 'linear-gradient(to right, #3b82f6, #60a5fa)',
+                            boxShadow: '0 8px 32px rgba(59, 130, 246, 0.4)',
+                          },
+                          '&:disabled': {
+                            background: 'rgba(115, 115, 115, 0.5)',
+                            color: 'text.disabled',
+                          },
+                          width: { xs: '100%', sm: 'auto' },
+                        }}
+                        title={
+                          hasRunAlgorithm
+                            ? 'Алгоритм уже выполнен для этого графа'
+                            : 'Запустить алгоритм'
+                        }
+                      >
+                        {hasRunAlgorithm ? 'Алгоритм выполнен' : 'Запустить алгоритм'}
+                      </Button>
+                      <Button
+                        onClick={handleReset}
+                        disabled={!hasGraph}
+                        variant="outlined"
+                        startIcon={<RotateCcw size={16} />}
+                        sx={{
+                          width: { xs: '100%', sm: 'auto' },
+                        }}
+                      >
+                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                          Сброс
+                        </Box>
+                        <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                          Сброс
+                        </Box>
+                      </Button>
+                    </Box>
+                  </Box>
 
-              <div className="space-y-4">
-                <GraphEditor
-                  onAddNode={handleAddNode}
-                  onAddEdge={handleAddEdge}
-                  onClear={handleClear}
-                  onLoadSample={handleLoadSample}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                  <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                    <GraphCanvas
+                      model={graphModel}
+                      onRendererReady={handleRendererReady}
+                      width={canvasSize.width}
+                      height={canvasSize.height}
+                    />
+                  </Box>
+
+                  {hasRunAlgorithm && !playing && currentIndex === -1 && (
+                    <Alert
+                      severity="success"
+                      icon={<CheckCircle size={20} />}
+                      sx={{
+                        m: 3,
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(34, 197, 94, 0.3)',
+                        '& .MuiAlert-icon': {
+                          color: 'success.light',
+                        },
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        Алгоритм выполнен
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'success.light' }}>
+                        Используйте панель управления для просмотра шагов. Чтобы запустить алгоритм
+                        снова, загрузите новую матрицу или нажмите "Сброс".
+                      </Typography>
+                    </Alert>
+                  )}
+                </Paper>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} lg="auto" sx={{ width: { lg: 320, xl: 380 } }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Paper
+                  sx={{
+                    backgroundColor: 'rgba(42, 42, 42, 0.5)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(115, 115, 115, 0.5)',
+                    p: 4,
+                  }}
+                >
+                  <ControlPanel />
+                </Paper>
+
+                <Box>
+                  <GraphEditor
+                    onAddNode={handleAddNode}
+                    onAddEdge={handleAddEdge}
+                    onClear={handleClear}
+                    onLoadSample={handleLoadSample}
+                  />
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
     </AlgorithmLayoutContext.Provider>
   );
 }

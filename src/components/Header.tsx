@@ -1,84 +1,140 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { Menu, ChevronLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { AppBar, Toolbar, IconButton, Menu, MenuItem, Box } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import Link from 'next/link';
 import Image from 'next/image';
-import { cn } from '@/shared/lib/utils';
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const isMenuOpen = Boolean(anchorEl);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const closeMenu = () => {
-    setIsMenuOpen(false);
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
-
-  // Закрытие меню при клике вне его
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        closeMenu();
-      }
-    };
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
 
   return (
-    <header className="header shadow-sm fixed top-0 left-0 right-0 z-50 w-full">
-      <div className="flex justify-between w-full px-4 sm:px-6 md:px-8 py-3 sm:py-4">
-        <div className="flex items-center">
-          <Link href="/" className="w-10 h-10 flex items-center justify-center">
-            <Image
-              src="/images/svg/logo.svg"
-              alt="Logo"
-              width={40}
-              height={40}
-              className="w-full h-full object-contain"
-            />
-          </Link>
-        </div>
-
-        <div ref={menuRef} className="relative">
-          <div className="user-menu-toggle" onClick={toggleMenu}>
-            <div className="flex items-center justify-center">
-              <Menu className={cn('text-xl text-white', isMenuOpen && 'text-white/70')} />
-            </div>
-            <ChevronLeft
-              className={cn(
-                'text-sm text-white transition-transform duration-300',
-                isMenuOpen ? '-rotate-90 text-white/70' : 'rotate-0'
-              )}
-            />
-          </div>
-          <div
-            className={cn(
-              'menu-dropdown',
-              isMenuOpen ? 'menu-dropdown-open' : 'menu-dropdown-closed'
-            )}
+    <AppBar
+      position="fixed"
+      sx={{
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 50,
+        width: '100%',
+      }}
+    >
+      <Toolbar
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          width: '100%',
+          px: { xs: 2, sm: 3, md: 4 },
+          py: { xs: 1.5, sm: 2 },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Link
+            href="/"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <nav className="flex flex-col py-2">
-              <Link href="/algorithms" onClick={closeMenu} className="menu-item">
-                Алгоритмы
-              </Link>
-              <Link href="/history" onClick={closeMenu} className="menu-item">
-                История
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </header>
+            <Image src="/images/svg/logo.svg" alt="Logo" width={40} height={40} />
+          </Link>
+        </Box>
+
+        <Box>
+          <IconButton
+            onClick={handleMenuOpen}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              },
+            }}
+          >
+            <MenuIcon sx={{ fontSize: '1.25rem', opacity: isMenuOpen ? 0.7 : 1 }} />
+            <ChevronLeftIcon
+              sx={{
+                fontSize: '0.875rem',
+                transition: 'transform 0.3s',
+                transform: isMenuOpen ? 'rotate(-90deg)' : 'rotate(0deg)',
+                opacity: isMenuOpen ? 0.7 : 1,
+              }}
+            />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={isMenuOpen}
+            onClose={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            sx={{
+              mt: 1,
+              '& .MuiPaper-root': {
+                minWidth: 224,
+                backgroundImage: 'linear-gradient(to bottom right, #2a2a2a, #1f1f1f, #151515)',
+                border: '1px solid #3a3a3a',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+                borderRadius: 2,
+              },
+              '& .MuiList-root': {
+                py: 0.5,
+              },
+            }}
+          >
+            <MenuItem
+              component={Link}
+              href="/algorithms"
+              onClick={handleMenuClose}
+              sx={{
+                px: 3,
+                py: 1.5,
+                color: 'white',
+                borderBottom: '1px solid #3a3a3a',
+                '&:hover': {
+                  background:
+                    'linear-gradient(to right, rgba(147, 51, 234, 0.2), rgba(37, 99, 235, 0.2))',
+                  color: 'rgba(196, 181, 253, 1)',
+                },
+              }}
+            >
+              Алгоритмы
+            </MenuItem>
+            <MenuItem
+              component={Link}
+              href="/history"
+              onClick={handleMenuClose}
+              sx={{
+                px: 3,
+                py: 1.5,
+                color: 'white',
+                '&:hover': {
+                  background:
+                    'linear-gradient(to right, rgba(147, 51, 234, 0.2), rgba(37, 99, 235, 0.2))',
+                  color: 'rgba(196, 181, 253, 1)',
+                },
+              }}
+            >
+              История
+            </MenuItem>
+          </Menu>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 

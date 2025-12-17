@@ -5,6 +5,7 @@
  * Страница визуализации алгоритма раскраски графа
  */
 
+import { Box, Paper, Typography, Alert } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
@@ -106,52 +107,76 @@ function GraphColoringContent() {
 
   return (
     <>
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-        <h3 className="text-base font-semibold text-neutral-200 mb-3">Ввод матрицы смежности</h3>
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          Ввод матрицы смежности
+        </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
           placeholder="Введите матрицу смежности неориентированного графа построчно, используя запятую как разделитель между элементами"
         />
-      </div>
+      </Paper>
 
-      <div className="bg-neutral-800/50 backdrop-blur-sm rounded-xl p-4 border border-neutral-700/50">
-        <h3 className="text-base font-semibold text-neutral-200 mb-3">О алгоритме</h3>
-        <div className="text-sm text-neutral-300 space-y-2 leading-relaxed">
-          <p>
-            <strong className="text-white">Алгоритм раскраски графа</strong> — это алгоритм для
-            назначения цветов вершинам графа таким образом, чтобы никакие две смежные вершины не
-            имели одинаковый цвет.
-          </p>
-          <p>
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          О алгоритме
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2">
+            <strong>Алгоритм раскраски графа</strong> — это алгоритм для назначения цветов вершинам
+            графа таким образом, чтобы никакие две смежные вершины не имели одинаковый цвет.
+          </Typography>
+          <Typography variant="body2">
             Реализован <strong>жадный алгоритм</strong> (Greedy Coloring), который проходит по
             вершинам и назначает каждой вершине минимальный доступный цвет (не используемый её
             соседями).
-          </p>
-          <p>
+          </Typography>
+          <Typography variant="body2">
             <strong>Хроматическое число</strong> графа — это минимальное количество цветов,
             необходимое для правильной раскраски. Жадный алгоритм не всегда находит оптимальное
             решение, но работает быстро.
-          </p>
-          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <p className="text-blue-300 text-xs font-medium">
+          </Typography>
+          <Alert severity="info" sx={{ mt: 1 }}>
+            <Typography variant="body2">
               💡 Совет: Алгоритм работает с неориентированными графами. Матрица должна быть
               симметричной.
-            </p>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Alert>
+        </Box>
+      </Paper>
 
-      <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
-        <h3 className="text-base font-semibold text-blue-200 mb-3">Как использовать</h3>
-        <ol className="text-sm text-neutral-300 space-y-2 list-decimal list-inside leading-relaxed">
-          <li>Введите симметричную матрицу смежности неориентированного графа</li>
-          <li>Нажмите "Отправить" чтобы построить граф</li>
-          <li>Нажмите "Запустить" чтобы выполнить алгоритм раскраски</li>
-          <li>Просмотрите процесс раскраски вершин пошагово</li>
-          <li>Обратите внимание на финальное количество использованных цветов</li>
-          <li>Используйте панель управления для пошагового просмотра алгоритма</li>
-        </ol>
-      </div>
+      <Paper
+        sx={{
+          p: 3,
+          background:
+            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
+          Как использовать
+        </Typography>
+        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Typography component="li" variant="body2">
+            Введите симметричную матрицу смежности неориентированного графа
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите "Отправить" чтобы построить граф
+          </Typography>
+          <Typography component="li" variant="body2">
+            Нажмите "Запустить" чтобы выполнить алгоритм раскраски
+          </Typography>
+          <Typography component="li" variant="body2">
+            Просмотрите процесс раскраски вершин пошагово
+          </Typography>
+          <Typography component="li" variant="body2">
+            Обратите внимание на финальное количество использованных цветов
+          </Typography>
+          <Typography component="li" variant="body2">
+            Используйте панель управления для пошагового просмотра алгоритма
+          </Typography>
+        </Box>
+      </Paper>
     </>
   );
 }

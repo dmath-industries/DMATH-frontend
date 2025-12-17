@@ -36,12 +36,17 @@ test.describe('Страница списка алгоритмов', () => {
   });
 
   test('должна иметь адаптивную сетку карточек', async ({ page }) => {
+    // Проверяем адаптивность через видимость карточек алгоритмов при разных размерах экрана
     await page.setViewportSize({ width: 1920, height: 1080 });
-    const container = page.locator('.grid').first();
-    await expect(container).toBeVisible();
+    const algorithmLinks = page.locator('a[href^="/algorithms/"]');
+    const countDesktop = await algorithmLinks.count();
+    expect(countDesktop).toBeGreaterThan(0);
+    await expect(algorithmLinks.first()).toBeVisible();
 
     await page.setViewportSize({ width: 375, height: 667 });
-    await expect(container).toBeVisible();
+    const countMobile = await algorithmLinks.count();
+    expect(countMobile).toBeGreaterThan(0);
+    await expect(algorithmLinks.first()).toBeVisible();
   });
 
   test('все карточки алгоритмов должны быть кликабельными', async ({ page }) => {

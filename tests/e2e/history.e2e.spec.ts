@@ -12,7 +12,7 @@ test.describe('Страница истории', () => {
 
   test('должна загружаться и отображать заголовок', async ({ page }) => {
     await expect(page).toHaveURL('/history');
-    await expect(page.getByRole('heading', { name: 'История решений' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
   });
 
   test('должна иметь кнопку возврата на главную', async ({ page }) => {
@@ -60,7 +60,7 @@ test.describe('Страница истории', () => {
     if (spinnerCount === 0 && textCount === 0) {
       // If neither exists, it might have loaded too fast, which is acceptable
       // We just verify the page loaded successfully
-      await expect(page.getByRole('heading', { name: 'История решений' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
     } else {
       // If loading indicator exists, verify it's visible
       if (spinnerCount > 0) {
@@ -206,17 +206,17 @@ test.describe('Страница истории', () => {
   test.describe('Адаптивность', () => {
     test('должна корректно отображаться на десктопе', async ({ page }) => {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await expect(page.getByRole('heading', { name: 'История решений' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
     });
 
     test('должна корректно отображаться на планшете', async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      await expect(page.getByRole('heading', { name: 'История решений' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
     });
 
     test('должна корректно отображаться на мобильном', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await expect(page.getByRole('heading', { name: 'История решений' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
     });
   });
 

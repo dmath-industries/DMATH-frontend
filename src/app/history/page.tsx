@@ -13,6 +13,7 @@ import { HistoryItem } from '@/components/elements';
 import { sessionRepository } from '@/shared/persistence';
 import type { Session } from '@/shared/persistence';
 import { AnalyticsEvents } from '@/shared/lib';
+import { Box, Container, Typography, Paper, CircularProgress, Stack, Chip } from '@mui/material';
 
 /**
  * Маппинг имён алгоритмов на их URL маршруты
@@ -109,75 +110,209 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="App min-h-screen">
-      <div className="min-h-screen py-4 sm:py-6 md:py-8 px-4 sm:px-6 lg:px-8 container m-auto mt-4 sm:mt-6 md:mt-8 lg:mt-[10%]">
-        <Link
+    <Box sx={{ minHeight: '100vh' }}>
+      <Container
+        maxWidth="lg"
+        sx={{
+          minHeight: '100vh',
+          py: { xs: 4, sm: 6, md: 8 },
+          px: { xs: 4, sm: 6, lg: 8 },
+          mt: { xs: 4, sm: 6, md: 8, lg: '10%' },
+        }}
+      >
+        <Box
+          component={Link}
           href="/"
-          className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-4 group ml-0 sm:ml-4 md:ml-10"
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            color: 'text.secondary',
+            textDecoration: 'none',
+            mb: 4,
+            ml: { xs: 0, sm: 4, md: 10 },
+            transition: 'color 0.2s',
+            '&:hover': {
+              color: 'text.primary',
+              '& svg': {
+                transform: 'translateX(-4px)',
+              },
+            },
+          }}
         >
-          <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm">Назад на главную</span>
-        </Link>
+          <ChevronLeft size={18} style={{ transition: 'transform 0.2s' }} />
+          <Typography variant="body2" sx={{ ml: 0.5 }}>
+            Назад на главную
+          </Typography>
+        </Box>
 
-        <h1 className="text-2xl sm:text-3xl md:text-4xl mb-4 sm:mb-6 text-center sm:text-left ml-0 sm:ml-4 md:ml-10">
+        <Typography
+          variant="h3"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.25rem' },
+            mb: { xs: 4, sm: 6 },
+            textAlign: { xs: 'center', sm: 'left' },
+            ml: { xs: 0, sm: 4, md: 10 },
+          }}
+        >
           История решений
-        </h1>
+        </Typography>
 
-        <div className="bg-[#756565] flex flex-col gap-4 sm:gap-6 md:gap-8 px-4 sm:px-6 md:px-8 py-4 sm:py-6 rounded-xl pb-8 sm:pb-12 md:pb-[100px]">
-          <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl text-center sm:text-left ml-0 sm:ml-3 mb-4 sm:mb-0">
+        <Paper
+          sx={{
+            backgroundColor: '#756565',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 4, sm: 6, md: 8 },
+            px: { xs: 4, sm: 6, md: 8 },
+            py: { xs: 4, sm: 6 },
+            pb: { xs: 8, sm: 12, md: '100px' },
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontSize: {
+                xs: '1.125rem',
+                sm: '1.25rem',
+                md: '1.5rem',
+                lg: '1.875rem',
+                xl: '2.25rem',
+              },
+              textAlign: { xs: 'center', sm: 'left' },
+              ml: { xs: 0, sm: 3 },
+              mb: { xs: 4, sm: 0 },
+              color: '#ffffff',
+            }}
+          >
             История решений алгоритмов:
-          </p>
+          </Typography>
 
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin mb-4"></div>
-              <p className="text-white text-lg">Загрузка истории...</p>
-            </div>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                py: 12,
+              }}
+            >
+              <CircularProgress sx={{ mb: 4, color: 'rgba(255,255,255,0.3)' }} />
+              <Typography variant="body1" sx={{ color: '#ffffff' }}>
+                Загрузка истории...
+              </Typography>
+            </Box>
           ) : sessions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="bg-white/10 rounded-lg p-8 max-w-md mx-auto">
-                <p className="text-white text-lg mb-4">История пуста</p>
-                <p className="text-gray-300 text-sm">
+            <Box
+              sx={{
+                textAlign: 'center',
+                py: 12,
+              }}
+            >
+              <Paper
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  p: 8,
+                  maxWidth: 448,
+                  mx: 'auto',
+                }}
+              >
+                <Typography variant="body1" sx={{ color: '#ffffff', mb: 4 }}>
+                  История пуста
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 4 }}>
                   Запустите алгоритм, чтобы создать первую запись в истории решений.
-                </p>
-                <Link
+                </Typography>
+                <Box
+                  component={Link}
                   href="/algorithms"
-                  className="inline-block mt-6 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  sx={{
+                    display: 'inline-block',
+                    mt: 6,
+                    px: 6,
+                    py: 3,
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    textDecoration: 'none',
+                    borderRadius: 2,
+                    transition: 'background-color 0.2s',
+                    '&:hover': {
+                      backgroundColor: '#2563eb',
+                    },
+                  }}
                 >
                   Перейти к алгоритмам
-                </Link>
-              </div>
-            </div>
+                </Box>
+              </Paper>
+            </Box>
           ) : (
-            <div className="space-y-4 sm:space-y-6 md:space-y-8">
+            <Stack spacing={{ xs: 4, sm: 6, md: 8 }}>
               {sessions.map(session => {
                 const nodeCount = session.graphDTO?.nodes?.length || 0;
                 const edgeCount = session.graphDTO?.edges?.length || 0;
                 const stepCount = session.metadata?.totalSteps || session.steps?.length || 0;
 
                 return (
-                  <div key={session.id} className="space-y-2">
+                  <Box key={session.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <HistoryItem
                       title={session.algorithmName}
                       date={formatDate(session.updatedAt)}
                       onOpen={() => handleOpenSession(session)}
                       onDelete={() => handleDeleteSession(session.id)}
                     />
-                    <div className="ml-3 sm:ml-4 text-xs sm:text-sm text-gray-300 flex flex-wrap gap-3 sm:gap-4">
-                      <span>Вершин: {nodeCount}</span>
-                      <span>Рёбер: {edgeCount}</span>
-                      <span>Шагов: {stepCount}</span>
+                    <Stack
+                      direction="row"
+                      spacing={2}
+                      sx={{
+                        ml: { xs: 3, sm: 4 },
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <Chip
+                        label={`Вершин: ${nodeCount}`}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                      />
+                      <Chip
+                        label={`Рёбер: ${edgeCount}`}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                      />
+                      <Chip
+                        label={`Шагов: ${stepCount}`}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                      />
                       {session.metadata?.executionTime && (
-                        <span>Время: {Math.round(session.metadata.executionTime)}мс</span>
+                        <Chip
+                          label={`Время: ${Math.round(session.metadata.executionTime)}мс`}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          }}
+                        />
                       )}
-                    </div>
-                  </div>
+                    </Stack>
+                  </Box>
                 );
               })}
-            </div>
+            </Stack>
           )}
-        </div>
-      </div>
-    </div>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
