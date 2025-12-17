@@ -63,6 +63,16 @@ export class StepController {
   }
 
   /**
+   * Получить шаг по индексу
+   */
+  getStepByIndex(index: number): Step | null {
+    if (index < 0 || index >= this.steps.length) {
+      return null;
+    }
+    return this.steps[index] || null;
+  }
+
+  /**
    * Получить общее количество шагов
    */
   getTotalSteps(): number {
