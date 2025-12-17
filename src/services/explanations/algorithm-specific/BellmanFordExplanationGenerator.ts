@@ -34,18 +34,25 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
     const nodeId = step.nodeId;
     const label = step.attrs.label;
 
-    // Инициализация расстояний
-    if (label && typeof label === 'string') {
-      if (label.includes(': ∞') || label.includes(': 0')) {
-        const value = label.includes('∞') ? '∞' : '0';
-        const nodeLabel = this.formatNode(nodeId);
-        const formula = `d(${nodeLabel}) = ${value === '∞' ? '∞' : '0'}`;
-        return this.createExplanation(
-          'initialization',
-          `Инициализация: расстояние до ${nodeLabel} = ${value}\nФормула: ${formula}`,
-          { nodes: [nodeId], values: { distance: value }, formula: formula }
-        );
-      }
+      // Инициализация расстояний
+      if (label && typeof label === 'string') {
+        if (label.includes(': ∞') || label.includes(': 0')) {
+          const value = label.includes('∞') ? '∞' : '0';
+          const nodeLabel = this.formatNode(nodeId);
+          const formula = `d(${nodeLabel}) = ${value === '∞' ? '∞' : '0'}`;
+          const isStart = value === '0';
+          return this.createExplanation(
+            'initialization',
+            `Инициализация расстояния до вершины ${nodeLabel}`,
+            { nodes: [nodeId], values: { distance: value } },
+            {
+              reason: isStart
+                ? `Стартовая вершина имеет расстояние 0, так как путь от неё до неё самой равен нулю. Это база для алгоритма поиска кратчайших путей`
+                : `Начальное расстояние до всех остальных вершин устанавливается в бесконечность (∞), так как мы ещё не знаем, достижимы ли они и каков кратчайший путь`,
+              formula: formula,
+            }
+          );
+        }
 
       // Обновление расстояния (релаксация)
       if (label.includes(':')) {
@@ -54,10 +61,13 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         const formula = `d(${nodeLabel}) = ${distance}`;
         return this.createExplanation(
           'update',
-          `Обновление расстояния до ${nodeLabel}: новое значение = ${distance}\nФормула: ${formula}`,
+          `Расстояние до вершины ${nodeLabel} обновлено`,
           {
             nodes: [nodeId],
             values: { distance: distance || 'unknown' },
+          },
+          {
+            reason: `В результате релаксации рёбер найдено более короткое расстояние до вершины ${nodeLabel}. Это значение может быть улучшено в следующих итерациях алгоритма`,
             formula: formula,
           }
         );
@@ -85,8 +95,12 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
           const formula = `d(${nodeLabel}) = 0`;
           return this.createExplanation(
             'initialization',
-            `Стартовая вершина: ${nodeLabel}\nФормула инициализации: ${formula}`,
-            { nodes: [nodeId], formula: formula }
+            `Стартовая вершина: ${nodeLabel}`,
+            { nodes: [nodeId] },
+            {
+              reason: `Стартовая вершина имеет расстояние 0, так как путь от неё до неё самой равен нулю. Все расстояния будут вычисляться относительно этой вершины`,
+              formula: formula,
+            }
           );
         }
         return this.createExplanation('general', `Текущая вершина: ${nodeLabel}`, {
@@ -102,8 +116,12 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
           const distStr = dist !== undefined ? this.formatDistance(dist) : '?';
           return this.createExplanation(
             'path',
-            `Вершина ${nodeLabel} в кратчайшем пути: расстояние = ${distStr}, путь: ${pathStr}`,
-            { nodes: [nodeId], values: { distance: distStr, path: pathStr } }
+            `Вершина ${nodeLabel} в кратчайшем пути`,
+            { nodes: [nodeId], values: { distance: distStr, path: pathStr } },
+            {
+              reason: `Эта вершина является частью найденного кратчайшего пути от стартовой вершины. Расстояние ${distStr} является минимальным среди всех возможных путей`,
+              currentPath: `Путь: ${pathStr}`,
+            }
           );
         }
         return this.createExplanation('path', `Вершина ${nodeLabel} в кратчайшем пути`, {
@@ -111,9 +129,14 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         });
 
       case 'rejected':
-        return this.createExplanation('decision', `Вершина ${nodeLabel} в отрицательном цикле`, {
-          nodes: [nodeId],
-        });
+        return this.createExplanation(
+          'decision',
+          `Вершина ${nodeLabel} в отрицательном цикле`,
+          { nodes: [nodeId] },
+          {
+            reason: `Обнаружен отрицательный цикл, содержащий вершину ${nodeLabel}. Это означает, что кратчайший путь не существует, так как можно бесконечно уменьшать расстояние, проходя по циклу. Алгоритм Беллмана-Форда не может корректно работать с графами, содержащими отрицательные циклы`,
+          }
+        );
 
       default:
         if (step.description) {
@@ -162,7 +185,7 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
             const formula = `d(${toLabel}) = min(d(${toLabel}), d(${fromLabel}) + w(${fromLabel},${toLabel})) = min(${distToStr}, ${distFromStr} + ${weightStr}) = ${sumStr}`;
             return this.createExplanation(
               'comparison',
-              `Проверка ребра ${edgeStr} (вес: ${weightStr}):\n${formula}\nСледовательно, обновляем расстояние d(${toLabel}) = ${sumStr}`,
+              `Обновляем расстояние до вершины ${toLabel} через вершину ${fromLabel}`,
               {
                 edges: [edgeId],
                 values: {
@@ -173,6 +196,9 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
                   distTo: distToStr,
                   sum: sumStr,
                 },
+              },
+              {
+                reason: `Принцип релаксации (relaxation): если найден более короткий путь до вершины ${toLabel} через вершину ${fromLabel} (${distFromStr} + ${weightStr} = ${sumStr} < ${distToStr}), то обновляем расстояние. Это основа алгоритма Беллмана-Форда - многократная проверка всех рёбер для поиска кратчайших путей`,
                 formula: formula,
               }
             );
@@ -180,7 +206,7 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
             const formula = `d(${fromLabel}) + w(${fromLabel},${toLabel}) = ${distFromStr} + ${weightStr} = ${sumStr} ≥ d(${toLabel}) = ${distToStr}`;
             return this.createExplanation(
               'comparison',
-              `Проверка ребра ${edgeStr} (вес: ${weightStr}):\n${formula}\nРелаксация не требуется`,
+              `Релаксация не требуется для ребра ${edgeStr}`,
               {
                 edges: [edgeId],
                 values: {
@@ -191,6 +217,9 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
                   distTo: distToStr,
                   sum: sumStr,
                 },
+              },
+              {
+                reason: `Путь через вершину ${fromLabel} не короче текущего расстояния до ${toLabel}. Текущее расстояние ${distToStr} уже оптимально или меньше, чем ${sumStr}`,
                 formula: formula,
               }
             );
@@ -211,7 +240,10 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         return this.createExplanation(
           'decision',
           `Ребро ${edgeStr} указывает на отрицательный цикл`,
-          { edges: [edgeId] }
+          { edges: [edgeId] },
+          {
+            reason: `Обнаружено ребро, которое позволяет ещё уменьшить расстояние после ${(context as any)?.iterations || 'последней'} итерации. Это признак отрицательного цикла - кратчайший путь не существует`,
+          }
         );
 
       default:
