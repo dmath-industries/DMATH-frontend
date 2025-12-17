@@ -28,6 +28,8 @@ export type {
   HighlightEdgeStep,
   Step,
   StepType,
+  ExplanationType,
+  StepExplanation,
 } from './step.types';
 
 // Worker types
