@@ -55,25 +55,18 @@ export default function AlgorithmsPage() {
   ];
 
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        pt: { xs: 12, sm: 14, md: 16, lg: 18 },
-      }}
-    >
+    <Box sx={{ minHeight: '100vh' }}>
       <Container
         maxWidth="xl"
         sx={{
+          pt: { xs: 3, md: 5 },
           px: { xs: 2, sm: 3, lg: 4 },
+          pb: 8,
         }}
       >
-        <Grid container spacing={{ xs: 3, md: 4, lg: 5 }} justifyContent="center">
+        <Grid container spacing={{ xs: 4, md: 5, lg: 6 }}>
           {algorithms.map((algorithm, index) => (
-            <Grid item xs={12} sm={6} lg={4} xl={3} key={index}>
+            <Grid item xs={12} sm={6} lg={3} xl={3} key={index}>
               <AlgorithmsItem title={algorithm.title} img={algorithm.img} href={algorithm.href} />
             </Grid>
           ))}
