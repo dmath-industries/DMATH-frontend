@@ -5,7 +5,7 @@
  * Страница со списком доступных алгоритмов
  */
 
-import { Box, Container, Grid } from '@mui/material';
+import { Box, Container, GridLegacy as Grid } from '@mui/material';
 import { AlgorithmsItem } from '@/components/elements';
 import type { IAlgorithmsItem } from '@/types';
 
