@@ -21,7 +21,7 @@ export default function Home() {
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        pt: { xs: 3, sm: 4, md: 6 },
+        pt: { xs: 5, sm: 6, md: 8 },
         pb: 4,
         overflow: 'hidden',
       }}

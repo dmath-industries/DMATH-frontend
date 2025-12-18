@@ -36,6 +36,7 @@ const STORAGE_KEYS = {
   SESSION: (algorithmName: string) => `currentSession-${algorithmName}`,
   STEP: (algorithmName: string) => `currentStep-${algorithmName}`,
   LOAD_SESSION: 'loadSessionId',
+  LAST_ALGORITHM: 'lastAlgorithmVisited',
 } as const;
 
 const TIMING = {
@@ -106,6 +107,7 @@ export function AlgorithmLayout({
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   const prevGraphHashRef = useRef<string | null>(null);
   const pendingStepsRef = useRef<Step[] | null>(null);
+  const prevAlgorithmNameRef = useRef<string>(algorithmName);
 
   /**
    * Создает уникальный хеш для структуры графа для обнаружения изменений
@@ -680,6 +682,38 @@ export function AlgorithmLayout({
   useEffect(() => {
     AnalyticsEvents.algorithmViewed(algorithmName, pathname);
   }, [algorithmName, pathname]);
+
+  /**
+   * Отслеживание смены алгоритма
+   */
+  useEffect(() => {
+    const lastAlgorithm = sessionStorage.getItem(STORAGE_KEYS.LAST_ALGORITHM);
+    const isAlgorithmChange = lastAlgorithm && lastAlgorithm !== algorithmName;
+
+    if (isAlgorithmChange) {
+      graphModel.clear();
+      setHasGraph(false);
+      setHasRunAlgorithm(false);
+      setCurrentGraphHash(null);
+      setLoadedSessionInfo(null);
+
+      if (rendererRef.current) {
+        rendererRef.current.drawAll(graphModel);
+      }
+
+      if (controllerRef.current) {
+        controllerRef.current.setSteps([]);
+      }
+
+      dispatch(reset());
+      dispatch(setIndex(-1));
+      pendingStepsRef.current = null;
+      currentAlgorithmRef.current = null;
+    }
+
+    sessionStorage.setItem(STORAGE_KEYS.LAST_ALGORITHM, algorithmName);
+    prevAlgorithmNameRef.current = algorithmName;
+  }, [algorithmName, graphModel, dispatch]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
