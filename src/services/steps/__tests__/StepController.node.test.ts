@@ -598,7 +598,7 @@ describe('StepController', () => {
     it('должен останавливать воспроизведение, если playing стал false', () => {
       const steps = createTestSteps();
       controller.setSteps(steps);
-      controller.startPlayback();
+      controller.play();
       controller['playing'] = false;
       jest.advanceTimersByTime(100);
       expect(controller.isPlaying()).toBe(false);
