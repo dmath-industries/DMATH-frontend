@@ -186,8 +186,11 @@ export class BellmanFordStepGenerator {
       }
     }
 
+    this.pendingDescription = undefined;
+
     if (hasNegativeCycle) {
       this.addDescriptionStep('⚠️ Обнаружен отрицательный цикл! Кратчайшие пути не определены.');
+      this.pendingDescription = undefined;
     } else {
       this.addDescriptionStep('✓ Отрицательных циклов не обнаружено. Кратчайшие пути найдены.');
 
@@ -228,9 +231,10 @@ export class BellmanFordStepGenerator {
           }
         }
       }
-
-      this.addFinalResultStep(graphDTO, startNode, hasNegativeCycle);
     }
+
+    this.pendingDescription = undefined;
+    this.addFinalResultStep(graphDTO, startNode, hasNegativeCycle);
 
     return this.steps;
   }
