@@ -300,7 +300,6 @@ export class HungarianStepGenerator {
   }
 
   private emitAssignments(assignments: Assignment[]): void {
-    // Находим индексы строк и столбцов для передачи в контекст
     const sourceNodesList = this.nodeOrder
       .filter(id => id.startsWith('source_'))
       .sort((a, b) => {

@@ -404,7 +404,6 @@ export class BellmanFordStepGenerator {
 
     const items: Array<{ label: string; value: string }> = [];
 
-    // Сортируем вершины для консистентного вывода
     const sortedNodes = [...graphDTO.nodes].sort((a, b) => {
       const aNum = Number(a.id);
       const bNum = Number(b.id);
@@ -419,7 +418,6 @@ export class BellmanFordStepGenerator {
       const nodeLabel = this.getNodeLabel(node.id);
 
       if (node.id === startNode) {
-        // Стартовая вершина всегда имеет расстояние 0
         items.push({
           label: `${nodeLabel}:`,
           value: '0',
@@ -433,7 +431,6 @@ export class BellmanFordStepGenerator {
             value: `${dist} (${pathStr})`,
           });
         } else {
-          // Путь не найден (недостижима)
           items.push({
             label: `${nodeLabel}:`,
             value: '∞ (недостижима)',
@@ -447,7 +444,6 @@ export class BellmanFordStepGenerator {
       }
     }
 
-    // Добавляем специальный шаг для финального результата, чтобы гарантировать его отображение
     const finalStep: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
