@@ -42,7 +42,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
         const isInitial = context?.isInitial as boolean | undefined;
 
         if (isInitial) {
-          const formula = `path = [${nodeLabel}], |path| = 1`;
+          const formulas = [`\\text{path} = [${nodeLabel}]`, `|\\text{path}| = 1`];
           return this.createExplanation(
             'initialization',
             `Инициализация: начинаем поиск Гамильтоновых циклов с вершины ${nodeLabel}`,
@@ -50,7 +50,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
             {
               reason:
                 'Используем backtracking (обход с возвратом) для систематического исследования всех возможных путей',
-              formula: formula,
+              formula: formulas,
             }
           );
         }
@@ -60,7 +60,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
           const currentLabel = this.formatNode(currentVertex);
           const nextLabel = this.formatNode(nextVertex);
           const unvisitedNeighbors = neighbors?.filter(n => !path.includes(n)).length || 0;
-          const formula = `${nextLabel} ∈ neighbors(${currentLabel}) ∧ ${nextLabel} ∉ path`;
+          const formula = `${nextLabel} \\in \\text{neighbors}(${currentLabel}) \\land ${nextLabel} \\notin \\text{path}`;
           return this.createExplanation(
             'selection',
             `Добавляем вершину ${nextLabel} в путь`,
@@ -99,7 +99,10 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
           const startLabel = this.formatNode(startNodeCycle);
           const lastNode = cyclePath[cyclePath.length - 1];
           const lastLabel = lastNode ? this.formatNode(lastNode) : '?';
-          const formula = `|path| = ${cyclePath.length} = ${totalNodesCycle} ∧ ∃ edge(${lastLabel}, ${startLabel})`;
+          const formulas = [
+            `|\\text{path}| = ${cyclePath.length} = ${totalNodesCycle}`,
+            `\\exists \\text{ edge}(${lastLabel}, ${startLabel})`,
+          ];
           return this.createExplanation(
             'path',
             `Вершина ${nodeLabel} в Гамильтоновом цикле: ${cycleStr}`,
@@ -114,7 +117,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
             },
             {
               reason: `Условие выполнено: путь содержит все ${totalNodesCycle} вершин и существует ребро от ${lastLabel} к ${startLabel}`,
-              formula: formula,
+              formula: formulas,
             }
           );
         }
@@ -131,7 +134,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
           const backtrackStr = this.formatPath(backtrackPath);
           const currentLabel = backtrackCurrent ? this.formatNode(backtrackCurrent) : 'предыдущая';
           const nextLabel = this.formatNode(backtrackNext);
-          const formula = `path.pop() - удаляем последнюю вершину`;
+          const formula = `\\text{path.pop()} - \\text{ удаляем последнюю вершину }`;
           return this.createExplanation(
             'decision',
             `Откат (backtracking): вершина ${nextLabel} удалена из пути`,
@@ -175,7 +178,10 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
               ? this.formatNode(rejectedPath[0])
               : '?';
           const lastLabel = lastNode ? this.formatNode(lastNode) : '?';
-          const formula = `|path| = ${rejectedPath.length} = ${totalNodesReject} ∧ ¬∃ edge(${lastLabel}, ${firstLabel})`;
+          const formulas = [
+            `|\\text{path}| = ${rejectedPath.length} = ${totalNodesReject}`,
+            `\\neg \\exists \\text{ edge}(${lastLabel}, ${firstLabel})`,
+          ];
           return this.createExplanation(
             'decision',
             `Путь ${rejectedStr} не образует Гамильтонов цикл`,
@@ -190,7 +196,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
             },
             {
               reason: `Путь содержит все ${totalNodesReject} вершин (|path| = ${totalNodesReject}), но нет ребра от последней вершины ${lastLabel} к начальной ${firstLabel}. Условие Гамильтонова цикла не выполнено`,
-              formula: formula,
+              formula: formulas,
             }
           );
         }
@@ -262,7 +268,10 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
 
         if (isCycle && cyclePathEdge && totalNodesEdge !== undefined) {
           const cycleStr = this.formatPath(cyclePathEdge);
-          const formula = `|path| = ${totalNodesEdge} ∧ ∃ edge(${toLabel}, ${fromLabel})`;
+          const formulas = [
+            `|\\text{path}| = ${totalNodesEdge}`,
+            `\\exists \\text{ edge}(${toLabel}, ${fromLabel})`,
+          ];
           return this.createExplanation(
             'path',
             `Найден Гамильтонов цикл: ${cycleStr}\nРебро ${edgeStr} замыкает цикл (от ${toLabel} к ${fromLabel})`,
@@ -272,7 +281,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
             },
             {
               reason: `Условие: путь содержит все ${totalNodesEdge} вершин и существует замыкающее ребро`,
-              formula: formula,
+              formula: formulas,
             }
           );
         }
