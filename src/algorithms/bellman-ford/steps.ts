@@ -228,6 +228,9 @@ export class BellmanFordStepGenerator {
           }
         }
       }
+
+      // Добавляем итоговый ответ на последнем шаге
+      this.addFinalResultStep(graphDTO, startNode, hasNegativeCycle);
     }
 
     return this.steps;
@@ -374,5 +377,61 @@ export class BellmanFordStepGenerator {
 
   private addDescriptionStep(description: string): void {
     this.pendingDescription = description;
+  }
+
+  /**
+   * Добавляет итоговый ответ алгоритма на последнем шаге
+   */
+  private addFinalResultStep(
+    graphDTO: GraphDTO,
+    startNode: string,
+    hasNegativeCycle: boolean
+  ): void {
+    if (hasNegativeCycle || !this.startNode) {
+      return;
+    }
+
+    const items: Array<{ label: string; value: string }> = [];
+
+    for (const node of graphDTO.nodes) {
+      if (node.id === startNode) {
+        continue;
+      }
+
+      const dist = this.distances.get(node.id);
+      if (dist !== undefined && dist !== Infinity) {
+        const path = this.reconstructPath(startNode, node.id);
+        if (path.length > 1) {
+          const pathStr = path.map(n => this.getNodeLabel(n)).join(' → ');
+          items.push({
+            label: `d(${this.getNodeLabel(node.id)})`,
+            value: `${dist} (путь: ${pathStr})`,
+          });
+        } else {
+          items.push({
+            label: `d(${this.getNodeLabel(node.id)})`,
+            value: `${dist}`,
+          });
+        }
+      } else {
+        items.push({
+          label: `d(${this.getNodeLabel(node.id)})`,
+          value: '∞ (недостижима)',
+        });
+      }
+    }
+
+    // Добавляем итоговый ответ к последнему шагу с explanation
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i];
+      if (step && step.explanation) {
+        step.explanation.finalResult = {
+          title: 'Итоговый результат: кратчайшие расстояния',
+          items,
+          summary: `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
+        };
+        break;
+      }
+    }
   }
 }
