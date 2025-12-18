@@ -12,11 +12,13 @@ export function DatabaseProvider({ children }: DatabaseProviderProps) {
     if (typeof window === 'undefined') {
       return;
     }
-    initDatabase().catch((err) => {
-      console.warn('Database initialization failed. App will continue, but data persistence may be unavailable:', err);
+    initDatabase().catch(err => {
+      console.warn(
+        'Database initialization failed. App will continue, but data persistence may be unavailable:',
+        err
+      );
     });
   }, []);
 
   return <>{children}</>;
 }
-

@@ -43,11 +43,4 @@ export {
 } from './graph.slice';
 
 // Экспорт actions из ui.slice
-export {
-  setViewport,
-  setTheme,
-  selectAlgorithm,
-  toggleSidebar,
-  setSidebarOpen,
-} from './ui.slice';
-
+export { setViewport, setTheme, selectAlgorithm, toggleSidebar, setSidebarOpen } from './ui.slice';

@@ -127,4 +127,3 @@ export type Step =
  * Тип для StepType строк
  */
 export type StepType = Step['type'];
-

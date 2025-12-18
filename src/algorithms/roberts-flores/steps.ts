@@ -28,10 +28,8 @@ const formatNodeLabel = (nodeId: string | number): string => {
   return String(nodeId);
 };
 
-const formatPath = (
-  path: (string | number)[],
-  separator = ' → '
-): string => path.map(formatNodeLabel).join(separator);
+const formatPath = (path: (string | number)[], separator = ' → '): string =>
+  path.map(formatNodeLabel).join(separator);
 
 /**
  * Генератор шагов для алгоритма Roberts-Flores

@@ -46,10 +46,7 @@ export class SessionRepository {
    * Получить сессии по алгоритму
    */
   async getSessionsByAlgorithm(algorithmName: string): Promise<Session[]> {
-    return await db.sessions
-      .where('algorithmName')
-      .equals(algorithmName)
-      .sortBy('updatedAt');
+    return await db.sessions.where('algorithmName').equals(algorithmName).sortBy('updatedAt');
   }
 
   /**
@@ -65,11 +62,7 @@ export class SessionRepository {
   /**
    * Сохранить чекпоинт графа
    */
-  async saveCheckpoint(
-    sessionId: string,
-    at: number,
-    snapshot: GraphDTO
-  ): Promise<void> {
+  async saveCheckpoint(sessionId: string, at: number, snapshot: GraphDTO): Promise<void> {
     const checkpoint: GraphSnapshot = {
       id: `${sessionId}_${at}`,
       sessionId,
@@ -84,19 +77,14 @@ export class SessionRepository {
   /**
    * Загрузить ближайший чекпоинт
    */
-  async loadNearestCheckpoint(
-    sessionId: string,
-    index: number
-  ): Promise<GraphSnapshot | null> {
+  async loadNearestCheckpoint(sessionId: string, index: number): Promise<GraphSnapshot | null> {
     const checkpoints = await db.graphs
       .where('sessionId')
       .equals(sessionId)
-      .filter((cp) => cp.at <= index)
+      .filter(cp => cp.at <= index)
       .sortBy('at');
 
-    return checkpoints.length > 0
-      ? checkpoints[checkpoints.length - 1]!
-      : null;
+    return checkpoints.length > 0 ? checkpoints[checkpoints.length - 1]! : null;
   }
 
   /**
@@ -109,10 +97,7 @@ export class SessionRepository {
   /**
    * Обновить метаданные сессии
    */
-  async updateSessionMetadata(
-    id: string,
-    metadata: Partial<Session['metadata']>
-  ): Promise<void> {
+  async updateSessionMetadata(id: string, metadata: Partial<Session['metadata']>): Promise<void> {
     const session = await db.sessions.get(id);
     if (session) {
       await db.sessions.update(id, {
@@ -127,4 +112,3 @@ export class SessionRepository {
 }
 
 export const sessionRepository = new SessionRepository();
-

@@ -27,7 +27,7 @@ describe('LayoutService', () => {
 
       const nodeA = model.getNode('a');
       const nodeB = model.getNode('b');
-      
+
       expect(nodeA?.x).toBeDefined();
       expect(nodeA?.y).toBeDefined();
       expect(nodeB?.x).toBeDefined();
@@ -36,18 +36,18 @@ describe('LayoutService', () => {
 
     it('должен работать с пустым графом', async () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       await expect(service.runFA2(model)).resolves.not.toThrow();
       expect(consoleWarnSpy).toHaveBeenCalledWith('Graph is empty, nothing to layout');
-      
+
       consoleWarnSpy.mockRestore();
     });
 
     it('должен работать с одним узлом', async () => {
       model.addNode({ id: 'single', x: 100, y: 100 });
-      
+
       await service.runFA2(model, { iterations: 5 });
-      
+
       const node = model.getNode('single');
       expect(node?.x).toBeDefined();
       expect(node?.y).toBeDefined();
@@ -56,12 +56,12 @@ describe('LayoutService', () => {
     it('должен инициализировать случайные позиции для узлов без координат', async () => {
       model.addNode({ id: 'a', x: 0, y: 0 });
       model.addNode({ id: 'b', x: 0, y: 0 });
-      
+
       await service.runFA2(model, { iterations: 10 });
-      
+
       const nodeA = model.getNode('a');
       const nodeB = model.getNode('b');
-      
+
       expect(nodeA?.x).toBeDefined();
       expect(nodeB?.y).toBeDefined();
     });
@@ -95,7 +95,7 @@ describe('LayoutService', () => {
       service.circularLayout(model, 100);
 
       const nodes = ['a', 'b', 'c', 'd'].map(id => model.getNode(id));
-      
+
       // Все узлы должны быть на расстоянии ~100 от центра (0, 0)
       nodes.forEach(node => {
         if (node) {
@@ -119,7 +119,7 @@ describe('LayoutService', () => {
       expect(nodeA).toBeDefined();
       expect(nodeB).toBeDefined();
       expect(nodeC).toBeDefined();
-      
+
       // Углы между соседними узлами должны быть примерно равны
       // для 3 узлов: 360/3 = 120 градусов
     });
@@ -130,9 +130,9 @@ describe('LayoutService', () => {
 
     it('должен работать с одним узлом', () => {
       model.addNode({ id: 'single', x: 0, y: 0 });
-      
+
       service.circularLayout(model, 100);
-      
+
       const node = model.getNode('single');
       expect(node?.x).toBeDefined();
       expect(node?.y).toBeDefined();
@@ -204,9 +204,9 @@ describe('LayoutService', () => {
 
     it('должен использовать размеры по умолчанию', () => {
       model.addNode({ id: 'a', x: 0, y: 0 });
-      
+
       service.randomLayout(model);
-      
+
       const node = model.getNode('a');
       expect(node?.x).toBeDefined();
       expect(node?.y).toBeDefined();
@@ -268,9 +268,9 @@ describe('LayoutService', () => {
 
     it('должен работать с одним узлом', () => {
       model.addNode({ id: 'single', x: 0, y: 0 });
-      
+
       service.gridLayout(model, 100);
-      
+
       const node = model.getNode('single');
       expect(node?.x).toBeDefined();
       expect(node?.y).toBeDefined();
@@ -279,9 +279,9 @@ describe('LayoutService', () => {
     it('должен использовать spacing по умолчанию', () => {
       model.addNode({ id: 'a', x: 0, y: 0 });
       model.addNode({ id: 'b', x: 0, y: 0 });
-      
+
       service.gridLayout(model);
-      
+
       expect(model.getNode('a')).toBeDefined();
       expect(model.getNode('b')).toBeDefined();
     });
@@ -314,10 +314,10 @@ describe('LayoutService', () => {
 
       // Добавляем рёбра
       for (let i = 0; i < 99; i++) {
-        model.addEdge({ 
-          id: `edge${i}`, 
-          source: `node${i}`, 
-          target: `node${i + 1}` 
+        model.addEdge({
+          id: `edge${i}`,
+          source: `node${i}`,
+          target: `node${i + 1}`,
         });
       }
 
@@ -328,4 +328,3 @@ describe('LayoutService', () => {
     });
   });
 });
-

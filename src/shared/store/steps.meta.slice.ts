@@ -34,14 +34,14 @@ const stepsSlice = createSlice({
       state.playing = false;
       state.selectedStepId = null;
     },
-    
+
     setIndex(state, action: PayloadAction<number>) {
       const newIndex = action.payload;
       if (newIndex >= -1 && newIndex < state.totalSteps) {
         state.currentIndex = newIndex;
       }
     },
-    
+
     nextStep(state) {
       if (state.currentIndex < state.totalSteps - 1) {
         state.currentIndex += 1;
@@ -49,31 +49,31 @@ const stepsSlice = createSlice({
         state.playing = false;
       }
     },
-    
+
     prevStep(state) {
       if (state.currentIndex > -1) {
         state.currentIndex -= 1;
       }
     },
-    
+
     play(state) {
       if (state.totalSteps > 0) {
         state.playing = true;
       }
     },
-    
+
     pause(state) {
       state.playing = false;
     },
-    
+
     setSpeed(state, action: PayloadAction<number>) {
       state.speedMs = action.payload;
     },
-    
+
     setSelectedStepId(state, action: PayloadAction<string | null>) {
       state.selectedStepId = action.payload;
     },
-    
+
     reset(state) {
       state.sessionId = null;
       state.currentIndex = -1;
@@ -81,7 +81,7 @@ const stepsSlice = createSlice({
       state.playing = false;
       state.selectedStepId = null;
     },
-    
+
     updateTotalSteps(state, action: PayloadAction<number>) {
       state.totalSteps = action.payload;
     },
@@ -102,4 +102,3 @@ export const {
 } = stepsSlice.actions;
 
 export default stepsSlice.reducer;
-
