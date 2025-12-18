@@ -9,23 +9,43 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { HistoryItem } from '@/components/elements';
+import { HistoryItem, Alert } from '@/components/elements';
 import { sessionRepository } from '@/shared/persistence';
 import type { Session } from '@/shared/persistence';
 import { AnalyticsEvents } from '@/shared/lib';
-import { Box, Container, Typography, Paper, CircularProgress, Stack, Chip } from '@mui/material';
+import {
+  Box,
+  Container,
+  Typography,
+  Paper,
+  CircularProgress,
+  Stack,
+  Chip,
+  Button,
+} from '@mui/material';
 
 /**
  * Маппинг имён алгоритмов на их URL маршруты
  */
 const ALGORITHM_ROUTES: Record<string, string> = {
   'roberts-flores': '/algorithms/roberts-flores',
-  'Roberts-Flores': '/algorithms/roberts-flores',
-  RobertsFlores: '/algorithms/roberts-flores',
   'bellman-ford': '/algorithms/bellman-ford',
-  'Bellman-Ford': '/algorithms/bellman-ford',
-  'ford-bellman': '/algorithms/bellman-ford',
-  'Ford-Bellman': '/algorithms/bellman-ford',
+  prim: '/algorithms/prim',
+  'graph-coloring': '/algorithms/graph-coloring',
+  hungarian: '/algorithms/hungarian',
+  'bron-kerbosch': '/algorithms/bron-kerbosch',
+};
+
+/**
+ * Маппинг имён алгоритмов на их отображаемые названия
+ */
+const ALGORITHM_TITLES: Record<string, string> = {
+  'roberts-flores': 'Алгоритм Робертса-Флореса',
+  'bellman-ford': 'Алгоритм Форда-Беллмана',
+  prim: 'Алгоритм Прима',
+  'graph-coloring': 'Алгоритм раскраски графа',
+  hungarian: 'Венгерский алгоритм',
+  'bron-kerbosch': 'Алгоритм Брона-Кербоша',
 };
 
 /**
@@ -35,9 +55,19 @@ export default function HistoryPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    sessionId: string | null;
+    algorithmName: string;
+    date: string;
+  }>({
+    open: false,
+    sessionId: null,
+    algorithmName: '',
+    date: '',
+  });
 
   useEffect(() => {
-    // Загружаем сессии из IndexedDB
     const loadSessions = async () => {
       try {
         const allSessions = await sessionRepository.getAllSessions();
@@ -65,11 +95,9 @@ export default function HistoryPage() {
   };
 
   const handleOpenSession = (session: Session) => {
-    // Получаем маршрут для алгоритма
     const route = ALGORITHM_ROUTES[session.algorithmName];
 
     if (route) {
-      // Сохраняем ID сессии в localStorage для загрузки на странице алгоритма
       localStorage.setItem('loadSessionId', session.id);
 
       const sessionAgeDays = Math.floor((Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24));
@@ -81,32 +109,44 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDeleteSession = async (sessionId: string) => {
+  const handleDeleteSession = (sessionId: string) => {
     const sessionToDelete = sessions.find(s => s.id === sessionId);
-    const confirmMessage = sessionToDelete
-      ? `Вы уверены, что хотите удалить сессию "${sessionToDelete.algorithmName}"?\n\nДата: ${formatDate(sessionToDelete.updatedAt)}`
-      : 'Вы уверены, что хотите удалить эту сессию?';
+    if (!sessionToDelete) return;
 
-    if (!confirm(confirmMessage)) {
-      return;
-    }
+    const algorithmTitle =
+      ALGORITHM_TITLES[sessionToDelete.algorithmName] || sessionToDelete.algorithmName;
+
+    setDeleteDialog({
+      open: true,
+      sessionId,
+      algorithmName: algorithmTitle,
+      date: formatDate(sessionToDelete.updatedAt),
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteDialog.sessionId) return;
 
     try {
-      await sessionRepository.deleteSession(sessionId);
+      const sessionToDelete = sessions.find(s => s.id === deleteDialog.sessionId);
+
+      await sessionRepository.deleteSession(deleteDialog.sessionId);
 
       if (sessionToDelete) {
         AnalyticsEvents.sessionDeleted(sessionToDelete.algorithmName);
       }
 
-      // Обновляем список сессий с плавным удалением
-      setSessions(prevSessions => prevSessions.filter(s => s.id !== sessionId));
+      setSessions(prevSessions => prevSessions.filter(s => s.id !== deleteDialog.sessionId));
 
-      // Показываем уведомление об успехе
-      console.log('Session deleted successfully:', sessionId);
+      setDeleteDialog({ open: false, sessionId: null, algorithmName: '', date: '' });
     } catch (error) {
       console.error('Failed to delete session:', error);
-      alert('Ошибка при удалении сессии. Попробуйте ещё раз.');
+      setDeleteDialog({ open: false, sessionId: null, algorithmName: '', date: '' });
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialog({ open: false, sessionId: null, algorithmName: '', date: '' });
   };
 
   return (
@@ -115,9 +155,9 @@ export default function HistoryPage() {
         maxWidth="lg"
         sx={{
           minHeight: '100vh',
-          py: { xs: 4, sm: 6, md: 8 },
+          py: { xs: 2, sm: 3, md: 4 },
           px: { xs: 4, sm: 6, lg: 8 },
-          mt: { xs: 4, sm: 6, md: 8, lg: '10%' },
+          mt: { xs: 2, sm: 3, md: 4 },
         }}
       >
         <Box
@@ -128,7 +168,7 @@ export default function HistoryPage() {
             alignItems: 'center',
             color: 'text.secondary',
             textDecoration: 'none',
-            mb: 4,
+            mb: 2,
             ml: { xs: 0, sm: 4, md: 10 },
             transition: 'color 0.2s',
             '&:hover': {
@@ -149,7 +189,7 @@ export default function HistoryPage() {
           variant="h3"
           sx={{
             fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.25rem' },
-            mb: { xs: 4, sm: 6 },
+            mb: { xs: 2, sm: 3 },
             textAlign: { xs: 'center', sm: 'left' },
             ml: { xs: 0, sm: 4, md: 10 },
           }}
@@ -162,10 +202,10 @@ export default function HistoryPage() {
             backgroundColor: '#756565',
             display: 'flex',
             flexDirection: 'column',
-            gap: { xs: 4, sm: 6, md: 8 },
+            gap: { xs: 2, sm: 3, md: 4 },
             px: { xs: 4, sm: 6, md: 8 },
-            py: { xs: 4, sm: 6 },
-            pb: { xs: 8, sm: 12, md: '100px' },
+            py: { xs: 3, sm: 4 },
+            pb: { xs: 4, sm: 6, md: 8 },
           }}
         >
           <Typography
@@ -180,7 +220,7 @@ export default function HistoryPage() {
               },
               textAlign: { xs: 'center', sm: 'left' },
               ml: { xs: 0, sm: 3 },
-              mb: { xs: 4, sm: 0 },
+              mb: { xs: 2, sm: 0 },
               color: '#ffffff',
             }}
           >
@@ -193,10 +233,10 @@ export default function HistoryPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                py: 12,
+                py: 6,
               }}
             >
-              <CircularProgress sx={{ mb: 4, color: 'rgba(255,255,255,0.3)' }} />
+              <CircularProgress sx={{ mb: 2, color: 'rgba(255,255,255,0.3)' }} />
               <Typography variant="body1" sx={{ color: '#ffffff' }}>
                 Загрузка истории...
               </Typography>
@@ -205,21 +245,21 @@ export default function HistoryPage() {
             <Box
               sx={{
                 textAlign: 'center',
-                py: 12,
+                py: 6,
               }}
             >
               <Paper
                 sx={{
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  p: 8,
+                  p: 4,
                   maxWidth: 448,
                   mx: 'auto',
                 }}
               >
-                <Typography variant="body1" sx={{ color: '#ffffff', mb: 4 }}>
+                <Typography variant="body1" sx={{ color: '#ffffff', mb: 2 }}>
                   История пуста
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 4 }}>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3 }}>
                   Запустите алгоритм, чтобы создать первую запись в истории решений.
                 </Typography>
                 <Box
@@ -227,7 +267,7 @@ export default function HistoryPage() {
                   href="/algorithms"
                   sx={{
                     display: 'inline-block',
-                    mt: 6,
+                    mt: 2,
                     px: 6,
                     py: 3,
                     backgroundColor: '#3b82f6',
@@ -245,7 +285,7 @@ export default function HistoryPage() {
               </Paper>
             </Box>
           ) : (
-            <Stack spacing={{ xs: 4, sm: 6, md: 8 }}>
+            <Stack spacing={{ xs: 2, sm: 3, md: 4 }}>
               {sessions.map(session => {
                 const nodeCount = session.graphDTO?.nodes?.length || 0;
                 const edgeCount = session.graphDTO?.edges?.length || 0;
@@ -254,7 +294,7 @@ export default function HistoryPage() {
                 return (
                   <Box key={session.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <HistoryItem
-                      title={session.algorithmName}
+                      title={ALGORITHM_TITLES[session.algorithmName] || session.algorithmName}
                       date={formatDate(session.updatedAt)}
                       onOpen={() => handleOpenSession(session)}
                       onDelete={() => handleDeleteSession(session.id)}
@@ -313,6 +353,57 @@ export default function HistoryPage() {
           )}
         </Paper>
       </Container>
+
+      <Alert
+        open={deleteDialog.open}
+        onClose={cancelDelete}
+        title="Удаление сессии"
+        variant="warning"
+        showIcon={false}
+        showCloseButton={false}
+        actions={
+          <>
+            <Button
+              onClick={cancelDelete}
+              variant="outlined"
+              sx={{
+                borderColor: 'rgba(115, 115, 115, 0.5)',
+                color: 'text.primary',
+                textTransform: 'none',
+                px: 3,
+                '&:hover': {
+                  borderColor: 'rgba(115, 115, 115, 0.8)',
+                  backgroundColor: 'rgba(115, 115, 115, 0.1)',
+                },
+              }}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              variant="contained"
+              sx={{
+                backgroundColor: '#f59e0b',
+                textTransform: 'none',
+                px: 3,
+                '&:hover': {
+                  backgroundColor: '#f59e0b',
+                  filter: 'brightness(1.1)',
+                },
+              }}
+            >
+              OK
+            </Button>
+          </>
+        }
+      >
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          Вы уверены, что хотите удалить сессию "{deleteDialog.algorithmName}"?
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Дата: {deleteDialog.date}
+        </Typography>
+      </Alert>
     </Box>
   );
 }
