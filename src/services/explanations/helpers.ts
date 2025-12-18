@@ -2,7 +2,8 @@
  * Вспомогательные функции для работы с пояснениями
  */
 
-import type { Step, AlgorithmContext } from '@/types';
+import type { Step } from '@/types';
+import type { AlgorithmContext } from './ExplanationGenerator';
 import { explanationGeneratorRegistry } from './ExplanationGenerator';
 
 /**

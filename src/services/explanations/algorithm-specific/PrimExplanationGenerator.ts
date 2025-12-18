@@ -5,7 +5,7 @@ import type { AlgorithmContext } from '../ExplanationGenerator';
 export class PrimExplanationGenerator extends ExplanationGenerator {
   generateExplanation(
     step: Step,
-    algorithmName: string,
+    _algorithmName: string,
     context?: AlgorithmContext
   ): StepExplanation | undefined {
     switch (step.type) {
