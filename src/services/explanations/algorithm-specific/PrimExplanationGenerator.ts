@@ -34,7 +34,7 @@ export class PrimExplanationGenerator extends ExplanationGenerator {
 
     switch (state) {
       case 'current':
-        const mstNodeFormula = `MST = MST ∪ {${nodeLabel}}`;
+        const mstNodeFormula = `\\text{MST} = \\text{MST} \\cup \\{${nodeLabel}\\}`;
         return this.createExplanation(
           'selection',
           `Добавлена вершина ${nodeLabel} в минимальное остовное дерево (MST)`,
@@ -96,17 +96,21 @@ export class PrimExplanationGenerator extends ExplanationGenerator {
     const edgeStr = this.formatEdge(from, to, false);
 
     switch (state) {
-      case 'active':
-        const selectionFormula = `w(${fromLabel},${toLabel}) = ${weightStr} = min(w(ребра-кандидаты))`;
+      case 'active': {
+        const selectionFormulas = [
+          `w(${fromLabel}, ${toLabel}) = ${weightStr}`,
+          `= \\min(w(\\text{ребра-кандидаты}))`,
+        ];
         return this.createExplanation(
           'selection',
           `Выбрано ребро ${edgeStr} с минимальным весом ${weightStr}`,
           { edges: [edgeId], values: { weight: weightStr } },
           {
             reason: `Жадный принцип алгоритма Прима: выбираем ребро с минимальным весом среди всех рёбер, соединяющих уже построенную часть MST с непосещёнными вершинами. Это гарантирует, что в итоге получим минимальное остовное дерево, так как каждое добавленное ребро является локально оптимальным выбором`,
-            formula: selectionFormula,
+            formula: selectionFormulas,
           }
         );
+      }
 
       case 'candidate':
         const candidateWeight = weightStr;
@@ -119,17 +123,21 @@ export class PrimExplanationGenerator extends ExplanationGenerator {
           }
         );
 
-      case 'path':
-        const mstFormula = `MST = MST ∪ {(${fromLabel},${toLabel})}, вес = ${weightStr}`;
+      case 'path': {
+        const mstFormulas = [
+          `\\text{MST} = \\text{MST} \\cup \\{(${fromLabel}, ${toLabel})\\}`,
+          `\\text{вес} = ${weightStr}`,
+        ];
         return this.createExplanation(
           'selection',
           `Ребро ${edgeStr} добавлено в MST с весом ${weightStr}`,
           { edges: [edgeId], values: { weight: weightStr } },
           {
             reason: `Ребро ${edgeStr} добавляется в MST, так как оно имеет минимальный вес среди всех рёбер, соединяющих текущее MST с новыми вершинами. Это расширяет дерево, добавляя ближайшую непосещённую вершину`,
-            formula: mstFormula,
+            formula: mstFormulas,
           }
         );
+      }
 
       case 'rejected':
         return this.createExplanation(
