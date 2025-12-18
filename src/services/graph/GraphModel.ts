@@ -19,9 +19,7 @@ export class GraphModel {
   private graph: Graph<NodeAttrs, EdgeAttrs>;
 
   constructor(directed = false) {
-    this.graph = directed 
-      ? new Graph({ type: 'directed' })
-      : new Graph({ type: 'undirected' });
+    this.graph = directed ? new Graph({ type: 'directed' }) : new Graph({ type: 'undirected' });
   }
 
   /**
@@ -246,7 +244,7 @@ export class GraphModel {
    * Сериализовать в DTO
    */
   toDTO(): GraphDTO {
-    const nodes: NodeDTO[] = this.graph.nodes().map((nodeId) => {
+    const nodes: NodeDTO[] = this.graph.nodes().map(nodeId => {
       const attrs = this.graph.getNodeAttributes(nodeId);
       return {
         id: nodeId,
@@ -259,7 +257,7 @@ export class GraphModel {
       };
     });
 
-    const edges: EdgeDTO[] = this.graph.edges().map((edgeId) => {
+    const edges: EdgeDTO[] = this.graph.edges().map(edgeId => {
       const attrs = this.graph.getEdgeAttributes(edgeId);
       const source = this.graph.source(edgeId);
       const target = this.graph.target(edgeId);
@@ -319,4 +317,3 @@ export class GraphModel {
     return cloned;
   }
 }
-

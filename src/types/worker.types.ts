@@ -9,14 +9,14 @@ import type { Step } from './step.types';
 /**
  * Типы сообщений Worker
  */
-export type WorkerMessageType = 
-  | 'RUN_ALGO'      // UI → Worker: запуск алгоритма
-  | 'STEP_CHUNK'    // Worker → UI: батч шагов
-  | 'CHUNK_ACK'     // UI → Worker: подтверждение получения чанка
-  | 'DONE'          // Worker → UI: алгоритм завершён
-  | 'ERROR'         // Worker → UI: ошибка выполнения
-  | 'CANCEL'        // UI → Worker: отмена выполнения
-  | 'PROGRESS';     // Worker → UI: прогресс выполнения
+export type WorkerMessageType =
+  | 'RUN_ALGO' // UI → Worker: запуск алгоритма
+  | 'STEP_CHUNK' // Worker → UI: батч шагов
+  | 'CHUNK_ACK' // UI → Worker: подтверждение получения чанка
+  | 'DONE' // Worker → UI: алгоритм завершён
+  | 'ERROR' // Worker → UI: ошибка выполнения
+  | 'CANCEL' // UI → Worker: отмена выполнения
+  | 'PROGRESS'; // Worker → UI: прогресс выполнения
 
 /**
  * Базовое сообщение Worker
@@ -120,12 +120,11 @@ export interface ProgressMessage extends WorkerMessage {
 /**
  * Union type для всех сообщений
  */
-export type WorkerMessages = 
-  | RunAlgoMessage 
-  | StepChunkMessage 
+export type WorkerMessages =
+  | RunAlgoMessage
+  | StepChunkMessage
   | ChunkAckMessage
-  | DoneMessage 
-  | ErrorMessage 
+  | DoneMessage
+  | ErrorMessage
   | CancelMessage
   | ProgressMessage;
-

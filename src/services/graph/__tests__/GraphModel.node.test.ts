@@ -51,7 +51,7 @@ describe('GraphModel', () => {
 
       model.addNode(node);
       const retrieved = model.getNode('node2');
-      
+
       expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe('node2');
       expect(retrieved?.x).toBe(50);
@@ -89,7 +89,7 @@ describe('GraphModel', () => {
 
       expect(model.edgeCount).toBe(1);
       model.removeNode('node1');
-      
+
       expect(model.edgeCount).toBe(0);
       expect(model.hasEdge('edge1')).toBe(false);
     });
@@ -434,4 +434,3 @@ describe('GraphModel', () => {
     });
   });
 });
-

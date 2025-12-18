@@ -19,7 +19,12 @@ import {
 } from '@/types';
 import type { NodeAttrs, EdgeAttrs, ElementState, NodeDTO, EdgeDTO } from '@/types';
 
-type PrevState = Partial<NodeAttrs> | EdgeAttrs | { x: number; y: number } | ElementState | Record<string, unknown>;
+type PrevState =
+  | Partial<NodeAttrs>
+  | EdgeAttrs
+  | { x: number; y: number }
+  | ElementState
+  | Record<string, unknown>;
 
 export class Applier {
   private prevStates = new WeakMap<Step, PrevState>();
@@ -39,34 +44,34 @@ export class Applier {
     switch (step.type) {
       case 'ADD_NODE':
         return this.applyAddNode(step, model);
-      
+
       case 'REMOVE_NODE':
         return this.applyRemoveNode(step, model);
-      
+
       case 'UPDATE_NODE':
         return this.applyUpdateNode(step, model);
-      
+
       case 'ADD_EDGE':
         return this.applyAddEdge(step, model);
-      
+
       case 'REMOVE_EDGE':
         return this.applyRemoveEdge(step, model);
-      
+
       case 'UPDATE_EDGE':
         return this.applyUpdateEdge(step, model);
-      
+
       case 'SET_COORDS':
         return this.applySetCoords(step, model);
-      
+
       case 'BATCH':
         return this.applyBatch(step, model);
-      
+
       case 'HIGHLIGHT_NODE':
         return this.applyHighlightNode(step, model);
-      
+
       case 'HIGHLIGHT_EDGE':
         return this.applyHighlightEdge(step, model);
-      
+
       default:
         console.warn('Unknown step type:', (step as Step).type);
         return [];
@@ -81,34 +86,34 @@ export class Applier {
     switch (step.type) {
       case 'ADD_NODE':
         return this.revertAddNode(step, model);
-      
+
       case 'REMOVE_NODE':
         return this.revertRemoveNode(step, model);
-      
+
       case 'UPDATE_NODE':
         return this.revertUpdateNode(step, model);
-      
+
       case 'ADD_EDGE':
         return this.revertAddEdge(step, model);
-      
+
       case 'REMOVE_EDGE':
         return this.revertRemoveEdge(step, model);
-      
+
       case 'UPDATE_EDGE':
         return this.revertUpdateEdge(step, model);
-      
+
       case 'SET_COORDS':
         return this.revertSetCoords(step, model);
-      
+
       case 'BATCH':
         return this.revertBatch(step, model);
-      
+
       case 'HIGHLIGHT_NODE':
         return this.revertHighlightNode(step, model);
-      
+
       case 'HIGHLIGHT_EDGE':
         return this.revertHighlightEdge(step, model);
-      
+
       default:
         console.warn('Unknown step type for revert:', (step as Step).type);
         return [];
@@ -141,14 +146,11 @@ export class Applier {
           this.prevStates.set(step, prev);
         }
       }
-        
-      const affectedEdges = [
-        ...model.getOutEdges(step.nodeId),
-        ...model.getInEdges(step.nodeId),
-      ];
-      
+
+      const affectedEdges = [...model.getOutEdges(step.nodeId), ...model.getInEdges(step.nodeId)];
+
       model.removeNode(step.nodeId);
-      
+
       return [step.nodeId, ...affectedEdges];
     }
     return [];
@@ -156,7 +158,14 @@ export class Applier {
 
   private revertRemoveNode(step: RemoveNodeStep, model: GraphModel): string[] {
     const prev = this.prevStates.get(step);
-    if (prev && typeof prev === 'object' && !model.hasNode(step.nodeId) && 'id' in prev && 'x' in prev && 'y' in prev) {
+    if (
+      prev &&
+      typeof prev === 'object' &&
+      !model.hasNode(step.nodeId) &&
+      'id' in prev &&
+      'x' in prev &&
+      'y' in prev
+    ) {
       model.addNode(prev as unknown as NodeDTO);
       return [step.nodeId];
     }
@@ -175,7 +184,7 @@ export class Applier {
           this.prevStates.set(step, prev);
         }
       }
-      
+
       model.updateNode(step.nodeId, step.attrs);
       return [step.nodeId];
     }
@@ -216,10 +225,10 @@ export class Applier {
           this.prevStates.set(step, prev);
         }
       }
-      
+
       const edge = model.getEdge(step.edgeId);
       model.removeEdge(step.edgeId);
-      
+
       return edge ? [step.edgeId, edge.source, edge.target] : [step.edgeId];
     }
     return [];
@@ -227,7 +236,14 @@ export class Applier {
 
   private revertRemoveEdge(step: RemoveEdgeStep, model: GraphModel): string[] {
     const prev = this.prevStates.get(step);
-    if (prev && typeof prev === 'object' && !model.hasEdge(step.edgeId) && 'id' in prev && 'source' in prev && 'target' in prev) {
+    if (
+      prev &&
+      typeof prev === 'object' &&
+      !model.hasEdge(step.edgeId) &&
+      'id' in prev &&
+      'source' in prev &&
+      'target' in prev
+    ) {
       const edge = prev as unknown as EdgeDTO;
       model.addEdge(edge);
       return [step.edgeId, edge.source, edge.target];
@@ -247,10 +263,10 @@ export class Applier {
           this.prevStates.set(step, prev);
         }
       }
-      
+
       const edge = model.getEdge(step.edgeId);
       model.updateEdge(step.edgeId, step.attrs);
-      
+
       return edge ? [step.edgeId, edge.source, edge.target] : [step.edgeId];
     }
     return [];
@@ -261,7 +277,7 @@ export class Applier {
     if (prev && model.hasEdge(step.edgeId) && typeof prev === 'object') {
       const edge = model.getEdge(step.edgeId);
       model.updateEdge(step.edgeId, prev as Partial<EdgeAttrs>);
-      
+
       return edge ? [step.edgeId, edge.source, edge.target] : [step.edgeId];
     }
     return [];
@@ -276,7 +292,7 @@ export class Applier {
           this.prevStates.set(step, { x: node.x, y: node.y });
         }
       }
-      
+
       model.updateNode(step.nodeId, { x: step.x, y: step.y });
       return [step.nodeId];
     }
@@ -285,7 +301,13 @@ export class Applier {
 
   private revertSetCoords(step: SetCoordsStep, model: GraphModel): string[] {
     const prev = this.prevStates.get(step);
-    if (prev && typeof prev === 'object' && model.hasNode(step.nodeId) && 'x' in prev && 'y' in prev) {
+    if (
+      prev &&
+      typeof prev === 'object' &&
+      model.hasNode(step.nodeId) &&
+      'x' in prev &&
+      'y' in prev
+    ) {
       model.updateNode(step.nodeId, prev as { x: number; y: number });
       return [step.nodeId];
     }
@@ -295,18 +317,18 @@ export class Applier {
   // ===== BATCH =====
   private applyBatch(step: BatchStep, model: GraphModel): string[] {
     const dirtyIds: string[] = [];
-    
+
     for (const op of step.ops) {
       const ids = this.apply(op, model);
       dirtyIds.push(...ids);
     }
-    
+
     return [...new Set(dirtyIds)];
   }
 
   private revertBatch(step: BatchStep, model: GraphModel): string[] {
     const dirtyIds: string[] = [];
-    
+
     for (let i = step.ops.length - 1; i >= 0; i--) {
       const op = step.ops[i];
       if (op) {
@@ -314,7 +336,7 @@ export class Applier {
         dirtyIds.push(...ids);
       }
     }
-    
+
     return [...new Set(dirtyIds)];
   }
 
@@ -327,7 +349,7 @@ export class Applier {
           this.prevStates.set(step, node.state);
         }
       }
-      
+
       model.updateNode(step.nodeId, { state: step.state });
       return [step.nodeId];
     }
@@ -354,10 +376,10 @@ export class Applier {
           this.prevStates.set(step, edge.state);
         }
       }
-      
+
       const edge = model.getEdge(step.edgeId);
       model.updateEdge(step.edgeId, { state: step.state });
-      
+
       return edge ? [step.edgeId, edge.source, edge.target] : [step.edgeId];
     }
     return [];
@@ -369,11 +391,10 @@ export class Applier {
       if (typeof prev === 'string') {
         const edge = model.getEdge(step.edgeId);
         model.updateEdge(step.edgeId, { state: prev as ElementState });
-        
+
         return edge ? [step.edgeId, edge.source, edge.target] : [step.edgeId];
       }
     }
     return [];
   }
 }
-

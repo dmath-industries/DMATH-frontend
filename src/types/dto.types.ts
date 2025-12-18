@@ -6,14 +6,14 @@
 /**
  * Состояние узла/ребра для визуальной подсветки в анимации
  */
-export type ElementState = 
-  | 'default'      // обычное состояние
-  | 'active'       // активная обработка
-  | 'visited'      // посещён
-  | 'current'      // текущий элемент
-  | 'path'         // часть пути/решения
-  | 'rejected'     // отвергнут/исключён
-  | 'candidate';   // кандидат для рассмотрения
+export type ElementState =
+  | 'default' // обычное состояние
+  | 'active' // активная обработка
+  | 'visited' // посещён
+  | 'current' // текущий элемент
+  | 'path' // часть пути/решения
+  | 'rejected' // отвергнут/исключён
+  | 'candidate'; // кандидат для рассмотрения
 
 /**
  * DTO для узла графа
@@ -49,4 +49,3 @@ export interface GraphDTO {
   nodes: NodeDTO[];
   edges: EdgeDTO[];
 }
-

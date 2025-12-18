@@ -47,4 +47,3 @@ export const DEFAULT_EDGE_ATTRS: Partial<EdgeAttrs> = {
   width: 2,
   state: 'default',
 };
-

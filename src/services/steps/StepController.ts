@@ -20,13 +20,13 @@ export class StepController {
   private model: GraphModel;
   private applier: Applier;
   private renderer: Renderer;
-  
+
   private steps: Step[] = [];
   private currentIndex: number = -1;
   private playing: boolean = false;
   private speedMs: number = 1000;
   private intervalId: NodeJS.Timeout | null = null;
-  
+
   private onIndexChange?: (index: number) => void;
   private onComplete?: () => void;
 
@@ -81,7 +81,7 @@ export class StepController {
    */
   setSpeed(speedMs: number): void {
     this.speedMs = speedMs;
-    
+
     if (this.playing) {
       this.stopPlayback();
       this.startPlayback();
@@ -252,4 +252,3 @@ export class StepController {
     this.playing = false;
   }
 }
-
