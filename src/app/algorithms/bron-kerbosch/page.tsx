@@ -8,7 +8,10 @@
 import { Box, Paper, Typography, Alert } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
+import { getAlgorithmConfig } from '@/algorithms';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
+
+const algorithmConfig = getAlgorithmConfig('bron-kerbosch');
 
 /**
  * Контент страницы алгоритма Брона-Кербоша
@@ -113,7 +116,8 @@ function BronKerboschContent() {
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
-          placeholder="Введите матрицу смежности неориентированного графа построчно, используя запятую как разделитель между элементами"
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
         />
       </Paper>
 

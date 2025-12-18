@@ -19,13 +19,18 @@ interface GraphEditorProps {
   onAddNode: (id: string, x?: number, y?: number) => void;
   onAddEdge: (source: string, target: string, weight?: number) => void;
   onClear: () => void;
-  onLoadSample?: () => void;
+  useWeights?: boolean;
 }
 
 /**
  * Компонент панели редактирования графа
  */
-export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: GraphEditorProps) {
+export function GraphEditor({
+  onAddNode,
+  onAddEdge,
+  onClear,
+  useWeights = true,
+}: GraphEditorProps) {
   const [showNodeDialog, setShowNodeDialog] = useState(false);
   const [showEdgeDialog, setShowEdgeDialog] = useState(false);
   const [nodeId, setNodeId] = useState('');
@@ -35,7 +40,6 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
 
   const handleAddNode = () => {
     if (nodeId.trim()) {
-      // Передаём undefined, чтобы позиция определялась в GraphContainer (центр viewport)
       onAddNode(nodeId.trim());
       setNodeId('');
       setShowNodeDialog(false);
@@ -44,7 +48,7 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
 
   const handleAddEdge = () => {
     if (edgeSource.trim() && edgeTarget.trim()) {
-      const weight = parseFloat(edgeWeight) || 1;
+      const weight = useWeights ? parseFloat(edgeWeight) || 1 : 1;
       onAddEdge(edgeSource.trim(), edgeTarget.trim(), weight);
       setEdgeSource('');
       setEdgeTarget('');
@@ -56,12 +60,10 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
   return (
     <Box sx={{ p: 3 }}>
       <Stack
-        direction="row"
-        spacing={1}
+        direction="column"
+        spacing={2}
         sx={{
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          maxWidth: 400,
+          maxWidth: 250,
           mx: 'auto',
         }}
       >
@@ -70,6 +72,7 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
           startIcon={<Plus size={16} />}
           onClick={() => setShowNodeDialog(true)}
           title="Добавить вершину"
+          fullWidth
         >
           Вершина
         </Button>
@@ -79,16 +82,10 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
           startIcon={<Network size={16} />}
           onClick={() => setShowEdgeDialog(true)}
           title="Добавить ребро"
-          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          fullWidth
         >
           Ребро
         </Button>
-
-        {onLoadSample && (
-          <Button variant="contained" onClick={onLoadSample} title="Загрузить пример">
-            Пример
-          </Button>
-        )}
 
         <Button
           variant="contained"
@@ -96,6 +93,7 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
           startIcon={<Minus size={16} />}
           onClick={onClear}
           title="Очистить граф"
+          fullWidth
         >
           Очистить
         </Button>
@@ -182,13 +180,15 @@ export function GraphEditor({ onAddNode, onAddEdge, onClear, onLoadSample }: Gra
               value={edgeTarget}
               onChange={e => setEdgeTarget(e.target.value)}
             />
-            <TextField
-              fullWidth
-              type="number"
-              label="Вес (опционально)"
-              value={edgeWeight}
-              onChange={e => setEdgeWeight(e.target.value)}
-            />
+            {useWeights && (
+              <TextField
+                fullWidth
+                type="number"
+                label="Вес (опционально)"
+                value={edgeWeight}
+                onChange={e => setEdgeWeight(e.target.value)}
+              />
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>

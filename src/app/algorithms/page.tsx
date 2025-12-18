@@ -62,7 +62,7 @@ export default function AlgorithmsPage() {
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        pt: { xs: 4, sm: 5, md: 6 },
+        pt: { xs: 12, sm: 14, md: 16, lg: 18 },
       }}
     >
       <Container

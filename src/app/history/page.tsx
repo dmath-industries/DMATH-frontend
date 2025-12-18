@@ -157,7 +157,7 @@ export default function HistoryPage() {
           minHeight: '100vh',
           py: { xs: 2, sm: 3, md: 4 },
           px: { xs: 4, sm: 6, lg: 8 },
-          mt: { xs: 2, sm: 3, md: 4 },
+          mt: { xs: 9, sm: 10, md: 11, lg: 12 },
         }}
       >
         <Box

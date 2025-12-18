@@ -1,18 +1,46 @@
 'use client';
 
-import { Box, Paper, Typography, Alert } from '@mui/material';
+import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import { graphConfig } from '@/shared/lib/config';
+import { getAlgorithmConfig } from '@/algorithms';
+import { Alert } from '@/components/elements';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
+import { useState } from 'react';
+
+const algorithmConfig = getAlgorithmConfig('bellman-ford');
 
 function BellmanFordContent() {
   const { loadGraph } = useAlgorithmLayout();
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'warning' | 'error' | 'success';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    variant: 'info' | 'warning' | 'error' | 'success' = 'error'
+  ) => {
+    setAlertState({ open: true, title, message, variant });
+  };
+
+  const closeAlert = () => {
+    setAlertState(prev => ({ ...prev, open: false }));
+  };
 
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
@@ -29,14 +57,14 @@ function BellmanFordContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          alert('Матрица должна быть квадратной!');
+          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
           return;
         }
       }
@@ -91,7 +119,7 @@ function BellmanFordContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      alert('Ошибка при парсинге матрицы. Проверьте формат!');
+      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
     }
   };
 
@@ -103,7 +131,8 @@ function BellmanFordContent() {
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
-          placeholder="Введите квадратную матрицу весов построчно. Используйте запятую как разделитель. Числа представляют веса рёбер. Используйте 'inf' или '∞' для отсутствующих рёбер."
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
         />
       </Paper>
 
@@ -125,12 +154,12 @@ function BellmanFordContent() {
           <Typography variant="body2">
             Временная сложность: O(V × E), где V — количество вершин, E — количество рёбер.
           </Typography>
-          <Alert severity="info" sx={{ mt: 1 }}>
+          <MuiAlert severity="info" sx={{ mt: 1 }}>
             <Typography variant="body2">
               💡 Совет: Используйте матрицу весов, где элемент [i][j] — вес ребра от вершины i к
               вершине j. Используйте 0 для отсутствия ребра или 'inf' для бесконечности.
             </Typography>
-          </Alert>
+          </MuiAlert>
         </Box>
       </Paper>
 
@@ -160,6 +189,27 @@ function BellmanFordContent() {
           </Typography>
         </Box>
       </Paper>
+
+      <Alert
+        open={alertState.open}
+        onClose={closeAlert}
+        title={alertState.title}
+        variant={alertState.variant}
+        actions={
+          <Button
+            onClick={closeAlert}
+            variant="contained"
+            sx={{
+              textTransform: 'none',
+              px: 4,
+            }}
+          >
+            ОК
+          </Button>
+        }
+      >
+        {alertState.message}
+      </Alert>
     </>
   );
 }

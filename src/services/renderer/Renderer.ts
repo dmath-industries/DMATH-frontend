@@ -29,6 +29,7 @@ export class Renderer {
   private draggingNodeId: string | null = null;
   private dragOffset: { x: number; y: number } | null = null;
   private viewportAdapter: ViewportAdapter | null = null;
+  private showWeights: boolean = true;
 
   /**
    * Инициализация Pixi Application
@@ -86,6 +87,13 @@ export class Renderer {
   }
 
   /**
+   * Установить флаг отображения весов
+   */
+  setShowWeights(show: boolean): void {
+    this.showWeights = show;
+  }
+
+  /**
    * Полная отрисовка графа
    */
   drawAll(model: GraphModel): void {
@@ -132,7 +140,6 @@ export class Renderer {
       this.drawNode(nodeId, model);
     }
 
-    // Настраиваем интерактивность для новых или обновлённых узлов
     if (dirtyNodes.length > 0) {
       this.setupNodeInteractivity();
     }
@@ -171,7 +178,6 @@ export class Renderer {
     graphic.position.set(node.x, node.y);
     graphic.zIndex = 10;
 
-    // Делаем вершину интерактивной
     graphic.eventMode = 'static';
     graphic.cursor = 'pointer';
 
@@ -191,7 +197,7 @@ export class Renderer {
     label.anchor.set(0.5);
     label.position.set(node.x, node.y);
     label.zIndex = 20;
-    label.eventMode = 'none'; // Метка не должна перехватывать события
+    label.eventMode = 'none';
 
     this.labelsContainer.addChild(label);
     this.labelGraphics.set(nodeId, label);
@@ -251,9 +257,19 @@ export class Renderer {
     this.edgesContainer.addChild(graphic);
     this.edgeGraphics.set(edgeId, graphic);
 
-    // Отрисовка веса ребра, если он указан
-    if (edge.weight !== undefined && edge.weight !== null) {
+    if (this.showWeights && edge.weight !== undefined && edge.weight !== null) {
       this.drawEdgeWeight(edgeId, edge.weight, startX, startY, endX, endY);
+    } else if (!this.showWeights) {
+      const oldLabelData = this.edgeWeightLabels.get(edgeId);
+      if (oldLabelData) {
+        this.labelsContainer?.removeChild(oldLabelData.text);
+        oldLabelData.text.destroy();
+        if (oldLabelData.bg) {
+          this.labelsContainer?.removeChild(oldLabelData.bg);
+          oldLabelData.bg.destroy();
+        }
+        this.edgeWeightLabels.delete(edgeId);
+      }
     }
   }
 
@@ -290,7 +306,6 @@ export class Renderer {
     const length = Math.sqrt(dx * dx + dy * dy);
     if (length === 0) return;
 
-    // Перпендикулярный вектор (поворот на 90 градусов)
     const perpX = -dy / length;
     const perpY = dx / length;
 
@@ -299,14 +314,13 @@ export class Renderer {
     const labelX = midX + perpX * offset;
     const labelY = midY + perpY * offset;
 
-    // Создаём текст для веса (белые цифры без фона, с чёрной обводкой)
     const weightText = new Text({
       text: String(weight),
       style: {
         fontSize: 14,
         fill: 0xffffff,
         fontWeight: 'bold',
-        stroke: { color: 0x000000, width: 2 }, // Чёрная обводка для лучшей читаемости
+        stroke: { color: 0x000000, width: 2 },
       },
     });
 
@@ -433,10 +447,8 @@ export class Renderer {
     }
 
     for (const [nodeId, graphic] of this.nodeGraphics.entries()) {
-      // Удаляем старые обработчики, если они есть
       graphic.removeAllListeners('pointerdown');
 
-      // Обработчик начала перетаскивания
       graphic.on('pointerdown', event => {
         if (!this.model) return;
 
@@ -445,12 +457,9 @@ export class Renderer {
 
         this.draggingNodeId = nodeId;
 
-        // Приостанавливаем перетаскивание viewport
         this.viewportAdapter?.pauseDrag();
 
-        // Получаем глобальные координаты клика
         const globalPos = event.global;
-        // Преобразуем в локальные координаты контейнера узлов
         const localPos = this.nodesContainer?.toLocal(globalPos);
 
         if (localPos) {
@@ -464,7 +473,6 @@ export class Renderer {
       });
     }
 
-    // Глобальные обработчики для перетаскивания
     if (this.app.stage) {
       this.app.stage.eventMode = 'static';
 
@@ -474,19 +482,15 @@ export class Renderer {
         const node = this.model.getNode(this.draggingNodeId);
         if (!node) return;
 
-        // Получаем глобальные координаты мыши
         const globalPos = event.global;
-        // Преобразуем в локальные координаты контейнера узлов
         const localPos = this.nodesContainer?.toLocal(globalPos);
 
         if (localPos) {
           const newX = localPos.x - this.dragOffset.x;
           const newY = localPos.y - this.dragOffset.y;
 
-          // Обновляем позицию в модели
           this.model.updateNode(this.draggingNodeId, { x: newX, y: newY });
 
-          // Обновляем позицию графики и метки
           const graphic = this.nodeGraphics.get(this.draggingNodeId);
           const label = this.labelGraphics.get(this.draggingNodeId);
 
@@ -497,7 +501,6 @@ export class Renderer {
             label.position.set(newX, newY);
           }
 
-          // Перерисовываем связанные рёбра
           const edges = this.model.getEdges();
           for (const edgeId of edges) {
             const edge = this.model.getEdge(edgeId);
@@ -512,7 +515,6 @@ export class Renderer {
       };
 
       const handlePointerUp = () => {
-        // Возобновляем перетаскивание viewport
         if (this.draggingNodeId) {
           this.viewportAdapter?.resumeDrag();
         }
