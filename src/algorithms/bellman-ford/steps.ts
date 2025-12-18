@@ -402,7 +402,7 @@ export class BellmanFordStepGenerator {
     startNode: string,
     hasNegativeCycle: boolean
   ): void {
-    if (hasNegativeCycle || !this.startNode) {
+    if (!this.startNode) {
       return;
     }
 
@@ -472,9 +472,20 @@ export class BellmanFordStepGenerator {
 
     finalStep.explanation = explanation;
     finalStep.explanation.finalResult = {
-      title: 'Итоговый результат: кратчайшие расстояния',
-      items,
-      summary: `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
+      title: hasNegativeCycle
+        ? 'Итоговый результат: обнаружен отрицательный цикл'
+        : 'Итоговый результат: кратчайшие расстояния',
+      items: hasNegativeCycle
+        ? [
+            {
+              label: 'Ошибка',
+              value: 'Обнаружен отрицательный цикл. Кратчайшие пути не определены.',
+            },
+          ]
+        : items,
+      summary: hasNegativeCycle
+        ? 'Граф содержит отрицательный цикл, достижимый из стартовой вершины'
+        : `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
     };
 
     this.steps.push(finalStep);
