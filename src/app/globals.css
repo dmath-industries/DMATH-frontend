@@ -25,3 +25,85 @@
     text-shadow: 1px 1px 10px rgba(255, 255, 255, 0.4);
   }
 }
+
+/* KaTeX стили для темной темы */
+.katex {
+  color: inherit;
+  font-size: 1.1em;
+}
+
+.katex .mathnormal {
+  color: inherit;
+}
+
+.katex .mord {
+  color: inherit;
+}
+
+.katex .mrel {
+  color: inherit;
+}
+
+.katex .mbin {
+  color: inherit;
+}
+
+.katex .mop {
+  color: inherit;
+}
+
+.katex .mopen {
+  color: inherit;
+}
+
+.katex .mclose {
+  color: inherit;
+}
+
+.katex .mpunct {
+  color: inherit;
+}
+
+.katex .mspace {
+  color: inherit;
+}
+
+.katex .msupsub {
+  color: inherit;
+}
+
+.katex .mfrac {
+  color: inherit;
+}
+
+.katex .sqrt {
+  color: inherit;
+}
+
+.katex .overline {
+  color: inherit;
+}
+
+.katex .underline {
+  color: inherit;
+}
+
+.katex .accent {
+  color: inherit;
+}
+
+.katex .text {
+  color: inherit;
+}
+
+/* Для inline формул */
+.katex-inline {
+  display: inline-block;
+}
+
+/* Для display формул */
+.katex-display {
+  display: block;
+  text-align: center;
+  margin: 0.5em 0;
+}
