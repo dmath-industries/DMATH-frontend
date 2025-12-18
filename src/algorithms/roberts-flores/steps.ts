@@ -43,6 +43,7 @@ export class RobertsFloresStepGenerator {
   private graph!: Graph;
   private totalNodes: number = 0;
   private startNode: string | null = null;
+  private foundCycles: string[][] = []; // Найденные Гамильтоновы циклы
 
   /**
    * Генерировать шаги для алгоритма Roberts-Flores
@@ -50,6 +51,7 @@ export class RobertsFloresStepGenerator {
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
+    this.foundCycles = [];
 
     // Конвертировать GraphDTO в GraphModel (направленный граф)
     this.graphModel = new GraphModel(true);
@@ -81,6 +83,9 @@ export class RobertsFloresStepGenerator {
 
     this.findHamiltonianCycles(path, startNode, totalNodes);
 
+    // Добавляем итоговый ответ на последнем шаге
+    this.addFinalResultStep();
+
     return this.steps;
   }
 
@@ -97,6 +102,10 @@ export class RobertsFloresStepGenerator {
       const hasCycleEdge = this.graph.hasEdge(current, firstNode);
 
       if (hasCycleEdge) {
+        // Сохраняем найденный цикл (замыкаем его)
+        const cycle = [...path, firstNode];
+        this.foundCycles.push(cycle);
+
         const edgeId = this.getEdgeId(current, firstNode);
         if (edgeId) {
           this.addHighlightEdgeStep(
@@ -251,5 +260,40 @@ export class RobertsFloresStepGenerator {
   private getEdgeId(from: string, to: string): string | null {
     const edgeKey = this.graph.edge(from, to);
     return typeof edgeKey === 'string' ? edgeKey : null;
+  }
+
+  /**
+   * Добавляет итоговый ответ алгоритма на последнем шаге
+   */
+  private addFinalResultStep(): void {
+    const items: Array<{ label: string; value: string }> = [];
+
+    if (this.foundCycles.length === 0) {
+      items.push({
+        label: 'Результат',
+        value: 'Гамильтоновы циклы не найдены',
+      });
+    } else {
+      this.foundCycles.forEach((cycle, index) => {
+        const cycleStr = cycle.map(nodeId => formatNodeLabel(nodeId)).join(' → ');
+        items.push({
+          label: `Цикл ${index + 1}`,
+          value: cycleStr,
+        });
+      });
+    }
+
+    // Добавляем итоговый ответ к последнему шагу с explanation
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i];
+      if (step && step.explanation) {
+        step.explanation.finalResult = {
+          title: 'Итоговый результат: Гамильтоновы циклы',
+          items,
+          summary: `Найдено циклов: ${this.foundCycles.length}`,
+        };
+        break;
+      }
+    }
   }
 }
