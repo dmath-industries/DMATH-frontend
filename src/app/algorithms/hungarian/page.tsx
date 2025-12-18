@@ -4,7 +4,10 @@ import { Box, Paper, Typography, Alert } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import { graphConfig } from '@/shared/lib/config';
+import { getAlgorithmConfig } from '@/algorithms';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
+
+const algorithmConfig = getAlgorithmConfig('hungarian');
 
 function HungarianContent() {
   const { loadGraph } = useAlgorithmLayout();
@@ -127,10 +130,8 @@ function HungarianContent() {
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
-          placeholder="Введите квадратную матрицу стоимостей построчно. Используйте запятую как разделитель. Числа представляют стоимость назначения источника на цель."
-          defaultValue={`3,4,0
-1,0,2
-1,3,5`}
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
         />
       </Paper>
 

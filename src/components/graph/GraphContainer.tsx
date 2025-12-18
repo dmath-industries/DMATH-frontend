@@ -20,50 +20,6 @@ export function GraphContainer() {
   const handleRendererReady = (renderer: Renderer, viewport: ViewportAdapter) => {
     rendererRef.current = renderer;
     viewportRef.current = viewport;
-    loadSampleGraph();
-  };
-
-  /**
-   * Загрузить тестовый граф с примером
-   */
-  const loadSampleGraph = () => {
-    model.clear();
-
-    const offset = 500;
-    const nodes = [
-      { id: 'a', x: offset + 0, y: offset - 150, label: 'a' },
-      { id: 'b', x: offset + 150, y: offset - 50, label: 'b' },
-      { id: 'c', x: offset + 150, y: offset + 100, label: 'c' },
-      { id: 'd', x: offset - 150, y: offset + 100, label: 'd' },
-      { id: 'e', x: offset - 150, y: offset - 50, label: 'e' },
-    ];
-
-    const edges = [
-      { source: 'a', target: 'b' },
-      { source: 'b', target: 'c' },
-      { source: 'c', target: 'd' },
-      { source: 'd', target: 'e' },
-      { source: 'e', target: 'a' },
-      { source: 'a', target: 'c' },
-      { source: 'e', target: 'b' },
-    ];
-
-    for (const node of nodes) {
-      model.addNode(node);
-    }
-
-    for (const edge of edges) {
-      model.addEdge({
-        id: `${edge.source}-${edge.target}`,
-        source: edge.source,
-        target: edge.target,
-        directed: true,
-      });
-    }
-
-    if (rendererRef.current && viewportRef.current) {
-      rendererRef.current.drawAll(model);
-    }
   };
 
   /**
@@ -178,7 +134,6 @@ export function GraphContainer() {
               onAddNode={handleAddNode}
               onAddEdge={handleAddEdge}
               onClear={handleClear}
-              onLoadSample={loadSampleGraph}
             />
           </div>
         </div>

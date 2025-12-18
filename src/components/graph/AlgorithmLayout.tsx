@@ -19,6 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
 import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
+import { getAlgorithmConfig } from '@/algorithms';
 import { usePathname } from 'next/navigation';
 import {
   Box,
@@ -84,6 +85,8 @@ export function AlgorithmLayout({
   const { playing, currentIndex, speedMs, totalSteps } = useAppSelector(state => state.steps);
   const pathname = usePathname();
 
+  const algorithmConfig = getAlgorithmConfig(algorithmName);
+
   const [graphModel] = useState(() => new GraphModel(true));
   const [applier] = useState(() => new Applier());
   const [workerClient] = useState(() => new WorkerClient());
@@ -98,6 +101,17 @@ export function AlgorithmLayout({
     height: mobileConfig.canvas.defaultSize.height,
   });
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'warning' | 'error' | 'success';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    variant: 'info',
+  });
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -187,10 +201,23 @@ export function AlgorithmLayout({
    * @param y - Координата Y (опционально, использует центр viewport если не указано)
    */
   const handleAddNode = (id: string, x?: number, y?: number) => {
-    const position = x !== undefined && y !== undefined ? { x, y } : getCenterPosition();
+    let position: { x: number; y: number };
+
+    if (x !== undefined && y !== undefined) {
+      position = { x, y };
+    } else {
+      const center = getCenterPosition();
+      const offsetRange = 150;
+      const randomOffsetX = (Math.random() - 0.5) * offsetRange * 2;
+      const randomOffsetY = (Math.random() - 0.5) * offsetRange * 2;
+      position = {
+        x: center.x + randomOffsetX,
+        y: center.y + randomOffsetY,
+      };
+    }
 
     if (graphModel.hasNode(id)) {
-      alert(`Вершина с ID "${id}" уже существует!`);
+      showAlert('Ошибка', `Вершина с ID "${id}" уже существует!`, 'error');
       return;
     }
 
@@ -200,6 +227,14 @@ export function AlgorithmLayout({
       y: position.y,
       label: id,
     });
+
+    if (hasRunAlgorithm) {
+      setHasRunAlgorithm(false);
+      if (controllerRef.current) {
+        controllerRef.current.setSteps([]);
+      }
+      dispatch(reset());
+    }
 
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
@@ -214,22 +249,22 @@ export function AlgorithmLayout({
    */
   const handleAddEdge = (source: string, target: string, weight?: number) => {
     if (!graphModel.hasNode(source)) {
-      alert(`Вершина "${source}" не существует!`);
+      showAlert('Ошибка', `Вершина "${source}" не существует!`, 'error');
       return;
     }
     if (!graphModel.hasNode(target)) {
-      alert(`Вершина "${target}" не существует!`);
+      showAlert('Ошибка', `Вершина "${target}" не существует!`, 'error');
       return;
     }
     if (source === target) {
-      alert('Нельзя создать ребро из вершины в саму себя!');
+      showAlert('Ошибка', 'Нельзя создать ребро из вершины в саму себя!', 'error');
       return;
     }
 
     const edgeId = `${source}-${target}`;
 
     if (graphModel.hasEdge(edgeId)) {
-      alert(`Ребро между "${source}" и "${target}" уже существует!`);
+      showAlert('Ошибка', `Ребро между "${source}" и "${target}" уже существует!`, 'error');
       return;
     }
 
@@ -240,6 +275,14 @@ export function AlgorithmLayout({
       weight,
       directed: true,
     });
+
+    if (hasRunAlgorithm) {
+      setHasRunAlgorithm(false);
+      if (controllerRef.current) {
+        controllerRef.current.setSteps([]);
+      }
+      dispatch(reset());
+    }
 
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
@@ -277,49 +320,18 @@ export function AlgorithmLayout({
   };
 
   /**
-   * Загрузить тестовый граф с примером
+   * Показать кастомный алерт
    */
-  const handleLoadSample = () => {
-    graphModel.clear();
+  const showAlert = (
+    title: string,
+    message: string,
+    variant: 'info' | 'warning' | 'error' | 'success' = 'error'
+  ) => {
+    setAlertState({ open: true, title, message, variant });
+  };
 
-    const { x: centerX, y: centerY } = DEFAULT_GRAPH_CENTER;
-    const nodes = [
-      { id: 'a', x: centerX + 0, y: centerY - 150, label: 'a' },
-      { id: 'b', x: centerX + 150, y: centerY - 50, label: 'b' },
-      { id: 'c', x: centerX + 150, y: centerY + 100, label: 'c' },
-      { id: 'd', x: centerX - 150, y: centerY + 100, label: 'd' },
-      { id: 'e', x: centerX - 150, y: centerY - 50, label: 'e' },
-    ];
-
-    const edges = [
-      { source: 'a', target: 'b' },
-      { source: 'b', target: 'c' },
-      { source: 'c', target: 'd' },
-      { source: 'd', target: 'e' },
-      { source: 'e', target: 'a' },
-      { source: 'a', target: 'c' },
-      { source: 'e', target: 'b' },
-    ];
-
-    for (const node of nodes) {
-      graphModel.addNode(node);
-    }
-
-    for (const edge of edges) {
-      graphModel.addEdge({
-        id: `${edge.source}-${edge.target}`,
-        source: edge.source,
-        target: edge.target,
-        directed: true,
-      });
-    }
-
-    const graphDTO = graphModel.toDTO();
-    loadGraph(graphDTO);
-
-    if (rendererRef.current) {
-      rendererRef.current.drawAll(graphModel);
-    }
+  const closeAlert = () => {
+    setAlertState(prev => ({ ...prev, open: false }));
   };
 
   /**
@@ -328,6 +340,8 @@ export function AlgorithmLayout({
   const handleRendererReady = (renderer: Renderer, viewport: ViewportAdapter) => {
     rendererRef.current = renderer;
     viewportRef.current = viewport;
+
+    renderer.setShowWeights(algorithmConfig?.useWeights ?? true);
 
     const controller = new StepController({
       model: graphModel,
@@ -363,13 +377,15 @@ export function AlgorithmLayout({
 
   const handleRunAlgorithm = () => {
     if (!hasGraph) {
-      alert('Сначала загрузите граф!');
+      showAlert('Внимание', 'Сначала загрузите граф!', 'warning');
       return;
     }
 
     if (hasRunAlgorithm) {
-      alert(
-        'Алгоритм уже был запущен для этого графа. Просмотрите результаты в панели управления или загрузите новый граф.'
+      showAlert(
+        'Внимание',
+        'Алгоритм уже был запущен для этого графа. Просмотрите результаты в панели управления или загрузите новый граф.',
+        'warning'
       );
       return;
     }
@@ -624,7 +640,7 @@ export function AlgorithmLayout({
       },
       onError: error => {
         console.error('Worker error:', error);
-        alert(`Ошибка выполнения: ${error}`);
+        showAlert('Ошибка выполнения', String(error), 'error');
 
         if (currentAlgorithmRef.current) {
           const graphDTO = currentGraphDTORef.current;
@@ -980,7 +996,7 @@ export function AlgorithmLayout({
                     onAddNode={handleAddNode}
                     onAddEdge={handleAddEdge}
                     onClear={handleClear}
-                    onLoadSample={handleLoadSample}
+                    useWeights={algorithmConfig?.useWeights ?? true}
                   />
                 </Box>
               </Box>
@@ -1033,6 +1049,27 @@ export function AlgorithmLayout({
             Вы уверены, что хотите очистить граф? Все вершины, рёбра и результаты алгоритма будут
             удалены.
           </Typography>
+        </Alert>
+
+        <Alert
+          open={alertState.open}
+          onClose={closeAlert}
+          title={alertState.title}
+          variant={alertState.variant}
+          actions={
+            <Button
+              onClick={closeAlert}
+              variant="contained"
+              sx={{
+                textTransform: 'none',
+                px: 4,
+              }}
+            >
+              ОК
+            </Button>
+          }
+        >
+          {alertState.message}
         </Alert>
       </Box>
     </AlgorithmLayoutContext.Provider>

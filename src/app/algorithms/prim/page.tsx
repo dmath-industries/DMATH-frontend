@@ -5,14 +5,42 @@
  * Страница визуализации алгоритма Прима
  */
 
-import { Box, Paper, Typography, Alert } from '@mui/material';
+import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
+import { getAlgorithmConfig } from '@/algorithms';
+import { Alert } from '@/components/elements';
 import type { EdgeDTO, GraphDTO, NodeDTO } from '@/types';
 import { AnalyticsEvents } from '@/shared/lib';
+import { useState } from 'react';
+
+const algorithmConfig = getAlgorithmConfig('prim');
 
 function PrimContent() {
   const { loadGraph } = useAlgorithmLayout();
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'warning' | 'error' | 'success';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    variant: 'info' | 'warning' | 'error' | 'success' = 'error'
+  ) => {
+    setAlertState({ open: true, title, message, variant });
+  };
+
+  const closeAlert = () => {
+    setAlertState(prev => ({ ...prev, open: false }));
+  };
 
   /**
    * Построить граф из матрицы весов.
@@ -23,7 +51,7 @@ function PrimContent() {
     try {
       if (!matrixText || !matrixText.trim()) {
         AnalyticsEvents.matrixParseError('prim', 'empty');
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
@@ -35,7 +63,7 @@ function PrimContent() {
       const size = rows.length;
       if (size === 0) {
         AnalyticsEvents.matrixParseError('prim', 'empty');
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
@@ -43,7 +71,7 @@ function PrimContent() {
         const row = rows[i];
         if (!row || row.length !== size) {
           AnalyticsEvents.matrixParseError('prim', 'not_square');
-          alert('Матрица должна быть квадратной!');
+          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
           return;
         }
       }
@@ -101,7 +129,7 @@ function PrimContent() {
 
       if (edges.length === 0) {
         AnalyticsEvents.matrixParseError('prim', 'no_edges');
-        alert('Не найдено ни одного ребра. Заполните веса > 0.');
+        showAlert('Ошибка', 'Не найдено ни одного ребра. Заполните веса > 0.', 'error');
         return;
       }
 
@@ -110,7 +138,7 @@ function PrimContent() {
     } catch (error) {
       console.error('Error parsing matrix:', error);
       AnalyticsEvents.matrixParseError('prim', 'invalid_format');
-      alert('Ошибка при парсинге матрицы. Проверьте формат!');
+      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
     }
   };
 
@@ -122,7 +150,8 @@ function PrimContent() {
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
-          placeholder="Введите симметричную матрицу весов (0 или пусто — нет ребра)"
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
         />
       </Paper>
 
@@ -138,11 +167,11 @@ function PrimContent() {
           <Typography variant="body2">
             Работает с неориентированным взвешенным графом без отрицательных весов.
           </Typography>
-          <Alert severity="info" sx={{ mt: 1 }}>
+          <MuiAlert severity="info" sx={{ mt: 1 }}>
             <Typography variant="body2">
               💡 Совет: используйте симметричную матрицу с весами &gt; 0. Диагональ — 0.
             </Typography>
-          </Alert>
+          </MuiAlert>
         </Box>
       </Paper>
 
@@ -172,6 +201,27 @@ function PrimContent() {
           </Typography>
         </Box>
       </Paper>
+
+      <Alert
+        open={alertState.open}
+        onClose={closeAlert}
+        title={alertState.title}
+        variant={alertState.variant}
+        actions={
+          <Button
+            onClick={closeAlert}
+            variant="contained"
+            sx={{
+              textTransform: 'none',
+              px: 4,
+            }}
+          >
+            ОК
+          </Button>
+        }
+      >
+        {alertState.message}
+      </Alert>
     </>
   );
 }
