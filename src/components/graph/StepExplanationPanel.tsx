@@ -2,7 +2,8 @@
 
 import { useAppSelector } from '@/shared/store';
 import type { Step, StepExplanation } from '@/types';
-import { Info, Calculator } from 'lucide-react';
+import { Info, Calculator, CheckCircle2 } from 'lucide-react';
+import { Formula } from '@/components/common/Formula';
 
 interface StepExplanationPanelProps {
   currentStep: Step | null;
@@ -26,6 +27,10 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
   const displayExplanation: StepExplanation | null = hasActiveStep
     ? explanation || (description ? { type: 'general', text: description } : null)
     : null;
+
+  // Проверяем, является ли текущий шаг последним
+  const isLastStep = currentIndex >= 0 && currentIndex === totalSteps - 1;
+  const finalResult = isLastStep ? displayExplanation?.finalResult : undefined;
 
   // Показываем панель только если есть шаги
   if (totalSteps === 0) {
@@ -61,9 +66,17 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
                       <div className="text-xs font-medium text-blue-300 mb-1">
                         Математическая формула:
                       </div>
-                      <code className="text-sm text-blue-200 font-mono block whitespace-pre-wrap break-all">
-                        {displayExplanation.formula}
-                      </code>
+                      <div className="text-sm text-blue-200 space-y-1">
+                        {Array.isArray(displayExplanation.formula) ? (
+                          displayExplanation.formula.map((formula, index) => (
+                            <div key={index} className="block">
+                              <Formula formula={formula} displayMode={false} />
+                            </div>
+                          ))
+                        ) : (
+                          <Formula formula={displayExplanation.formula} displayMode={false} />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -74,6 +87,32 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
                   <p className="text-sm text-amber-200 leading-relaxed whitespace-pre-wrap break-words">
                     {displayExplanation.currentPath}
                   </p>
+                </div>
+              )}
+
+              {finalResult && (
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />
+                    <h3 className="text-sm font-semibold text-green-300">{finalResult.title}</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {finalResult.items.map((item, index) => (
+                      <div key={index} className="flex items-baseline gap-2">
+                        <span className="text-sm text-green-300 whitespace-nowrap">
+                          {item.label}:
+                        </span>
+                        <span className="text-sm text-green-200 flex-1 break-words">
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
+                    {finalResult.summary && (
+                      <div className="mt-3 pt-3 border-t border-green-500/20">
+                        <p className="text-sm font-medium text-green-300">{finalResult.summary}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
