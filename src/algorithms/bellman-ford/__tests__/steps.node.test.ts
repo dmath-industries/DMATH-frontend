@@ -197,4 +197,76 @@ describe('BellmanFordStepGenerator', () => {
     const startStep = updateSteps.find(step => step.attrs.label?.includes(': 0'));
     expect(startStep).toBeDefined();
   });
+
+  it('должен возвращать пустой массив, если startNode не найден в графе', () => {
+    const generator = new BellmanFordStepGenerator();
+    const graphDTO = buildSimpleGraphDTO();
+    const steps = generator.generateSteps(graphDTO, { startNode: 'nonexistent' });
+
+    expect(steps).toEqual([]);
+  });
+
+  it('должен обрабатывать путь длиной 1', () => {
+    const generator = new BellmanFordStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0, label: 'a' },
+        { id: '1', x: 100, y: 0, label: 'b' },
+      ],
+      edges: [{ id: 'e0', source: '0', target: '1', weight: 5, directed: true }],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+
+    expect(steps.length).toBeGreaterThan(0);
+    const pathSteps = steps.filter(
+      (step: Step) => step.type === 'HIGHLIGHT_NODE' && (step as HighlightNodeStep).state === 'path'
+    );
+    expect(pathSteps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать узлы без предшественников', () => {
+    const generator = new BellmanFordStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0, label: 'a' },
+        { id: '1', x: 100, y: 0, label: 'b' },
+      ],
+      edges: [],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать нечисловые идентификаторы узлов', () => {
+    const generator = new BellmanFordStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: 'node_a', x: 0, y: 0, label: 'a' },
+        { id: 'node_b', x: 100, y: 0, label: 'b' },
+      ],
+      edges: [{ id: 'e0', source: 'node_a', target: 'node_b', weight: 5, directed: true }],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: 'node_a' });
+
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда edge не найден для предшественника', () => {
+    const generator = new BellmanFordStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0, label: 'a' },
+        { id: '1', x: 100, y: 0, label: 'b' },
+        { id: '2', x: 200, y: 0, label: 'c' },
+      ],
+      edges: [
+        { id: 'e0', source: '0', target: '1', weight: 5, directed: true },
+        { id: 'e1', source: '1', target: '2', weight: 3, directed: true },
+      ],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+
+    expect(steps.length).toBeGreaterThan(0);
+  });
 });
