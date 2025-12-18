@@ -39,7 +39,6 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
         let reason = `Венгерский алгоритм последовательно обрабатывает строки и столбцы матрицы, выполняя приведение матрицы (вычитание минимумов) и поиск полного паросочетания в графе назначений`;
 
         if (rowIndex !== undefined && minValue !== undefined) {
-          // Обработка строки - находим минимум
           formulas = [
             `\\min_{j} c[${rowIndex}][j] = ${minValue}`,
             `u[${rowIndex}] = ${minValue}`,
@@ -47,7 +46,6 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
           ];
           reason = `Для строки ${nodeLabel} (индекс ${rowIndex}) находим минимальный элемент и вычитаем его из всех элементов строки. Это приведение строки, которое не изменяет оптимальность решения, но упрощает поиск назначений`;
         } else if (colIndex !== undefined && minValue !== undefined) {
-          // Обработка столбца - находим минимум
           formulas = [
             `\\min_{i} c[i][${colIndex}] = ${minValue}`,
             `v[${colIndex}] = ${minValue}`,
@@ -55,7 +53,6 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
           ];
           reason = `Для столбца ${nodeLabel} (индекс ${colIndex}) находим минимальный элемент и вычитаем его из всех элементов столбца. Это приведение столбца, которое не изменяет оптимальность решения`;
         } else if (minValue !== undefined) {
-          // Общая обработка с минимумом
           formulas = [
             `\\min = ${minValue}`,
             `Приведение матрицы: вычитаем минимум из строк/столбцов`,
@@ -125,19 +122,16 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
           const formulas: string[] = [];
 
           if (uValue !== undefined && vValue !== undefined && reducedCost !== undefined) {
-            // Полная формула с потенциалами
             formulas.push(
               `c'[${row}][${col}] = c[${row}][${col}] - u[${row}] - v[${col}]`,
               `= ${costStr} - ${uValue} - ${vValue} = ${reducedCost}`
             );
           } else if (uValue !== undefined && vValue !== undefined) {
-            // Формула с потенциалами, но без вычисленного значения
             formulas.push(
               `c'[${row}][${col}] = c[${row}][${col}] - u[${row}] - v[${col}]`,
               `= ${costStr} - ${uValue} - ${vValue}`
             );
           } else {
-            // Базовая формула
             formulas.push(`c'[${row}][${col}] = c[${row}][${col}] - u[${row}] - v[${col}]`);
           }
 
