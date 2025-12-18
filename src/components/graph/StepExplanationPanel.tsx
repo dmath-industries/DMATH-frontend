@@ -35,50 +35,54 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
           <Info className="w-5 h-5 text-blue-400" />
         </div>
         <div className="flex-1 min-w-0">
-          {displayExplanation ? (
+          {displayExplanation || finalResult ? (
             <div className="space-y-3">
-              <p className="text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap break-words">
-                {displayExplanation.text}
-              </p>
-
-              {displayExplanation.reason && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                  <p className="text-sm text-blue-200 leading-relaxed whitespace-pre-wrap break-words">
-                    {displayExplanation.reason}
+              {displayExplanation && (
+                <>
+                  <p className="text-sm text-neutral-200 leading-relaxed whitespace-pre-wrap break-words">
+                    {displayExplanation.text}
                   </p>
-                </div>
-              )}
 
-              {displayExplanation.formula && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <Calculator className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-blue-300 mb-1">
-                        Математическая формула:
-                      </div>
-                      <div className="text-sm text-blue-200 space-y-1">
-                        {Array.isArray(displayExplanation.formula) ? (
-                          displayExplanation.formula.map((formula, index) => (
-                            <div key={index} className="block">
-                              <Formula formula={formula} displayMode={false} />
-                            </div>
-                          ))
-                        ) : (
-                          <Formula formula={displayExplanation.formula} displayMode={false} />
-                        )}
+                  {displayExplanation.reason && (
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                      <p className="text-sm text-blue-200 leading-relaxed whitespace-pre-wrap break-words">
+                        {displayExplanation.reason}
+                      </p>
+                    </div>
+                  )}
+
+                  {displayExplanation.formula && (
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <Calculator className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-blue-300 mb-1">
+                            Математическая формула:
+                          </div>
+                          <div className="text-sm text-blue-200 space-y-1">
+                            {Array.isArray(displayExplanation.formula) ? (
+                              displayExplanation.formula.map((formula, index) => (
+                                <div key={index} className="block">
+                                  <Formula formula={formula} displayMode={false} />
+                                </div>
+                              ))
+                            ) : (
+                              <Formula formula={displayExplanation.formula} displayMode={false} />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {displayExplanation.currentPath && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
-                  <p className="text-sm text-amber-200 leading-relaxed whitespace-pre-wrap break-words">
-                    {displayExplanation.currentPath}
-                  </p>
-                </div>
+                  {displayExplanation.currentPath && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                      <p className="text-sm text-amber-200 leading-relaxed whitespace-pre-wrap break-words">
+                        {displayExplanation.currentPath}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               {finalResult && (
