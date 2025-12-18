@@ -8,7 +8,15 @@
 import Graph from 'graphology';
 
 import { GraphModel } from '@/services/graph';
-import type { AlgorithmParams, ElementState, GraphDTO, HighlightNodeStep, Step } from '@/types';
+import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
+import type {
+  AlgorithmParams,
+  ElementState,
+  GraphDTO,
+  HighlightNodeStep,
+  UpdateNodeStep,
+  Step,
+} from '@/types';
 
 const formatNodeLabel = (nodeId: string | number): string => {
   const numericId =
@@ -28,11 +36,13 @@ const formatNodeLabel = (nodeId: string | number): string => {
  * Цвета для раскраски (можно использовать разные состояния)
  */
 const COLOR_STATES: ElementState[] = [
-  'current', // Цвет 1
-  'active', // Цвет 2
-  'visited', // Цвет 3
-  'path', // Цвет 4
-  'candidate', // Цвет 5
+  'current', // Цвет 1 - Оранжевый
+  'active', // Цвет 2 - Жёлтый
+  'visited', // Цвет 3 - Синий
+  'path', // Цвет 4 - Зелёный
+  'candidate', // Цвет 5 - Фиолетовый
+  'rejected', // Цвет 6 - Красный
+  'default', // Цвет 7 - Белый (будет использован кастомный цвет)
 ];
 
 export class GraphColoringStepGenerator {
@@ -43,15 +53,22 @@ export class GraphColoringStepGenerator {
   private nodeColors: Map<string, number> = new Map();
   private nodeIndexMap: Map<string, number> = new Map();
   private indexNodeMap: Map<number, string> = new Map();
+  // Названия цветов должны соответствовать реальным цветам состояний в Renderer:
+  // current (colorNum=1) → оранжевый (amber-500)
+  // active (colorNum=2) → жёлтый (amber-400)
+  // visited (colorNum=3) → синий (blue-400)
+  // path (colorNum=4) → зелёный (emerald-500)
+  // candidate (colorNum=5) → фиолетовый (violet-500)
+  // rejected (colorNum=6) → красный (red-500)
+  // default (colorNum=7) → белый (white, через кастомный цвет)
   private colorNames = [
-    'Красный',
-    'Синий',
-    'Зелёный',
-    'Жёлтый',
-    'Фиолетовый',
-    'Оранжевый',
-    'Розовый',
-    'Голубой',
+    'Оранжевый', // colorNum=1, state='current'
+    'Жёлтый', // colorNum=2, state='active'
+    'Синий', // colorNum=3, state='visited'
+    'Зелёный', // colorNum=4, state='path'
+    'Фиолетовый', // colorNum=5, state='candidate'
+    'Красный', // colorNum=6, state='rejected'
+    'Белый', // colorNum=7, state='default' с color='#ffffff'
   ];
   private adjacencyMatrix: number[][] = [];
 
@@ -269,6 +286,11 @@ export class GraphColoringStepGenerator {
             state!,
             `Вершина ${formatNodeLabel(nodeId)} получает ${colorName} (цвет ${colorNum})`
           );
+
+          // Для белого цвета (colorNum=7, state='default') устанавливаем кастомный цвет
+          if (colorNum === 7 && state === 'default') {
+            this.addUpdateNodeStep(nodeId, { color: '#ffffff' });
+          }
         }
       }
 
@@ -279,6 +301,9 @@ export class GraphColoringStepGenerator {
     const chromaticNumber = colorNum - 1;
     this.addInfoStep(`Хроматическое число графа: ${chromaticNumber}`);
     this.addFinalSummary();
+
+    // Добавляем итоговый ответ на последнем шаге
+    this.addFinalResultStep();
   }
 
   /**
@@ -378,6 +403,13 @@ export class GraphColoringStepGenerator {
         state: 'default',
         description,
       };
+
+      // Генерируем пояснение
+      const explanation = explanationGeneratorRegistry.generate(step, 'graph-coloring');
+      if (explanation) {
+        step.explanation = explanation;
+      }
+
       this.steps.push(step);
     }
   }
@@ -394,6 +426,88 @@ export class GraphColoringStepGenerator {
       state,
       description,
     };
+
+    // Получаем соседей вершины для контекста
+    const neighbors = this.graph.neighbors(nodeId);
+    const algorithmContext: AlgorithmContext = {
+      neighbors: neighbors,
+    };
+
+    // Генерируем пояснение
+    const explanation = explanationGeneratorRegistry.generate(
+      step,
+      'graph-coloring',
+      algorithmContext
+    );
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     this.steps.push(step);
+  }
+
+  /**
+   * Добавить шаг обновления вершины (для установки кастомного цвета)
+   */
+  private addUpdateNodeStep(nodeId: string, attrs: { color?: string }): void {
+    const step: UpdateNodeStep = {
+      id: `step_${this.stepCounter++}`,
+      timestamp: Date.now(),
+      type: 'UPDATE_NODE',
+      nodeId,
+      attrs,
+    };
+
+    // Генерируем пояснение
+    const explanation = explanationGeneratorRegistry.generate(step, 'graph-coloring');
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
+    this.steps.push(step);
+  }
+
+  /**
+   * Добавляет итоговый ответ алгоритма на последнем шаге
+   */
+  private addFinalResultStep(): void {
+    // Группируем вершины по цветам
+    const colorGroups = new Map<number, string[]>();
+
+    for (const [nodeId, color] of this.nodeColors.entries()) {
+      if (!colorGroups.has(color)) {
+        colorGroups.set(color, []);
+      }
+      colorGroups.get(color)!.push(nodeId);
+    }
+
+    const items: Array<{ label: string; value: string }> = [];
+
+    // Сортируем по номерам цветов
+    const sortedColors = Array.from(colorGroups.keys()).sort((a, b) => a - b);
+
+    for (const color of sortedColors) {
+      const nodes = colorGroups.get(color)!;
+      const colorName = this.colorNames[color - 1] || `Цвет ${color}`;
+      const nodeLabels = nodes.map(nodeId => formatNodeLabel(nodeId)).join(', ');
+      items.push({
+        label: `${colorName} (цвет ${color})`,
+        value: nodeLabels || '—',
+      });
+    }
+
+    // Добавляем итоговый ответ к последнему шагу с explanation
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i];
+      if (step && step.explanation) {
+        const chromaticNumber = colorGroups.size;
+        step.explanation.finalResult = {
+          title: 'Итоговый результат: раскраска графа',
+          items,
+          summary: `Хроматическое число графа: ${chromaticNumber}`,
+        };
+        break;
+      }
+    }
   }
 }
