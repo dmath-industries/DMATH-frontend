@@ -41,7 +41,7 @@ export abstract class ExplanationGenerator {
     context?: AlgorithmContext,
     options?: {
       reason?: string;
-      formula?: string;
+      formula?: string | string[];
       currentPath?: string;
     }
   ): StepExplanation {
@@ -55,7 +55,15 @@ export abstract class ExplanationGenerator {
     }
 
     if (options?.formula) {
-      explanation.formula = options.formula;
+      // Если формула - строка с переносами строк, разбиваем на массив
+      if (typeof options.formula === 'string' && options.formula.includes('\n')) {
+        explanation.formula = options.formula
+          .split('\n')
+          .map(f => f.trim())
+          .filter(f => f.length > 0);
+      } else {
+        explanation.formula = options.formula;
+      }
     }
 
     if (options?.currentPath) {

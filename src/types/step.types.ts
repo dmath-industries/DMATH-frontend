@@ -20,14 +20,27 @@ export type ExplanationType =
   | 'general'; // Общее пояснение
 
 /**
+ * Итоговый результат алгоритма (отображается только на последнем шаге)
+ */
+export interface AlgorithmFinalResult {
+  title: string; // Заголовок блока (например, "Итоговый результат")
+  items: Array<{
+    label: string; // Метка (например, "Путь", "Цвет 1", "Вес")
+    value: string; // Значение (например, "a → b → c", "a, b, c", "15")
+  }>;
+  summary?: string; // Дополнительное резюме (например, "Общий вес: 42")
+}
+
+/**
  * Структурированное пояснение для шага алгоритма
  */
 export interface StepExplanation {
   type: ExplanationType;
   text: string; // "Что делаем?" - краткое описание действия
   reason?: string; // "Почему так?" - объяснение принципа/правила
-  formula?: string; // Математическая формула (если есть)
+  formula?: string | string[]; // Математическая формула (если есть) - может быть строкой или массивом строк (каждая формула на отдельной строке)
   currentPath?: string; // Текущий путь для отображения в оранжевом блоке
+  finalResult?: AlgorithmFinalResult; // Итоговый ответ алгоритма (только на последнем шаге)
   context?: {
     nodes?: string[];
     edges?: string[];
