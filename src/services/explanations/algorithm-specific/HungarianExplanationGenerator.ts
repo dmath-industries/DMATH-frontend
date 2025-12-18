@@ -5,7 +5,7 @@ import type { AlgorithmContext } from '../ExplanationGenerator';
 export class HungarianExplanationGenerator extends ExplanationGenerator {
   generateExplanation(
     step: Step,
-    algorithmName: string,
+    _algorithmName: string,
     context?: AlgorithmContext
   ): StepExplanation | undefined {
     switch (step.type) {

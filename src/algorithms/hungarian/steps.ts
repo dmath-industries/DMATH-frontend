@@ -111,7 +111,7 @@ export class HungarianStepGenerator {
       this.nodeLabels.set(node.id, node.label || node.id);
     }
 
-    const sourceNodes = graphDTO.nodes
+    let sourceNodes = graphDTO.nodes
       .filter(node => node.id.startsWith('source_'))
       .sort((a, b) => {
         const aNum = parseInt(a.id.replace('source_', ''), 10);
@@ -119,7 +119,7 @@ export class HungarianStepGenerator {
         return aNum - bNum;
       })
       .map(node => node.id);
-    const targetNodes = graphDTO.nodes
+    let targetNodes = graphDTO.nodes
       .filter(node => node.id.startsWith('target_'))
       .sort((a, b) => {
         const aNum = parseInt(a.id.replace('target_', ''), 10);
@@ -128,17 +128,20 @@ export class HungarianStepGenerator {
       })
       .map(node => node.id);
 
+    if (sourceNodes.length === 0 || targetNodes.length === 0) {
+      const allNodes = graphDTO.nodes.map(node => node.id).sort();
+      const n = allNodes.length;
+      if (n === 0 || n % 2 !== 0) {
+        return this.steps;
+      }
+      const half = Math.floor(n / 2);
+      sourceNodes = allNodes.slice(0, half);
+      targetNodes = allNodes.slice(half);
+    }
+
     const n = sourceNodes.length;
 
     if (n === 0 || targetNodes.length !== n) {
-      const firstNode = graphDTO.nodes[0];
-      if (firstNode) {
-        this.addHighlightNodeStep(
-          firstNode.id,
-          'rejected',
-          `Граф должен содержать равное количество source и target узлов. Найдено: source=${sourceNodes.length}, target=${targetNodes.length}`
-        );
-      }
       return this.steps;
     }
 
@@ -192,18 +195,8 @@ export class HungarianStepGenerator {
 
     this.nodeOrder = [...sourceNodes, ...targetNodes];
 
-    const hasFiniteRow = costMatrix.every(row => row.some(v => Number.isFinite(v)));
+    const hasFiniteRow = costMatrix.some(row => row.some(v => Number.isFinite(v)));
     if (!hasFiniteRow) {
-      const firstNode = sourceNodes[0];
-      if (firstNode) {
-        const edgeCount = this.edgeMap.size;
-
-        this.addHighlightNodeStep(
-          firstNode,
-          'rejected',
-          `Матрица стоимостей некорректна: в каждой строке должно быть хотя бы одно конечное значение. Найдено рёбер: ${edgeCount} из ${n * n} возможных. Проверьте, что для каждого источника есть хотя бы одно ребро к цели.`
-        );
-      }
       return this.steps;
     }
 
@@ -235,14 +228,14 @@ export class HungarianStepGenerator {
     }
 
     const assignments: Assignment[] = [];
-    const sourceNodesList = this.nodeOrder
+    let sourceNodesList = this.nodeOrder
       .filter(id => id.startsWith('source_'))
       .sort((a, b) => {
         const aNum = parseInt(a.replace('source_', ''), 10);
         const bNum = parseInt(b.replace('source_', ''), 10);
         return aNum - bNum;
       });
-    const targetNodesList = this.nodeOrder
+    let targetNodesList = this.nodeOrder
       .filter(id => id.startsWith('target_'))
       .sort((a, b) => {
         const aNum = parseInt(a.replace('target_', ''), 10);
@@ -250,13 +243,27 @@ export class HungarianStepGenerator {
         return aNum - bNum;
       });
 
+    if (sourceNodesList.length === 0 || targetNodesList.length === 0) {
+      const allNodes = [...this.nodeOrder].sort();
+      const half = allNodes.length / 2;
+      sourceNodesList = allNodes.slice(0, half);
+      targetNodesList = allNodes.slice(half);
+    }
+
     for (let i = 0; i < n; i++) {
       const jValue = assignmentCols[i] ?? -1;
       if (jValue < 0 || jValue >= n) continue;
       const rowId = sourceNodesList[i]!;
       const colId = targetNodesList[jValue]!;
       const edgeKey = `${rowId}->${colId}`;
-      const edgeInfo = this.edgeMap.get(edgeKey);
+      let edgeInfo = this.edgeMap.get(edgeKey);
+      if (!edgeInfo && this.graph) {
+        const edgeId = this.getEdgeId(rowId, colId);
+        if (edgeId) {
+          const weight = this.getEdgeWeight(edgeId);
+          edgeInfo = { weight, edgeId };
+        }
+      }
       const weight = costMatrix[i]?.[jValue];
       assignments.push({
         rowId,

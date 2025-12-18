@@ -5,7 +5,7 @@ import type { AlgorithmContext } from '../ExplanationGenerator';
 export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
   generateExplanation(
     step: Step,
-    algorithmName: string,
+    _algorithmName: string,
     context?: AlgorithmContext
   ): StepExplanation | undefined {
     switch (step.type) {
@@ -40,7 +40,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
         if (isInitial) {
           const formulas = [`\\text{path} = [${nodeLabel}]`, `|\\text{path}| = 1`];
           return this.createExplanation(
-            'initialization',
+            'general',
             `Инициализация: начинаем поиск Гамильтоновых циклов с вершины ${nodeLabel}`,
             { nodes: [nodeId], values: { start: nodeLabel } },
             {
@@ -81,7 +81,7 @@ export class RobertsFloresExplanationGenerator extends ExplanationGenerator {
           );
         }
 
-        return this.createExplanation('initialization', `Начало: добавлена вершина ${nodeLabel}`, {
+        return this.createExplanation('general', `Начало: добавлена вершина ${nodeLabel}`, {
           nodes: [nodeId],
         });
 

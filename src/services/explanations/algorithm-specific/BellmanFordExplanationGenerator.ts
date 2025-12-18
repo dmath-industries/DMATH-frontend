@@ -5,7 +5,7 @@ import type { AlgorithmContext } from '../ExplanationGenerator';
 export class BellmanFordExplanationGenerator extends ExplanationGenerator {
   generateExplanation(
     step: Step,
-    algorithmName: string,
+    _algorithmName: string,
     context?: AlgorithmContext
   ): StepExplanation | undefined {
     switch (step.type) {
@@ -36,7 +36,7 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         const formula = `d(${nodeLabel}) = ${value === '∞' ? '∞' : '0'}`;
         const isStart = value === '0';
         return this.createExplanation(
-          'initialization',
+          'general',
           `Инициализация расстояния до вершины ${nodeLabel}`,
           { nodes: [nodeId], values: { distance: value } },
           {
@@ -86,7 +86,7 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         if (context?.isStartNode) {
           const formula = `d(${nodeLabel}) = 0`;
           return this.createExplanation(
-            'initialization',
+            'general',
             `Стартовая вершина: ${nodeLabel}`,
             { nodes: [nodeId] },
             {
