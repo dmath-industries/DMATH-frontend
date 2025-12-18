@@ -419,7 +419,7 @@ export class BellmanFordStepGenerator {
 
       if (node.id === startNode) {
         items.push({
-          label: `${nodeLabel}:`,
+          label: `${nodeLabel}`,
           value: '0',
         });
       } else if (dist !== undefined && dist !== Infinity) {
@@ -427,18 +427,18 @@ export class BellmanFordStepGenerator {
         if (path.length > 1) {
           const pathStr = path.map(n => this.getNodeLabel(n)).join(' → ');
           items.push({
-            label: `${nodeLabel}:`,
+            label: `${nodeLabel}`,
             value: `${dist} (${pathStr})`,
           });
         } else {
           items.push({
-            label: `${nodeLabel}:`,
+            label: `${nodeLabel}`,
             value: '∞ (недостижима)',
           });
         }
       } else {
         items.push({
-          label: `${nodeLabel}:`,
+          label: `${nodeLabel}`,
           value: '∞ (недостижима)',
         });
       }
