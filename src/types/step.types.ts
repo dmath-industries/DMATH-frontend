@@ -1,46 +1,32 @@
-/**
- * Типы для Step-based представления алгоритмов
- * Каждый шаг описывает минимальную атомарную операцию над графом
- */
-
 import type { NodeDTO, EdgeDTO, ElementState } from './dto.types';
 
-/**
- * Типы пояснений для шагов алгоритма
- */
 export type ExplanationType =
-  | 'comparison' // Сравнение весов/значений
-  | 'formula' // Математическая формула
-  | 'matrix' // Работа с матрицей
-  | 'selection' // Выбор элемента
-  | 'update' // Обновление значения
-  | 'iteration' // Итерация алгоритма
-  | 'decision' // Принятие решения
-  | 'path' // Работа с путём
-  | 'general'; // Общее пояснение
+  | 'comparison'
+  | 'formula'
+  | 'matrix'
+  | 'selection'
+  | 'update'
+  | 'iteration'
+  | 'decision'
+  | 'path'
+  | 'general';
 
-/**
- * Итоговый результат алгоритма (отображается только на последнем шаге)
- */
 export interface AlgorithmFinalResult {
-  title: string; // Заголовок блока (например, "Итоговый результат")
+  title: string;
   items: Array<{
-    label: string; // Метка (например, "Путь", "Цвет 1", "Вес")
-    value: string; // Значение (например, "a → b → c", "a, b, c", "15")
+    label: string;
+    value: string;
   }>;
-  summary?: string; // Дополнительное резюме (например, "Общий вес: 42")
+  summary?: string;
 }
 
-/**
- * Структурированное пояснение для шага алгоритма
- */
 export interface StepExplanation {
   type: ExplanationType;
-  text: string; // "Что делаем?" - краткое описание действия
-  reason?: string; // "Почему так?" - объяснение принципа/правила
-  formula?: string | string[]; // Математическая формула (если есть) - может быть строкой или массивом строк (каждая формула на отдельной строке)
-  currentPath?: string; // Текущий путь для отображения в оранжевом блоке
-  finalResult?: AlgorithmFinalResult; // Итоговый ответ алгоритма (только на последнем шаге)
+  text: string;
+  reason?: string;
+  formula?: string | string[];
+  currentPath?: string;
+  finalResult?: AlgorithmFinalResult;
   context?: {
     nodes?: string[];
     edges?: string[];
@@ -49,93 +35,63 @@ export interface StepExplanation {
   };
 }
 
-/**
- * Базовый тип для всех шагов
- */
 export interface BaseStep {
   id: string;
   timestamp: number;
   type: string;
-  description?: string; // опциональное текстовое описание для UI (для обратной совместимости)
-  explanation?: StepExplanation; // структурированное пояснение для шага
+  description?: string;
+  explanation?: StepExplanation;
 }
 
-/**
- * Добавление узла
- */
 export interface AddNodeStep extends BaseStep {
   type: 'ADD_NODE';
   node: NodeDTO;
 }
 
-/**
- * Удаление узла
- */
 export interface RemoveNodeStep extends BaseStep {
   type: 'REMOVE_NODE';
   nodeId: string;
-  prev?: NodeDTO; // для revert
+  prev?: NodeDTO;
 }
 
-/**
- * Обновление атрибутов узла
- */
 export interface UpdateNodeStep extends BaseStep {
   type: 'UPDATE_NODE';
   nodeId: string;
   attrs: Partial<NodeDTO>;
-  prev?: Partial<NodeDTO>; // предыдущие значения для revert
+  prev?: Partial<NodeDTO>;
 }
 
-/**
- * Добавление ребра
- */
 export interface AddEdgeStep extends BaseStep {
   type: 'ADD_EDGE';
   edge: EdgeDTO;
 }
 
-/**
- * Удаление ребра
- */
 export interface RemoveEdgeStep extends BaseStep {
   type: 'REMOVE_EDGE';
   edgeId: string;
-  prev?: EdgeDTO; // для revert
+  prev?: EdgeDTO;
 }
 
-/**
- * Обновление атрибутов ребра
- */
 export interface UpdateEdgeStep extends BaseStep {
   type: 'UPDATE_EDGE';
   edgeId: string;
   attrs: Partial<EdgeDTO>;
-  prev?: Partial<EdgeDTO>; // предыдущие значения для revert
+  prev?: Partial<EdgeDTO>;
 }
 
-/**
- * Установка координат узла (для раскладок)
- */
 export interface SetCoordsStep extends BaseStep {
   type: 'SET_COORDS';
   nodeId: string;
   x: number;
   y: number;
-  prev?: { x: number; y: number }; // для revert
+  prev?: { x: number; y: number };
 }
 
-/**
- * Групповая операция (батч шагов)
- */
 export interface BatchStep extends BaseStep {
   type: 'BATCH';
   ops: Step[];
 }
 
-/**
- * Обновление состояния узла (для подсветки)
- */
 export interface HighlightNodeStep extends BaseStep {
   type: 'HIGHLIGHT_NODE';
   nodeId: string;
@@ -143,9 +99,6 @@ export interface HighlightNodeStep extends BaseStep {
   prev?: ElementState;
 }
 
-/**
- * Обновление состояния ребра (для подсветки)
- */
 export interface HighlightEdgeStep extends BaseStep {
   type: 'HIGHLIGHT_EDGE';
   edgeId: string;
@@ -153,9 +106,6 @@ export interface HighlightEdgeStep extends BaseStep {
   prev?: ElementState;
 }
 
-/**
- * Union type для всех шагов
- */
 export type Step =
   | AddNodeStep
   | RemoveNodeStep
@@ -168,7 +118,4 @@ export type Step =
   | HighlightNodeStep
   | HighlightEdgeStep;
 
-/**
- * Тип для StepType строк
- */
 export type StepType = Step['type'];

@@ -1,8 +1,3 @@
-/**
- * Renderer — отрисовка графа с помощью Pixi.js
- * Полностью переписанный с нуля для корректного отображения
- */
-
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { GraphModel } from '@/services/graph/GraphModel';
 import { ElementState } from '@/types';
@@ -31,9 +26,6 @@ export class Renderer {
   private viewportAdapter: ViewportAdapter | null = null;
   private showWeights: boolean = true;
 
-  /**
-   * Инициализация Pixi Application
-   */
   async init(canvas: HTMLCanvasElement, config: RendererConfig): Promise<void> {
     try {
       this.app = new Application();
@@ -61,16 +53,10 @@ export class Renderer {
     }
   }
 
-  /**
-   * Получить Pixi Application
-   */
   getApp(): Application | null {
     return this.app;
   }
 
-  /**
-   * Получить контейнеры для добавления в viewport
-   */
   getContainers() {
     return {
       edges: this.edgesContainer,
@@ -79,23 +65,14 @@ export class Renderer {
     };
   }
 
-  /**
-   * Установить viewport adapter для управления перетаскиванием
-   */
   setViewportAdapter(viewportAdapter: ViewportAdapter | null): void {
     this.viewportAdapter = viewportAdapter;
   }
 
-  /**
-   * Установить флаг отображения весов
-   */
   setShowWeights(show: boolean): void {
     this.showWeights = show;
   }
 
-  /**
-   * Полная отрисовка графа
-   */
   drawAll(model: GraphModel): void {
     if (!this.app) return;
 
@@ -113,9 +90,6 @@ export class Renderer {
     this.setupNodeInteractivity();
   }
 
-  /**
-   * Отрисовка только изменённых элементов (dirty rendering)
-   */
   renderDirty(dirtyIds: Set<string>, model: GraphModel): void {
     if (!this.app) return;
 
@@ -145,9 +119,6 @@ export class Renderer {
     }
   }
 
-  /**
-   * Отрисовка узла
-   */
   private drawNode(nodeId: string, model: GraphModel): void {
     if (!this.nodesContainer || !this.labelsContainer) return;
 
@@ -203,9 +174,6 @@ export class Renderer {
     this.labelGraphics.set(nodeId, label);
   }
 
-  /**
-   * Отрисовка ребра
-   */
   private drawEdge(edgeId: string, model: GraphModel): void {
     if (!this.edgesContainer) return;
 
@@ -273,9 +241,6 @@ export class Renderer {
     }
   }
 
-  /**
-   * Отрисовка веса ребра (белые цифры без фона)
-   */
   private drawEdgeWeight(
     edgeId: string,
     weight: number,
@@ -296,11 +261,9 @@ export class Renderer {
       }
     }
 
-    // Позиция по середине ребра, смещённая перпендикулярно
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
 
-    // Вычисляем перпендикулярное смещение для избежания пересечений
     const dx = endX - startX;
     const dy = endY - startY;
     const length = Math.sqrt(dx * dx + dy * dy);
@@ -309,7 +272,6 @@ export class Renderer {
     const perpX = -dy / length;
     const perpY = dx / length;
 
-    // Смещение на 20 пикселей перпендикулярно ребру
     const offset = 20;
     const labelX = midX + perpX * offset;
     const labelY = midY + perpY * offset;
@@ -332,9 +294,6 @@ export class Renderer {
     this.edgeWeightLabels.set(edgeId, { text: weightText, bg: null });
   }
 
-  /**
-   * Отрисовка стрелки для направленного ребра
-   */
   private drawArrow(
     graphic: Graphics,
     tipX: number,
@@ -366,35 +325,29 @@ export class Renderer {
     graphic.stroke({ width: width + 1, color });
   }
 
-  /**
-   * Получить цвет в зависимости от состояния
-   */
   private getStateColor(state?: ElementState, defaultColor?: string): number {
     switch (state) {
       case 'active':
-        return 0xfbbf24; // amber-400 (жёлтый)
+        return 0xfbbf24;
       case 'visited':
-        return 0x60a5fa; // blue-400 (синий)
+        return 0x60a5fa;
       case 'current':
-        return 0xf59e0b; // amber-500 (оранжевый)
+        return 0xf59e0b;
       case 'path':
-        return 0x10b981; // emerald-500 (зелёный)
+        return 0x10b981;
       case 'rejected':
-        return 0xef4444; // red-500 (красный)
+        return 0xef4444;
       case 'candidate':
-        return 0x8b5cf6; // violet-500 (фиолетовый)
+        return 0x8b5cf6;
       default:
         if (defaultColor) {
           const hex = defaultColor.startsWith('#') ? defaultColor.slice(1) : defaultColor;
           return parseInt(hex, 16);
         }
-        return 0x3b82f6; // blue-500 по умолчанию
+        return 0x3b82f6;
     }
   }
 
-  /**
-   * Очистить всё
-   */
   clear(): void {
     for (const graphic of this.nodeGraphics.values()) {
       this.nodesContainer?.removeChild(graphic);
@@ -425,21 +378,14 @@ export class Renderer {
     this.edgeWeightLabels.clear();
   }
 
-  /**
-   * Изменить размер canvas
-   */
   resize(width: number, height: number): void {
     if (!this.app) return;
     this.app.renderer.resize(width, height);
   }
 
-  /**
-   * Настроить интерактивность вершин (перетаскивание)
-   */
   private setupNodeInteractivity(): void {
     if (!this.app || !this.model) return;
 
-    // Удаляем старые глобальные обработчики, если они есть
     if (this.app.stage) {
       this.app.stage.removeAllListeners('pointermove');
       this.app.stage.removeAllListeners('pointerup');
@@ -528,9 +474,6 @@ export class Renderer {
     }
   }
 
-  /**
-   * Уничтожить renderer
-   */
   destroy(): void {
     this.clear();
     if (this.app) {

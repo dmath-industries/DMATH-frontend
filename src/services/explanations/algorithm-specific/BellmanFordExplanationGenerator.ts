@@ -1,7 +1,3 @@
-/**
- * Генератор пояснений для алгоритма Bellman-Ford
- */
-
 import { ExplanationGenerator } from '../ExplanationGenerator';
 import type { Step, StepExplanation } from '@/types';
 import type { AlgorithmContext } from '../ExplanationGenerator';
@@ -20,7 +16,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
       case 'HIGHLIGHT_EDGE':
         return this.handleHighlightEdge(step, context);
       default:
-        // Используем description если есть, иначе возвращаем undefined
         if (step.description) {
           return this.createExplanation('general', step.description, context);
         }
@@ -34,7 +29,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
     const nodeId = step.nodeId;
     const label = step.attrs.label;
 
-    // Инициализация расстояний
     if (label && typeof label === 'string') {
       if (label.includes(': ∞') || label.includes(': 0')) {
         const value = label.includes('∞') ? '∞' : '0';
@@ -54,7 +48,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         );
       }
 
-      // Обновление расстояния (релаксация)
       if (label.includes(':')) {
         const nodeLabel = this.formatNode(nodeId);
         const distance = label.split(':')[1]?.trim();
@@ -90,7 +83,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
 
     switch (state) {
       case 'current':
-        // Стартовая вершина или текущая вершина при релаксации
         if (context?.isStartNode) {
           const formula = `d(${nodeLabel}) = 0`;
           return this.createExplanation(
@@ -108,7 +100,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
         });
 
       case 'path':
-        // Вершина в кратчайшем пути
         const pathInfo = context?.path as string[] | undefined;
         if (pathInfo && pathInfo.length > 0) {
           const pathStr = this.formatPath(pathInfo);
@@ -152,7 +143,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
     const edgeId = step.edgeId;
     const state = step.state;
 
-    // Получаем информацию о ребре из контекста
     const from = context?.edgeFrom as string | undefined;
     const to = context?.edgeTo as string | undefined;
     const weight = context?.edgeWeight as number | undefined;
@@ -171,7 +161,6 @@ export class BellmanFordExplanationGenerator extends ExplanationGenerator {
 
     switch (state) {
       case 'active':
-        // Проверка ребра
         const distFrom = context?.distanceFrom as number | undefined;
         const distTo = context?.distanceTo as number | undefined;
 

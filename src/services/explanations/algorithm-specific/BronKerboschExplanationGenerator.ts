@@ -1,8 +1,3 @@
-/**
- * Генератор пояснений для алгоритма Bron-Kerbosch
- * Алгоритм находит все максимальные клики в неориентированном графе
- */
-
 import { ExplanationGenerator } from '../ExplanationGenerator';
 import type { Step, StepExplanation } from '@/types';
 import type { AlgorithmContext } from '../ExplanationGenerator';
@@ -44,10 +39,8 @@ export class BronKerboschExplanationGenerator extends ExplanationGenerator {
           const pStr = pSet && pSet.length > 0 ? this.formatSet(pSet) : '∅';
           const xStr = xSet && xSet.length > 0 ? this.formatSet(xSet) : '∅';
 
-          // Формулы для текущего состояния алгоритма (каждая на отдельной строке)
           const formulas = [`R = ${rStr}`, `P = ${pStr}`, `X = ${xStr}`];
 
-          // Формула определения клики
           const cliqueFormula =
             rSet.length > 1 ? `\\forall u, v \\in R: (u, v) \\in E` : `|R| = ${rSet.length}`;
 
@@ -85,7 +78,6 @@ export class BronKerboschExplanationGenerator extends ExplanationGenerator {
           const pStr = pSetActive && pSetActive.length > 0 ? this.formatSet(pSetActive) : '∅';
           const xStr = xSetActive && xSetActive.length > 0 ? this.formatSet(xSetActive) : '∅';
 
-          // Формулы (каждая на отдельной строке)
           const neighborsStr = neighbors && neighbors.length > 0 ? this.formatSet(neighbors) : '∅';
           const formulas = [
             `R' = R \\cup \\{${nodeLabel}\\} = ${rStr}`,
@@ -93,7 +85,6 @@ export class BronKerboschExplanationGenerator extends ExplanationGenerator {
             `X' = X \\cap N(${nodeLabel}) = ${xStr}`,
           ];
 
-          // Проверка условия клики
           const cliqueCondition =
             rSetActive.length > 1 ? `\\forall u \\in R: (${nodeLabel}, u) \\in E` : `|R| = 1`;
 
@@ -126,18 +117,14 @@ export class BronKerboschExplanationGenerator extends ExplanationGenerator {
         if (clique && clique.length > 0 && clique.includes(nodeId)) {
           const cliqueStr = this.formatSet(clique);
 
-          // Формулы (каждая на отдельной строке)
           const formulas = [`C = ${cliqueStr}`, `|C| = ${clique.length}`];
 
-          // Условие максимальности
           formulas.push(`\\text{Условие максимальности: } P = \\emptyset \\land X = \\emptyset`);
 
-          // Условие клики (полный подграф)
           const cliqueFormula =
             clique.length > 1 ? `\\forall u, v \\in C, u \\neq v: (u, v) \\in E` : `|C| = 1`;
           formulas.push(`\\text{Условие клики: } ${cliqueFormula}`);
 
-          // Формула для количества рёбер в клике
           const edgesFormula =
             clique.length > 1
               ? `|E(C)| = C(${clique.length}, 2) = ${(clique.length * (clique.length - 1)) / 2}`
@@ -177,7 +164,6 @@ export class BronKerboschExplanationGenerator extends ExplanationGenerator {
           const pStr = pSetVisited && pSetVisited.length > 0 ? this.formatSet(pSetVisited) : '∅';
           const xStr = this.formatSet(xSetVisited);
 
-          // Формулы backtracking (каждая на отдельной строке)
           const formulas = [
             `R' = R \\setminus \\{${nodeLabel}\\} = ${rStr}`,
             `P' = P \\setminus \\{${nodeLabel}\\} = ${pStr}`,
@@ -240,7 +226,6 @@ export class BronKerboschExplanationGenerator extends ExplanationGenerator {
         const cliqueStr =
           clique && clique.length > 0 ? this.formatSet(clique) : `{${fromLabel}, ${toLabel}}`;
 
-        // Формулы (каждая на отдельной строке)
         const formulas = [
           `(${fromLabel}, ${toLabel}) \\in E(C)`,
           `\\text{Условие клики: } \\forall u, v \\in C: (u, v) \\in E`,

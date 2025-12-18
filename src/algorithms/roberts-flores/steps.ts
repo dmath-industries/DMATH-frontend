@@ -1,8 +1,3 @@
-/**
- * Roberts-Flores Algorithm — Step-based версия
- * Генерирует поток Step'ов для поиска Гамильтоновых циклов в ориентированном графе
- */
-
 import Graph from 'graphology';
 import { GraphModel } from '@/services/graph';
 import type {
@@ -14,7 +9,7 @@ import type {
   ElementState,
 } from '@/types';
 import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
-import '@/services/explanations/registry'; // Инициализация реестра генераторов
+import '@/services/explanations/registry';
 
 const formatNodeLabel = (nodeId: string | number): string => {
   const numericId =
@@ -33,9 +28,6 @@ const formatNodeLabel = (nodeId: string | number): string => {
 const formatPath = (path: (string | number)[], separator = ' → '): string =>
   path.map(formatNodeLabel).join(separator);
 
-/**
- * Генератор шагов для алгоритма Roberts-Flores
- */
 export class RobertsFloresStepGenerator {
   private steps: Step[] = [];
   private stepCounter = 0;
@@ -43,17 +35,13 @@ export class RobertsFloresStepGenerator {
   private graph!: Graph;
   private totalNodes: number = 0;
   private startNode: string | null = null;
-  private foundCycles: string[][] = []; // Найденные Гамильтоновы циклы
+  private foundCycles: string[][] = [];
 
-  /**
-   * Генерировать шаги для алгоритма Roberts-Flores
-   */
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
     this.foundCycles = [];
 
-    // Конвертировать GraphDTO в GraphModel (направленный граф)
     this.graphModel = new GraphModel(true);
     this.graphModel.fromDTO(graphDTO);
     this.graph = this.graphModel.getGraph();
@@ -83,15 +71,11 @@ export class RobertsFloresStepGenerator {
 
     this.findHamiltonianCycles(path, startNode, totalNodes);
 
-    // Добавляем итоговый ответ на последнем шаге
     this.addFinalResultStep();
 
     return this.steps;
   }
 
-  /**
-   * Рекурсивный поиск Гамильтоновых циклов
-   */
   private findHamiltonianCycles(path: string[], current: string, totalNodes: number): void {
     if (path.length === totalNodes) {
       const firstNode = path[0];
@@ -102,7 +86,6 @@ export class RobertsFloresStepGenerator {
       const hasCycleEdge = this.graph.hasEdge(current, firstNode);
 
       if (hasCycleEdge) {
-        // Сохраняем найденный цикл (замыкаем его)
         const cycle = [...path, firstNode];
         this.foundCycles.push(cycle);
 
@@ -148,7 +131,6 @@ export class RobertsFloresStepGenerator {
       return;
     }
 
-    // Используем outNeighbors для получения соседей
     const neighbors = this.graph.outNeighbors(current);
     for (const next of neighbors) {
       if (!path.includes(next)) {
@@ -190,9 +172,6 @@ export class RobertsFloresStepGenerator {
     }
   }
 
-  /**
-   * Добавить шаг для подсветки узла
-   */
   private addHighlightNodeStep(
     nodeId: string,
     state: ElementState,
@@ -209,7 +188,6 @@ export class RobertsFloresStepGenerator {
     };
     this.steps.push(step);
 
-    // Добавляем пояснение через генератор
     if (context) {
       const explanation = explanationGeneratorRegistry.generate(
         step,
@@ -222,9 +200,6 @@ export class RobertsFloresStepGenerator {
     }
   }
 
-  /**
-   * Добавить шаг для подсветки ребра
-   */
   private addHighlightEdgeStep(
     edgeId: string,
     state: ElementState,
@@ -241,7 +216,6 @@ export class RobertsFloresStepGenerator {
     };
     this.steps.push(step);
 
-    // Добавляем пояснение через генератор
     if (context) {
       const explanation = explanationGeneratorRegistry.generate(
         step,
@@ -254,17 +228,11 @@ export class RobertsFloresStepGenerator {
     }
   }
 
-  /**
-   * Получить ID ребра между двумя вершинами
-   */
   private getEdgeId(from: string, to: string): string | null {
     const edgeKey = this.graph.edge(from, to);
     return typeof edgeKey === 'string' ? edgeKey : null;
   }
 
-  /**
-   * Добавляет итоговый ответ алгоритма на последнем шаге
-   */
   private addFinalResultStep(): void {
     const items: Array<{ label: string; value: string }> = [];
 
@@ -283,7 +251,6 @@ export class RobertsFloresStepGenerator {
       });
     }
 
-    // Добавляем итоговый ответ к последнему шагу с explanation
     for (let i = this.steps.length - 1; i >= 0; i--) {
       const step = this.steps[i];
       if (step && step.explanation) {

@@ -1,10 +1,5 @@
-/**
- * Prim Algorithm — Step-based версия
- * Генерирует поток шагов для построения минимального остовного дерева
- */
-
 import Graph from 'graphology';
-// eslint-disable-next-line boundaries/element-types
+
 import { GraphModel } from '@/services/graph';
 import type {
   AlgorithmParams,
@@ -15,7 +10,7 @@ import type {
   Step,
 } from '@/types';
 import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
-import '@/services/explanations/registry'; // Инициализация реестра генераторов
+import '@/services/explanations/registry';
 
 type CandidateEdge = {
   edgeId: string;
@@ -43,11 +38,8 @@ export class PrimStepGenerator {
   private stepCounter = 0;
   private graphModel!: GraphModel;
   private graph!: Graph;
-  private mstEdges: Array<{ from: string; to: string; weight: number }> = []; // Рёбра MST
+  private mstEdges: Array<{ from: string; to: string; weight: number }> = [];
 
-  /**
-   * Генерация шагов алгоритма Прима
-   */
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
@@ -106,7 +98,6 @@ export class PrimStepGenerator {
 
       visited.add(nextNode);
 
-      // Сохраняем ребро MST
       this.mstEdges.push({ from, to, weight });
 
       this.addHighlightEdgeStep(
@@ -128,15 +119,11 @@ export class PrimStepGenerator {
       );
     }
 
-    // Добавляем итоговый ответ на последнем шаге
     this.addFinalResultStep();
 
     return this.steps;
   }
 
-  /**
-   * Добавить ребра-кандидаты, ведущие к непосещённым вершинам
-   */
   private enqueueCandidateEdges(
     nodeId: string,
     visited: Set<string>,
@@ -165,9 +152,6 @@ export class PrimStepGenerator {
     }
   }
 
-  /**
-   * Выбрать следующее минимальное ребро, соединяющее остов с новой вершиной
-   */
   private pickNextEdge(edgeQueue: CandidateEdge[], visited: Set<string>): CandidateEdge | null {
     edgeQueue.sort((a, b) => a.weight - b.weight);
 
@@ -195,9 +179,6 @@ export class PrimStepGenerator {
     return null;
   }
 
-  /**
-   * Получить вес ребра
-   */
   private getEdgeWeight(edgeId: string): number {
     const attrs = this.graph.getEdgeAttributes(edgeId) ?? {};
     const rawWeight = (attrs as { weight?: unknown }).weight;
@@ -205,17 +186,11 @@ export class PrimStepGenerator {
     return Number.isFinite(weight) ? weight : Infinity;
   }
 
-  /**
-   * Получить ID ребра между двумя вершинами
-   */
   private getEdgeId(from: string, to: string): string | null {
     const edgeKey = this.graph.edge(from, to);
     return typeof edgeKey === 'string' ? edgeKey : null;
   }
 
-  /**
-   * Добавить шаг подсветки узла
-   */
   private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
@@ -226,7 +201,6 @@ export class PrimStepGenerator {
       description,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'prim');
     if (explanation) {
       step.explanation = explanation;
@@ -235,9 +209,6 @@ export class PrimStepGenerator {
     this.steps.push(step);
   }
 
-  /**
-   * Добавить шаг подсветки ребра
-   */
   private addHighlightEdgeStep(
     edgeId: string,
     state: ElementState,
@@ -253,7 +224,6 @@ export class PrimStepGenerator {
       description,
     };
 
-    // Генерируем пояснение с контекстом ребра
     const algorithmContext: AlgorithmContext = {
       edgeFrom: context?.from,
       edgeTo: context?.to,
@@ -275,9 +245,6 @@ export class PrimStepGenerator {
     return Number.isFinite(weight) ? weight.toString() : '∞';
   }
 
-  /**
-   * Добавляет итоговый ответ алгоритма на последнем шаге
-   */
   private addFinalResultStep(): void {
     const items: Array<{ label: string; value: string }> = [];
     let totalWeight = 0;
@@ -291,7 +258,6 @@ export class PrimStepGenerator {
       totalWeight += edge.weight;
     });
 
-    // Добавляем итоговый ответ к последнему шагу с explanation
     for (let i = this.steps.length - 1; i >= 0; i--) {
       const step = this.steps[i];
       if (step && step.explanation) {
