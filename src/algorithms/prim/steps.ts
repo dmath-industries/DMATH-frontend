@@ -43,6 +43,7 @@ export class PrimStepGenerator {
   private stepCounter = 0;
   private graphModel!: GraphModel;
   private graph!: Graph;
+  private mstEdges: Array<{ from: string; to: string; weight: number }> = []; // Рёбра MST
 
   /**
    * Генерация шагов алгоритма Прима
@@ -50,6 +51,7 @@ export class PrimStepGenerator {
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
+    this.mstEdges = [];
 
     this.graphModel = new GraphModel(false);
     this.graphModel.fromDTO(graphDTO);
@@ -104,6 +106,9 @@ export class PrimStepGenerator {
 
       visited.add(nextNode);
 
+      // Сохраняем ребро MST
+      this.mstEdges.push({ from, to, weight });
+
       this.addHighlightEdgeStep(
         edgeId,
         'path',
@@ -122,6 +127,9 @@ export class PrimStepGenerator {
         'Граф несвязный: построено остовное дерево только для доступной компоненты'
       );
     }
+
+    // Добавляем итоговый ответ на последнем шаге
+    this.addFinalResultStep();
 
     return this.steps;
   }
@@ -265,5 +273,35 @@ export class PrimStepGenerator {
 
   private formatWeight(weight: number): string {
     return Number.isFinite(weight) ? weight.toString() : '∞';
+  }
+
+  /**
+   * Добавляет итоговый ответ алгоритма на последнем шаге
+   */
+  private addFinalResultStep(): void {
+    const items: Array<{ label: string; value: string }> = [];
+    let totalWeight = 0;
+
+    this.mstEdges.forEach((edge, index) => {
+      const edgeLabel = `${this.formatEdgeLabel(edge.from, edge.to)}`;
+      items.push({
+        label: `Ребро ${index + 1}`,
+        value: `${edgeLabel} (вес: ${this.formatWeight(edge.weight)})`,
+      });
+      totalWeight += edge.weight;
+    });
+
+    // Добавляем итоговый ответ к последнему шагу с explanation
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i];
+      if (step && step.explanation) {
+        step.explanation.finalResult = {
+          title: 'Итоговый результат: минимальное остовное дерево',
+          items,
+          summary: `Общий вес MST: ${this.formatWeight(totalWeight)}`,
+        };
+        break;
+      }
+    }
   }
 }
