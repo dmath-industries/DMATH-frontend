@@ -1,7 +1,3 @@
-/**
- * Базовый класс для генерации пояснений к шагам алгоритмов
- */
-
 import type { Step, StepExplanation, ExplanationType } from '@/types';
 import {
   formatNodeLabel as fmtNodeLabel,
@@ -12,29 +8,17 @@ import {
 } from './formatters';
 import { createExplanation, type TemplateContext } from './templates';
 
-/**
- * Контекст алгоритма для генерации пояснений
- */
 export interface AlgorithmContext {
   [key: string]: unknown;
 }
 
-/**
- * Базовый генератор пояснений
- */
 export abstract class ExplanationGenerator {
-  /**
-   * Генерирует пояснение для шага
-   */
   abstract generateExplanation(
     step: Step,
     algorithmName: string,
     context?: AlgorithmContext
   ): StepExplanation | undefined;
 
-  /**
-   * Создает пояснение из текста и типа
-   */
   protected createExplanation(
     type: ExplanationType,
     text: string,
@@ -55,7 +39,6 @@ export abstract class ExplanationGenerator {
     }
 
     if (options?.formula) {
-      // Если формула - строка с переносами строк, разбиваем на массив
       if (typeof options.formula === 'string' && options.formula.includes('\n')) {
         explanation.formula = options.formula
           .split('\n')
@@ -77,9 +60,6 @@ export abstract class ExplanationGenerator {
     return explanation;
   }
 
-  /**
-   * Извлекает контекст из данных алгоритма
-   */
   protected extractContext(context: AlgorithmContext): StepExplanation['context'] {
     const result: StepExplanation['context'] = {};
 
@@ -102,65 +82,38 @@ export abstract class ExplanationGenerator {
     return result;
   }
 
-  /**
-   * Форматирование узла
-   */
   protected formatNode(nodeId: string | number): string {
     return fmtNodeLabel(nodeId);
   }
 
-  /**
-   * Форматирование веса
-   */
   protected formatWeight(weight: number): string {
     return fmtWeight(weight);
   }
 
-  /**
-   * Форматирование ребра
-   */
   protected formatEdge(from: string | number, to: string | number, directed = true): string {
     return fmtEdge(from, to, directed);
   }
 
-  /**
-   * Форматирование расстояния
-   */
   protected formatDistance(dist: number): string {
     return fmtDistance(dist);
   }
 
-  /**
-   * Форматирование пути
-   */
   protected formatPath(path: (string | number)[], separator = ' → '): string {
     return fmtPath(path, separator);
   }
 }
 
-/**
- * Реестр генераторов по алгоритмам
- */
 export class ExplanationGeneratorRegistry {
   private generators: Map<string, ExplanationGenerator> = new Map();
 
-  /**
-   * Регистрирует генератор для алгоритма
-   */
   register(algorithmName: string, generator: ExplanationGenerator): void {
     this.generators.set(algorithmName, generator);
   }
 
-  /**
-   * Получает генератор для алгоритма
-   */
   get(algorithmName: string): ExplanationGenerator | undefined {
     return this.generators.get(algorithmName);
   }
 
-  /**
-   * Генерирует пояснение используя зарегистрированный генератор
-   */
   generate(
     step: Step,
     algorithmName: string,
@@ -174,7 +127,4 @@ export class ExplanationGeneratorRegistry {
   }
 }
 
-/**
- * Глобальный экземпляр реестра
- */
 export const explanationGeneratorRegistry = new ExplanationGeneratorRegistry();

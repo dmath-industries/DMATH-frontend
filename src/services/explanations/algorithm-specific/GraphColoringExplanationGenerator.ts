@@ -1,20 +1,7 @@
-/**
- * Генератор пояснений для алгоритма раскраски графа
- * Основан на эвристическом алгоритме раскраски с использованием степеней вершин
- */
-
 import { ExplanationGenerator } from '../ExplanationGenerator';
 import type { Step, StepExplanation } from '@/types';
 import type { AlgorithmContext } from '../ExplanationGenerator';
 
-// Соответствие состояний цветам (должно совпадать с реальными цветами в Renderer):
-// current → оранжевый (amber-500)
-// active → жёлтый (amber-400)
-// visited → синий (blue-400)
-// path → зелёный (emerald-500)
-// candidate → фиолетовый (violet-500)
-// rejected → красный (red-500)
-// default → белый (white, через кастомный цвет)
 const STATE_TO_COLOR: Record<string, { name: string; index: number }> = {
   current: { name: 'Оранжевый', index: 1 },
   active: { name: 'Жёлтый', index: 2 },
@@ -31,7 +18,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     _algorithmName: string,
     context?: AlgorithmContext
   ): StepExplanation | undefined {
-    // Сначала проверяем description для информационных шагов
     if (step.description) {
       const infoExplanation = this.handleInfoStep(step.description, step, context);
       if (infoExplanation) {
@@ -52,9 +38,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     }
   }
 
-  /**
-   * Обработка информационных шагов (Шаг N, Степени вершин, Таблица векторов и т.д.)
-   */
   private handleInfoStep(
     description: string,
     _step: Step,
@@ -62,7 +45,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
   ): StepExplanation | undefined {
     const desc = description.trim();
 
-    // Обработка "Шаг N"
     const stepMatch = desc.match(/^Шаг (\d+)$/);
     if (stepMatch) {
       const stepNum = parseInt(stepMatch[1]!, 10);
@@ -80,7 +62,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
       );
     }
 
-    // Обработка "Степени вершин:\n..."
     if (desc.startsWith('Степени вершин:')) {
       const lines = desc.split('\n').filter(line => line.trim());
       const degrees: Array<{ node: string; degree: string }> = [];
@@ -110,7 +91,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
       );
     }
 
-    // Обработка "Таблица векторов (Шаг N):\n..."
     if (desc.startsWith('Таблица векторов')) {
       const lines = desc.split('\n').filter(line => line.trim());
       const stepMatch = desc.match(/Шаг (\d+)/);
@@ -144,7 +124,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
       );
     }
 
-    // Обработка "Хроматическое число графа: N"
     const chromaticMatch = desc.match(/^Хроматическое число графа:\s*(\d+)$/);
     if (chromaticMatch) {
       const chromaticNumber = parseInt(chromaticMatch[1]!, 10);
@@ -164,9 +143,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     return undefined;
   }
 
-  /**
-   * Обработка подсветки вершины
-   */
   private handleHighlightNode(step: Step, context?: AlgorithmContext): StepExplanation | undefined {
     if (step.type !== 'HIGHLIGHT_NODE') return undefined;
 
@@ -175,14 +151,12 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     const nodeLabel = this.formatNode(nodeId);
     const description = step.description || '';
 
-    // Обработка "Вершина X получает Цвет Y (цвет N)"
     const colorMatch = description.match(/Вершина ([a-z]) получает (.+?) \(цвет (\d+)\)/);
     if (colorMatch) {
       const vertexLabel = colorMatch[1]!;
       const colorName = colorMatch[2]!;
       const colorIndex = parseInt(colorMatch[3]!, 10);
 
-      // Получаем соседей из контекста, если есть
       const neighbors = context?.neighbors as string[] | undefined;
       const neighborsStr =
         neighbors && neighbors.length > 0
@@ -209,7 +183,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
       );
     }
 
-    // Обработка "Финальная раскраска: X - Цвет Y"
     const finalMatch = description.match(/Финальная раскраска:\s*([a-z])\s*-\s*(.+)$/);
     if (finalMatch) {
       const vertexLabel = finalMatch[1]!;
@@ -234,7 +207,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
       );
     }
 
-    // Обработка по состоянию, если описание не распознано
     const colorInfo = STATE_TO_COLOR[state];
     if (colorInfo) {
       const formula = `\\text{color}(${nodeLabel}) = ${colorInfo.index}`;
@@ -256,7 +228,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
       );
     }
 
-    // Если описание есть, но не распознано, используем его как есть
     if (description) {
       return this.createExplanation(
         'general',
@@ -278,9 +249,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     );
   }
 
-  /**
-   * Обработка обновления вершины
-   */
   private handleUpdateNode(step: Step, context?: AlgorithmContext): StepExplanation | undefined {
     if (step.type !== 'UPDATE_NODE') return undefined;
 
@@ -289,7 +257,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     const label = step.attrs?.label;
 
     if (label && typeof label === 'string') {
-      // Парсим цвет из label, если он там есть
       const colorMatch = label.match(/\(цвет (\d+)\)/);
       if (colorMatch) {
         const colorIndex = parseInt(colorMatch[1]!, 10);
@@ -319,7 +286,6 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
         );
       }
 
-      // Общее обновление
       if (step.description) {
         return this.createExplanation('update', step.description, context, {
           reason: `Обновление атрибутов вершины ${nodeLabel} в процессе раскраски графа.`,
@@ -336,26 +302,19 @@ export class GraphColoringExplanationGenerator extends ExplanationGenerator {
     return undefined;
   }
 
-  /**
-   * Получить название цвета по индексу
-   * Должно соответствовать реальным цветам состояний в Renderer
-   */
   private getColorName(colorIndex: number): string {
     const colorNames = [
-      'Оранжевый', // colorIndex=1, state='current'
-      'Жёлтый', // colorIndex=2, state='active'
-      'Синий', // colorIndex=3, state='visited'
-      'Зелёный', // colorIndex=4, state='path'
-      'Фиолетовый', // colorIndex=5, state='candidate'
-      'Красный', // colorIndex=6, state='rejected'
-      'Белый', // colorIndex=7, state='default' с color='#ffffff'
+      'Оранжевый',
+      'Жёлтый',
+      'Синий',
+      'Зелёный',
+      'Фиолетовый',
+      'Красный',
+      'Белый',
     ];
     return colorNames[colorIndex - 1] || `Цвет ${colorIndex}`;
   }
 
-  /**
-   * Получить индекс цвета по названию
-   */
   private getColorIndexByName(colorName: string): number {
     const colorNames = [
       'Красный',

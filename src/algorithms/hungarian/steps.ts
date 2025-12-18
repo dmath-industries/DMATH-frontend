@@ -1,13 +1,8 @@
-/**
- * Hungarian (Assignment) Algorithm — Step-based версия
- * Строит минимальное назначение для квадратной матрицы стоимостей.
- */
-
 import Graph from 'graphology';
-// eslint-disable-next-line boundaries/element-types
+
 import { GraphModel } from '@/services/graph';
 import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
-import '@/services/explanations/registry'; // Инициализация реестра генераторов
+import '@/services/explanations/registry';
 import type {
   AlgorithmParams,
   ElementState,
@@ -19,13 +14,6 @@ import type {
 
 type Assignment = { rowId: string; colId: string; weight: number; edgeId?: string | null };
 
-// formatNodeLabel будет использовать label узла из nodeLabels
-// Если label нет, будет использоваться форматирование по умолчанию
-
-/**
- * Реализация Венгерского алгоритма (минимизация).
- * Возвращает массив colIndex для каждой строки.
- */
 export const hungarian = (costs: number[][]): number[] => {
   const n = costs.length;
   const m = costs[0]?.length ?? 0;
@@ -43,7 +31,7 @@ export const hungarian = (costs: number[][]): number[] => {
     const used = Array(n + 1).fill(false);
 
     let iterations = 0;
-    const maxIterations = n * n; // Защита от зацикливания
+    const maxIterations = n * n;
 
     do {
       used[j0] = true;
@@ -71,7 +59,6 @@ export const hungarian = (costs: number[][]): number[] => {
         }
       }
 
-      // Защита от зацикливания: если delta остался Infinity, выходим
       if (delta === Infinity || iterations >= maxIterations) {
         break;
       }
@@ -89,7 +76,6 @@ export const hungarian = (costs: number[][]): number[] => {
       iterations++;
     } while (p[j0] !== 0 && iterations < maxIterations);
 
-    // augmenting
     do {
       const j1 = way[j0];
       p[j0] = p[j1];
@@ -112,22 +98,19 @@ export class HungarianStepGenerator {
   private graphModel!: GraphModel;
   private graph!: Graph;
   private nodeOrder: string[] = [];
-  private finalAssignments: Assignment[] = []; // Финальные назначения
-  private edgeMap: Map<string, { weight: number; edgeId: string }> = new Map(); // Карта рёбер для быстрого поиска
-  private nodeLabels: Map<string, string> = new Map(); // Карта ID -> label для форматирования
+  private finalAssignments: Assignment[] = [];
+  private edgeMap: Map<string, { weight: number; edgeId: string }> = new Map();
+  private nodeLabels: Map<string, string> = new Map();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   generateSteps(graphDTO: GraphDTO, _params?: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
 
-    // Сохраняем метки узлов для форматирования
     this.nodeLabels.clear();
     for (const node of graphDTO.nodes) {
       this.nodeLabels.set(node.id, node.label || node.id);
     }
 
-    // Разделяем узлы из DTO на source и target
     const sourceNodes = graphDTO.nodes
       .filter(node => node.id.startsWith('source_'))
       .sort((a, b) => {
@@ -147,7 +130,6 @@ export class HungarianStepGenerator {
 
     const n = sourceNodes.length;
 
-    // Проверяем, что количество source и target узлов совпадает
     if (n === 0 || targetNodes.length !== n) {
       const firstNode = graphDTO.nodes[0];
       if (firstNode) {
@@ -160,14 +142,12 @@ export class HungarianStepGenerator {
       return this.steps;
     }
 
-    // Создаём карту рёбер для быстрого поиска
     this.edgeMap.clear();
     for (const edge of graphDTO.edges) {
       const key = `${edge.source}->${edge.target}`;
       this.edgeMap.set(key, { weight: edge.weight ?? 0, edgeId: edge.id });
     }
 
-    // Проверяем, что есть рёбра
     if (this.edgeMap.size === 0) {
       const firstNode = sourceNodes[0];
       if (firstNode) {
@@ -180,12 +160,10 @@ export class HungarianStepGenerator {
       return this.steps;
     }
 
-    // Используем направленный граф для дальнейшей работы
     this.graphModel = new GraphModel(true);
     this.graphModel.fromDTO(graphDTO);
     this.graph = this.graphModel.getGraph();
 
-    // Добавляем начальный информационный шаг
     const firstNode = sourceNodes[0];
     if (firstNode) {
       this.addHighlightNodeStep(
@@ -195,7 +173,6 @@ export class HungarianStepGenerator {
       );
     }
 
-    // Строим матрицу стоимостей: строки - source узлы, столбцы - target узлы
     const costMatrix: number[][] = Array.from({ length: n }, () =>
       Array(n).fill(Number.POSITIVE_INFINITY)
     );
@@ -210,21 +187,15 @@ export class HungarianStepGenerator {
         if (edgeInfo && Number.isFinite(edgeInfo.weight)) {
           row[j] = edgeInfo.weight;
         }
-        // Если ребра нет, значение остается Infinity (это нормально для венгерского алгоритма)
       }
     }
 
-    // Сохраняем порядок узлов для использования в назначениях
     this.nodeOrder = [...sourceNodes, ...targetNodes];
 
-    // Проверяем, что в каждой строке есть хотя бы одно конечное значение
-    // Для венгерского алгоритма это необходимо
     const hasFiniteRow = costMatrix.every(row => row.some(v => Number.isFinite(v)));
     if (!hasFiniteRow) {
-      // Добавляем информационный шаг об ошибке с деталями
       const firstNode = sourceNodes[0];
       if (firstNode) {
-        // Подсчитываем количество найденных рёбер для диагностики
         const edgeCount = this.edgeMap.size;
 
         this.addHighlightNodeStep(
@@ -240,7 +211,6 @@ export class HungarianStepGenerator {
     try {
       assignmentCols = hungarian(costMatrix);
     } catch (error) {
-      // Обработка ошибок алгоритма
       const firstNode = this.nodeOrder[0];
       if (firstNode) {
         this.addHighlightNodeStep(
@@ -252,9 +222,7 @@ export class HungarianStepGenerator {
       return this.steps;
     }
 
-    // Проверяем, что алгоритм вернул результат правильной длины
     if (!assignmentCols || assignmentCols.length !== n) {
-      // Добавляем информационный шаг об ошибке
       const firstNode = this.nodeOrder[0];
       if (firstNode) {
         this.addHighlightNodeStep(
@@ -298,7 +266,6 @@ export class HungarianStepGenerator {
       });
     }
 
-    // Если нет назначений, добавляем информационный шаг
     if (assignments.length === 0) {
       const firstNode = this.nodeOrder[0];
       if (firstNode) {
@@ -308,7 +275,7 @@ export class HungarianStepGenerator {
           'Не удалось найти оптимальное назначение. Возможно, матрица стоимостей некорректна или не все строки имеют назначения.'
         );
       }
-      // Добавляем итоговый ответ даже если нет назначений
+
       this.addFinalResultStep();
       return this.steps;
     }
@@ -316,14 +283,12 @@ export class HungarianStepGenerator {
     this.finalAssignments = assignments;
     this.emitAssignments(assignments);
 
-    // Добавляем итоговый ответ на последнем шаге
     this.addFinalResultStep();
 
     return this.steps;
   }
 
   private formatNodeLabel(nodeId: string): string {
-    // Используем label узла, если он есть, иначе используем ID
     return this.nodeLabels.get(nodeId) || nodeId;
   }
 
@@ -349,7 +314,6 @@ export class HungarianStepGenerator {
   }
 
   private getEdgeId(from: string, to: string): string | null {
-    // Для направленного графа используем edge() метод
     if (!this.graph.hasNode(from) || !this.graph.hasNode(to)) {
       return null;
     }
@@ -360,7 +324,6 @@ export class HungarianStepGenerator {
         return typeof edgeKey === 'string' ? edgeKey : String(edgeKey);
       }
     } catch (error) {
-      // Если edge() не работает, пробуем найти через перебор исходящих рёбер
       try {
         const outEdges = this.graph.outEdges(from);
         for (const edgeId of outEdges) {
@@ -369,9 +332,7 @@ export class HungarianStepGenerator {
             return edgeId;
           }
         }
-      } catch (e) {
-        // Игнорируем ошибки
-      }
+      } catch (e) {}
     }
     return null;
   }
@@ -393,13 +354,11 @@ export class HungarianStepGenerator {
       description,
     };
 
-    // Получаем label узла для контекста
     const nodeLabel = this.formatNodeLabel(nodeId);
     const algorithmContext: AlgorithmContext = {
       nodeLabel: nodeLabel,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'hungarian', algorithmContext);
     if (explanation) {
       step.explanation = explanation;
@@ -418,7 +377,6 @@ export class HungarianStepGenerator {
       description,
     };
 
-    // Получаем информацию о ребре для контекста
     const from = this.graph.source(edgeId);
     const to = this.graph.target(edgeId);
     const weight = this.getEdgeWeight(edgeId);
@@ -432,7 +390,6 @@ export class HungarianStepGenerator {
       cost: Number.isFinite(weight) ? weight : undefined,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'hungarian', algorithmContext);
     if (explanation) {
       step.explanation = explanation;
@@ -445,9 +402,6 @@ export class HungarianStepGenerator {
     return Number.isFinite(weight) ? weight.toString() : '∞';
   }
 
-  /**
-   * Добавляет итоговый ответ алгоритма на последнем шаге
-   */
   private addFinalResultStep(): void {
     const items: Array<{ label: string; value: string }> = [];
     let totalWeight = 0;
@@ -472,8 +426,6 @@ export class HungarianStepGenerator {
       });
     }
 
-    // Добавляем итоговый ответ к последнему шагу с explanation
-    // Если нет шагов с explanation, создаем его для последнего шага
     let lastStepWithExplanation = null;
     for (let i = this.steps.length - 1; i >= 0; i--) {
       const step = this.steps[i];
@@ -483,7 +435,6 @@ export class HungarianStepGenerator {
       }
     }
 
-    // Если нашли шаг с explanation, добавляем итоговый ответ
     if (lastStepWithExplanation && lastStepWithExplanation.explanation) {
       lastStepWithExplanation.explanation.finalResult = {
         title: 'Итоговый результат: оптимальное назначение',
@@ -494,7 +445,6 @@ export class HungarianStepGenerator {
             : 'Назначения не найдены',
       };
     } else if (this.steps.length > 0) {
-      // Если нет шагов с explanation, создаем explanation для последнего шага
       const lastStep = this.steps[this.steps.length - 1];
       if (lastStep) {
         const explanation = explanationGeneratorRegistry.generate(lastStep, 'hungarian');

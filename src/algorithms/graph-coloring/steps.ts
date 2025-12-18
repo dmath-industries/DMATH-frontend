@@ -1,10 +1,3 @@
-/**
- * Graph Coloring Algorithm — Step-based версия
- * Эвристический алгоритм раскраски графа (Heuristic Graph Coloring)
- * Основан на алгоритме из DMath-bot-master
- * Находит правильную раскраску вершин графа минимальным количеством цветов
- */
-
 import Graph from 'graphology';
 
 import { GraphModel } from '@/services/graph';
@@ -32,17 +25,14 @@ const formatNodeLabel = (nodeId: string | number): string => {
   return String(nodeId);
 };
 
-/**
- * Цвета для раскраски (можно использовать разные состояния)
- */
 const COLOR_STATES: ElementState[] = [
-  'current', // Цвет 1 - Оранжевый
-  'active', // Цвет 2 - Жёлтый
-  'visited', // Цвет 3 - Синий
-  'path', // Цвет 4 - Зелёный
-  'candidate', // Цвет 5 - Фиолетовый
-  'rejected', // Цвет 6 - Красный
-  'default', // Цвет 7 - Белый (будет использован кастомный цвет)
+  'current',
+  'active',
+  'visited',
+  'path',
+  'candidate',
+  'rejected',
+  'default',
 ];
 
 export class GraphColoringStepGenerator {
@@ -53,22 +43,14 @@ export class GraphColoringStepGenerator {
   private nodeColors: Map<string, number> = new Map();
   private nodeIndexMap: Map<string, number> = new Map();
   private indexNodeMap: Map<number, string> = new Map();
-  // Названия цветов должны соответствовать реальным цветам состояний в Renderer:
-  // current (colorNum=1) → оранжевый (amber-500)
-  // active (colorNum=2) → жёлтый (amber-400)
-  // visited (colorNum=3) → синий (blue-400)
-  // path (colorNum=4) → зелёный (emerald-500)
-  // candidate (colorNum=5) → фиолетовый (violet-500)
-  // rejected (colorNum=6) → красный (red-500)
-  // default (colorNum=7) → белый (white, через кастомный цвет)
   private colorNames = [
-    'Оранжевый', // colorNum=1, state='current'
-    'Жёлтый', // colorNum=2, state='active'
-    'Синий', // colorNum=3, state='visited'
-    'Зелёный', // colorNum=4, state='path'
-    'Фиолетовый', // colorNum=5, state='candidate'
-    'Красный', // colorNum=6, state='rejected'
-    'Белый', // colorNum=7, state='default' с color='#ffffff'
+    'Оранжевый',
+    'Жёлтый',
+    'Синий',
+    'Зелёный',
+    'Фиолетовый',
+    'Красный',
+    'Белый',
   ];
   private adjacencyMatrix: number[][] = [];
 
@@ -79,7 +61,7 @@ export class GraphColoringStepGenerator {
     this.nodeIndexMap.clear();
     this.indexNodeMap.clear();
 
-    this.graphModel = new GraphModel(false); // Неориентированный граф
+    this.graphModel = new GraphModel(false);
     this.graphModel.fromDTO(graphDTO);
     this.graph = this.graphModel.getGraph();
 
@@ -88,24 +70,18 @@ export class GraphColoringStepGenerator {
       return this.steps;
     }
 
-    // Создаем индексное отображение
     nodes.forEach((node, index) => {
       this.nodeIndexMap.set(node, index);
       this.indexNodeMap.set(index, node);
     });
 
-    // Создаем матрицу смежности
     this.buildAdjacencyMatrix(nodes);
 
-    // Эвристический алгоритм раскраски
     this.heuristicColoring();
 
     return this.steps;
   }
 
-  /**
-   * Построить матрицу смежности
-   */
   private buildAdjacencyMatrix(nodes: string[]): void {
     const n = nodes.length;
     this.adjacencyMatrix = Array(n)
@@ -123,22 +99,18 @@ export class GraphColoringStepGenerator {
       }
     }
 
-    // Устанавливаем -1 на диагонали
     for (let i = 0; i < n; i++) {
       this.adjacencyMatrix[i]![i] = -1;
     }
   }
 
-  /**
-   * Получить степени вершин
-   */
   private getDegrees(): number[] {
     const n = this.adjacencyMatrix.length;
     const degrees = Array(n).fill(-1);
 
     for (let i = 0; i < n; i++) {
       if (this.nodeColors.get(this.indexNodeMap.get(i) || '') !== undefined) {
-        degrees[i] = -1; // Уже раскрашена
+        degrees[i] = -1;
         continue;
       }
 
@@ -158,23 +130,18 @@ export class GraphColoringStepGenerator {
     return degrees;
   }
 
-  /**
-   * Найти вершину с максимальной степенью среди доступных
-   */
   private getMaxDegreeVertex(degrees: number[], accessibleVector?: number[]): number {
     let maxDegreeVertex = -1;
     let maxDegree = -1;
 
     for (let i = 0; i < degrees.length; i++) {
-      // Пропускаем уже раскрашенные вершины
       if (this.nodeColors.get(this.indexNodeMap.get(i) || '') !== undefined) {
         continue;
       }
 
-      // Если передан вектор доступности, проверяем его
       if (accessibleVector !== undefined) {
         if (accessibleVector[i] !== 0) {
-          continue; // Вершина недоступна (уже выбрана или смежна с выбранными)
+          continue;
         }
       }
 
@@ -187,9 +154,6 @@ export class GraphColoringStepGenerator {
     return maxDegreeVertex;
   }
 
-  /**
-   * Получить соседей вершины по индексу
-   */
   private getNeighbors(vertexIndex: number): number[] {
     const neighbors: number[] = [];
     const n = this.adjacencyMatrix.length;
@@ -203,29 +167,20 @@ export class GraphColoringStepGenerator {
     return neighbors;
   }
 
-  /**
-   * Получить строку матрицы
-   */
   private getLine(vertexIndex: number): number[] {
     return [...this.adjacencyMatrix[vertexIndex]!];
   }
 
-  /**
-   * Эвристический алгоритм раскраски графа
-   */
   private heuristicColoring(): void {
     let colorNum = 1;
 
-    // Пока есть нераскрашенные вершины
     while (this.hasUncoloredVertices()) {
       const stepDescription = `Шаг ${colorNum}`;
       this.addInfoStep(stepDescription);
 
-      // Получаем степени вершин
       const degrees = this.getDegrees();
       this.displayDegrees(degrees);
 
-      // Находим вершину с максимальной степенью
       let maxDegreeVertex = this.getMaxDegreeVertex(degrees);
       if (maxDegreeVertex === -1) {
         break;
@@ -234,20 +189,17 @@ export class GraphColoringStepGenerator {
       const maxVertices: number[] = [maxDegreeVertex];
       const tableOfVectors: number[][] = [];
 
-      // Инициализируем первый вектор из строки матрицы
       const initialVector = this.getLine(maxDegreeVertex);
       tableOfVectors.push([...initialVector]);
 
       this.displayTable(maxVertices, tableOfVectors, colorNum);
 
-      // Пока в последнем векторе есть 0 (доступные вершины)
       while (
         tableOfVectors[tableOfVectors.length - 1]!.some(
           (val, idx) =>
             val === 0 && this.nodeColors.get(this.indexNodeMap.get(idx) || '') === undefined
         )
       ) {
-        // Находим следующую вершину с максимальной степенью среди доступных
         const currentVector = tableOfVectors[tableOfVectors.length - 1];
         maxDegreeVertex = this.getMaxDegreeVertex(degrees, currentVector);
 
@@ -257,11 +209,9 @@ export class GraphColoringStepGenerator {
 
         maxVertices.push(maxDegreeVertex);
 
-        // Создаем новый вектор
         const newVector = [...currentVector!];
-        newVector[maxDegreeVertex] = -1; // Помечаем выбранную вершину
+        newVector[maxDegreeVertex] = -1;
 
-        // Помечаем соседей выбранной вершины как недоступные (1)
         const neighbors = this.getNeighbors(maxDegreeVertex);
         for (const neighbor of neighbors) {
           if (newVector[neighbor] !== -1) {
@@ -273,7 +223,6 @@ export class GraphColoringStepGenerator {
         this.displayTable(maxVertices, tableOfVectors, colorNum);
       }
 
-      // Раскрашиваем все вершины из множества текущим цветом
       const state = colorNum - 1 < COLOR_STATES.length ? COLOR_STATES[colorNum - 1] : 'default';
       const colorName = this.colorNames[colorNum - 1] || `Цвет ${colorNum}`;
 
@@ -287,7 +236,6 @@ export class GraphColoringStepGenerator {
             `Вершина ${formatNodeLabel(nodeId)} получает ${colorName} (цвет ${colorNum})`
           );
 
-          // Для белого цвета (colorNum=7, state='default') устанавливаем кастомный цвет
           if (colorNum === 7 && state === 'default') {
             this.addUpdateNodeStep(nodeId, { color: '#ffffff' });
           }
@@ -297,18 +245,13 @@ export class GraphColoringStepGenerator {
       colorNum++;
     }
 
-    // Финальное резюме
     const chromaticNumber = colorNum - 1;
     this.addInfoStep(`Хроматическое число графа: ${chromaticNumber}`);
     this.addFinalSummary();
 
-    // Добавляем итоговый ответ на последнем шаге
     this.addFinalResultStep();
   }
 
-  /**
-   * Проверить, есть ли нераскрашенные вершины
-   */
   private hasUncoloredVertices(): boolean {
     const nodes = this.graph.nodes();
     for (const node of nodes) {
@@ -319,9 +262,6 @@ export class GraphColoringStepGenerator {
     return false;
   }
 
-  /**
-   * Отобразить степени вершин
-   */
   private displayDegrees(degrees: number[]): void {
     let description = 'Степени вершин:\n';
     for (let i = 0; i < degrees.length; i++) {
@@ -338,9 +278,6 @@ export class GraphColoringStepGenerator {
     this.addInfoStep(description);
   }
 
-  /**
-   * Отобразить таблицу векторов
-   */
   private displayTable(maxVertices: number[], tableOfVectors: number[][], colorNum: number): void {
     if (tableOfVectors.length === 0) return;
 
@@ -372,11 +309,7 @@ export class GraphColoringStepGenerator {
     this.addInfoStep(description);
   }
 
-  /**
-   * Добавить финальное резюме раскраски
-   */
   private addFinalSummary(): void {
-    // Подсвечиваем все вершины их цветами для финального вида
     for (const [nodeId, color] of this.nodeColors.entries()) {
       const state = color - 1 < COLOR_STATES.length ? COLOR_STATES[color - 1] : 'default';
       const colorName = this.colorNames[color - 1] || `Цвет ${color}`;
@@ -389,9 +322,6 @@ export class GraphColoringStepGenerator {
     }
   }
 
-  /**
-   * Добавить информационный шаг
-   */
   private addInfoStep(description: string): void {
     const firstNode = this.graph.nodes()[0];
     if (firstNode) {
@@ -404,7 +334,6 @@ export class GraphColoringStepGenerator {
         description,
       };
 
-      // Генерируем пояснение
       const explanation = explanationGeneratorRegistry.generate(step, 'graph-coloring');
       if (explanation) {
         step.explanation = explanation;
@@ -414,9 +343,6 @@ export class GraphColoringStepGenerator {
     }
   }
 
-  /**
-   * Добавить шаг подсветки вершины
-   */
   private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
@@ -427,13 +353,11 @@ export class GraphColoringStepGenerator {
       description,
     };
 
-    // Получаем соседей вершины для контекста
     const neighbors = this.graph.neighbors(nodeId);
     const algorithmContext: AlgorithmContext = {
       neighbors: neighbors,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(
       step,
       'graph-coloring',
@@ -446,9 +370,6 @@ export class GraphColoringStepGenerator {
     this.steps.push(step);
   }
 
-  /**
-   * Добавить шаг обновления вершины (для установки кастомного цвета)
-   */
   private addUpdateNodeStep(nodeId: string, attrs: { color?: string }): void {
     const step: UpdateNodeStep = {
       id: `step_${this.stepCounter++}`,
@@ -458,7 +379,6 @@ export class GraphColoringStepGenerator {
       attrs,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'graph-coloring');
     if (explanation) {
       step.explanation = explanation;
@@ -467,11 +387,7 @@ export class GraphColoringStepGenerator {
     this.steps.push(step);
   }
 
-  /**
-   * Добавляет итоговый ответ алгоритма на последнем шаге
-   */
   private addFinalResultStep(): void {
-    // Группируем вершины по цветам
     const colorGroups = new Map<number, string[]>();
 
     for (const [nodeId, color] of this.nodeColors.entries()) {
@@ -483,7 +399,6 @@ export class GraphColoringStepGenerator {
 
     const items: Array<{ label: string; value: string }> = [];
 
-    // Сортируем по номерам цветов
     const sortedColors = Array.from(colorGroups.keys()).sort((a, b) => a - b);
 
     for (const color of sortedColors) {
@@ -496,7 +411,6 @@ export class GraphColoringStepGenerator {
       });
     }
 
-    // Добавляем итоговый ответ к последнему шагу с explanation
     for (let i = this.steps.length - 1; i >= 0; i--) {
       const step = this.steps[i];
       if (step && step.explanation) {

@@ -1,7 +1,3 @@
-/**
- * Генератор пояснений для алгоритма Prim
- */
-
 import { ExplanationGenerator } from '../ExplanationGenerator';
 import type { Step, StepExplanation } from '@/types';
 import type { AlgorithmContext } from '../ExplanationGenerator';

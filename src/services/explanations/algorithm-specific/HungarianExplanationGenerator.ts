@@ -1,7 +1,3 @@
-/**
- * Генератор пояснений для Венгерского алгоритма
- */
-
 import { ExplanationGenerator } from '../ExplanationGenerator';
 import type { Step, StepExplanation } from '@/types';
 import type { AlgorithmContext } from '../ExplanationGenerator';
@@ -30,7 +26,7 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
 
     const nodeId = step.nodeId;
     const state = step.state;
-    // Используем label из контекста, если есть, иначе форматируем ID
+
     const nodeLabel = (context?.nodeLabel as string | undefined) || this.formatNode(nodeId);
 
     switch (state) {
@@ -74,7 +70,6 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
     const row = context?.matrixRow as number | undefined;
     const col = context?.matrixCol as number | undefined;
 
-    // Используем label из контекста, если есть, иначе форматируем ID
     const fromLabel =
       (context?.edgeFromLabel as string | undefined) || (from ? this.formatNode(from) : '?');
     const toLabel =

@@ -9,30 +9,21 @@ interface StepExplanationPanelProps {
   currentStep: Step | null;
 }
 
-/**
- * Компонент панели пояснений к текущему шагу алгоритма
- */
 export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps) {
   const { currentIndex, totalSteps } = useAppSelector(state => state.steps);
 
-  // Показываем панель всегда, когда есть шаги алгоритма
-  // Если нет активного шага, показываем пустое состояние
   const hasActiveStep = currentIndex >= 0 && currentStep;
 
-  // Используем explanation если есть, иначе description
   const explanation: StepExplanation | undefined = currentStep?.explanation;
   const description = currentStep?.description;
 
-  // Если есть explanation, используем его, иначе создаем из description
   const displayExplanation: StepExplanation | null = hasActiveStep
     ? explanation || (description ? { type: 'general', text: description } : null)
     : null;
 
-  // Проверяем, является ли текущий шаг последним
   const isLastStep = currentIndex >= 0 && currentIndex === totalSteps - 1;
   const finalResult = isLastStep ? displayExplanation?.finalResult : undefined;
 
-  // Показываем панель только если есть шаги
   if (totalSteps === 0) {
     return null;
   }

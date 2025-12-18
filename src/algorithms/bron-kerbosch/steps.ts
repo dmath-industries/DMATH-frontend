@@ -1,13 +1,8 @@
-/**
- * Bron–Kerbosch Algorithm — Step-based версия
- * Находит максимальные клики в неориентированном графе.
- */
-
 import Graph from 'graphology';
-// eslint-disable-next-line boundaries/element-types
+
 import { GraphModel } from '@/services/graph';
 import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
-import '@/services/explanations/registry'; // Инициализация реестра генераторов
+import '@/services/explanations/registry';
 import type {
   AlgorithmParams,
   ElementState,
@@ -36,7 +31,7 @@ export class BronKerboschStepGenerator {
   private stepCounter = 0;
   private graphModel!: GraphModel;
   private graph!: Graph;
-  private foundCliques: string[][] = []; // Найденные максимальные клики
+  private foundCliques: string[][] = [];
 
   generateSteps(graphDTO: GraphDTO, _params?: AlgorithmParams): Step[] {
     this.steps = [];
@@ -58,14 +53,12 @@ export class BronKerboschStepGenerator {
 
     this.recurse(r, p, x);
 
-    // Добавляем итоговый результат
     this.addFinalResultStep();
 
     return this.steps;
   }
 
   private recurse(r: string[], p: Set<string>, x: Set<string>): void {
-    // Выделяем текущее множество R
     for (const nodeId of r) {
       const context: AlgorithmContext = {
         rSet: [...r],
@@ -75,7 +68,6 @@ export class BronKerboschStepGenerator {
       this.addHighlightNodeStep(nodeId, 'current', undefined, context);
     }
 
-    // Проверяем условие завершения: P = ∅ и X = ∅
     if (p.size === 0 && x.size === 0) {
       this.highlightClique(r);
       return;
@@ -84,7 +76,6 @@ export class BronKerboschStepGenerator {
     for (const v of Array.from(p)) {
       const neighbors = new Set(this.graph.neighbors(v) ?? []);
 
-      // Добавляем вершину v в R
       r.push(v);
       const newP = new Set(Array.from(p).filter(n => neighbors.has(n)));
       const newX = new Set(Array.from(x).filter(n => neighbors.has(n)));
@@ -98,10 +89,8 @@ export class BronKerboschStepGenerator {
       };
       this.addHighlightNodeStep(v, 'active', undefined, addContext);
 
-      // Рекурсивный вызов
       this.recurse(r, newP, newX);
 
-      // Backtracking: убираем v из R, переносим в X
       r.pop();
       p.delete(v);
       x.add(v);
@@ -117,7 +106,6 @@ export class BronKerboschStepGenerator {
   }
 
   private highlightClique(clique: string[]): void {
-    // Сохраняем найденную клику
     this.foundCliques.push([...clique]);
 
     const cliqueContext: AlgorithmContext = {
@@ -127,12 +115,10 @@ export class BronKerboschStepGenerator {
       xSet: [],
     };
 
-    // Выделяем все вершины клики
     for (const nodeId of clique) {
       this.addHighlightNodeStep(nodeId, 'path', undefined, cliqueContext);
     }
 
-    // Выделяем все рёбра клики
     for (let i = 0; i < clique.length; i++) {
       for (let j = i + 1; j < clique.length; j++) {
         const from = clique[i];
@@ -173,7 +159,6 @@ export class BronKerboschStepGenerator {
       description,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'bron-kerbosch', context);
     if (explanation) {
       step.explanation = explanation;
@@ -197,7 +182,6 @@ export class BronKerboschStepGenerator {
       description,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'bron-kerbosch', context);
     if (explanation) {
       step.explanation = explanation;
@@ -210,9 +194,6 @@ export class BronKerboschStepGenerator {
     return nodes.map(formatNodeLabel).join(', ');
   }
 
-  /**
-   * Добавляет итоговый ответ алгоритма на последнем шаге
-   */
   private addFinalResultStep(): void {
     const items: Array<{ label: string; value: string }> = [];
 
@@ -222,7 +203,6 @@ export class BronKerboschStepGenerator {
         value: 'Максимальные клики не найдены',
       });
     } else {
-      // Сортируем клики по размеру (от больших к меньшим), затем лексикографически
       const sortedCliques = [...this.foundCliques].sort((a, b) => {
         if (b.length !== a.length) {
           return b.length - a.length;
@@ -245,8 +225,6 @@ export class BronKerboschStepGenerator {
       });
     }
 
-    // Добавляем итоговый ответ к последнему шагу с explanation
-    // Если нет шага с explanation, создаём его для последнего шага
     let lastStepWithExplanation: Step | null = null;
     for (let i = this.steps.length - 1; i >= 0; i--) {
       const step = this.steps[i];
@@ -263,7 +241,6 @@ export class BronKerboschStepGenerator {
         summary: `Найдено максимальных клик: ${this.foundCliques.length}`,
       };
     } else if (this.steps.length > 0) {
-      // Если нет шага с explanation, создаём explanation для последнего шага
       const lastStep = this.steps[this.steps.length - 1];
       if (lastStep) {
         const explanation = explanationGeneratorRegistry.generate(lastStep, 'bron-kerbosch', {});

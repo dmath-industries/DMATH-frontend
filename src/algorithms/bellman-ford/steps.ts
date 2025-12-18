@@ -8,7 +8,7 @@ import type {
   ElementState,
 } from '@/types';
 import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
-import '@/services/explanations/registry'; // Инициализация реестра генераторов
+import '@/services/explanations/registry';
 
 interface Edge {
   source: string;
@@ -229,7 +229,6 @@ export class BellmanFordStepGenerator {
         }
       }
 
-      // Добавляем итоговый ответ на последнем шаге
       this.addFinalResultStep(graphDTO, startNode, hasNegativeCycle);
     }
 
@@ -295,7 +294,6 @@ export class BellmanFordStepGenerator {
       description: description || this.pendingDescription,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'bellman-ford', {
       ...context,
       isStartNode: nodeId === this.startNode,
@@ -327,7 +325,6 @@ export class BellmanFordStepGenerator {
       description: description || this.pendingDescription,
     };
 
-    // Генерируем пояснение с контекстом ребра
     const algorithmContext: AlgorithmContext = {
       edgeFrom: context?.from,
       edgeTo: context?.to,
@@ -360,7 +357,6 @@ export class BellmanFordStepGenerator {
       description: description || this.pendingDescription,
     };
 
-    // Генерируем пояснение
     const explanation = explanationGeneratorRegistry.generate(step, 'bellman-ford', {
       distances: this.distances,
       predecessors: this.predecessors,
@@ -379,9 +375,6 @@ export class BellmanFordStepGenerator {
     this.pendingDescription = description;
   }
 
-  /**
-   * Добавляет итоговый ответ алгоритма на последнем шаге
-   */
   private addFinalResultStep(
     graphDTO: GraphDTO,
     startNode: string,
@@ -421,7 +414,6 @@ export class BellmanFordStepGenerator {
       }
     }
 
-    // Добавляем итоговый ответ к последнему шагу с explanation
     for (let i = this.steps.length - 1; i >= 0; i--) {
       const step = this.steps[i];
       if (step && step.explanation) {
