@@ -21,7 +21,7 @@ export const algorithmsConfig: Record<string, AlgorithmConfig> = {
   'bellman-ford': {
     name: 'Алгоритм Форда-Беллмана',
     useWeights: true,
-    defaultMatrix: '0,6,0,0,7\n' + '0,0,5,-4,8\n' + '0,-2,0,0,0\n' + '2,0,7,0,0\n' + '0,0,0,9,0',
+    defaultMatrix: '0,6,1,2,7\n' + '3,0,5,4,8\n' + '0,2,0,2,0\n' + '2,1,7,0,0\n' + '0,5,5,9,0',
     matrixDescription:
       'Матрица весов ориентированного графа. ' +
       'Числа представляют веса рёбер, допускаются отрицательные значения. ' +
