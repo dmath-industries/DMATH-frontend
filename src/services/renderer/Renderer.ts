@@ -372,17 +372,17 @@ export class Renderer {
   private getStateColor(state?: ElementState, defaultColor?: string): number {
     switch (state) {
       case 'active':
-        return 0xfbbf24; // amber-400
+        return 0xfbbf24; // amber-400 (жёлтый)
       case 'visited':
-        return 0x60a5fa; // blue-400
+        return 0x60a5fa; // blue-400 (синий)
       case 'current':
-        return 0xf59e0b; // amber-500
+        return 0xf59e0b; // amber-500 (оранжевый)
       case 'path':
-        return 0x10b981; // emerald-500
+        return 0x10b981; // emerald-500 (зелёный)
       case 'rejected':
-        return 0xef4444; // red-500
+        return 0xef4444; // red-500 (красный)
       case 'candidate':
-        return 0x8b5cf6; // violet-500
+        return 0x8b5cf6; // violet-500 (фиолетовый)
       default:
         if (defaultColor) {
           const hex = defaultColor.startsWith('#') ? defaultColor.slice(1) : defaultColor;
