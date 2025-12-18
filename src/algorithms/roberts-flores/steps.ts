@@ -36,13 +36,16 @@ export class RobertsFloresStepGenerator {
   private totalNodes: number = 0;
   private startNode: string | null = null;
   private foundCycles: string[][] = [];
+  private isDirected: boolean = false;
 
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
     this.foundCycles = [];
 
-    this.graphModel = new GraphModel(true);
+    this.isDirected = graphDTO.edges.some(edge => edge.directed === true);
+
+    this.graphModel = new GraphModel(this.isDirected);
     this.graphModel.fromDTO(graphDTO);
     this.graph = this.graphModel.getGraph();
 
@@ -83,13 +86,19 @@ export class RobertsFloresStepGenerator {
         return;
       }
 
-      const hasCycleEdge = this.graph.hasEdge(current, firstNode);
+      const hasCycleEdge = this.isDirected
+        ? this.graph.hasEdge(current, firstNode)
+        : this.graph.hasEdge(current, firstNode) || this.graph.hasEdge(firstNode, current);
 
       if (hasCycleEdge) {
         const cycle = [...path, firstNode];
         this.foundCycles.push(cycle);
 
-        const edgeId = this.getEdgeId(current, firstNode);
+        let edgeId = this.getEdgeId(current, firstNode);
+        if (!edgeId && !this.isDirected) {
+          edgeId = this.getEdgeId(firstNode, current);
+        }
+
         if (edgeId) {
           this.addHighlightEdgeStep(
             edgeId,
@@ -131,7 +140,10 @@ export class RobertsFloresStepGenerator {
       return;
     }
 
-    const neighbors = this.graph.outNeighbors(current);
+    const neighbors = this.isDirected
+      ? this.graph.outNeighbors(current)
+      : this.graph.neighbors(current);
+
     for (const next of neighbors) {
       if (!path.includes(next)) {
         path.push(next);
@@ -149,7 +161,11 @@ export class RobertsFloresStepGenerator {
           }
         );
 
-        const edgeId = this.getEdgeId(current, next);
+        let edgeId = this.getEdgeId(current, next);
+        if (!edgeId && !this.isDirected) {
+          edgeId = this.getEdgeId(next, current);
+        }
+
         if (edgeId) {
           this.addHighlightEdgeStep(edgeId, 'active', undefined, { from: current, to: next });
         }
