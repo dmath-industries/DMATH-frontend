@@ -238,13 +238,28 @@ export class BellmanFordStepGenerator {
   private reconstructPath(start: string, target: string): string[] {
     const path: string[] = [];
     let current: string | null = target;
+    const visited = new Set<string>();
 
+    // Восстанавливаем путь от целевой вершины к стартовой
     while (current !== null && current !== undefined) {
+      // Защита от циклов
+      if (visited.has(current)) {
+        break;
+      }
+      visited.add(current);
+
       path.unshift(current);
+
       if (current === start) {
         break;
       }
+
       current = this.predecessors.get(current) ?? null;
+    }
+
+    // Если путь не начинается со стартовой вершины, значит путь не найден
+    if (path.length === 0 || path[0] !== start) {
+      return [];
     }
 
     return path;
@@ -255,10 +270,13 @@ export class BellmanFordStepGenerator {
 
     for (const edge of graphDTO.edges) {
       if (edge.directed !== false) {
+        // Вес может быть 0, что является валидным значением
+        // Если вес не указан, используем 0 как значение по умолчанию (не Infinity)
+        const weight = edge.weight !== undefined && edge.weight !== null ? edge.weight : 0;
         edges.push({
           source: edge.source,
           target: edge.target,
-          weight: edge.weight ?? Infinity,
+          weight: weight,
           edgeId: edge.id,
         });
       }
@@ -386,44 +404,73 @@ export class BellmanFordStepGenerator {
 
     const items: Array<{ label: string; value: string }> = [];
 
-    for (const node of graphDTO.nodes) {
-      if (node.id === startNode) {
-        continue;
+    // Сортируем вершины для консистентного вывода
+    const sortedNodes = [...graphDTO.nodes].sort((a, b) => {
+      const aNum = Number(a.id);
+      const bNum = Number(b.id);
+      if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+        return aNum - bNum;
       }
+      return String(a.id).localeCompare(String(b.id));
+    });
 
+    for (const node of sortedNodes) {
       const dist = this.distances.get(node.id);
-      if (dist !== undefined && dist !== Infinity) {
+      const nodeLabel = this.getNodeLabel(node.id);
+
+      if (node.id === startNode) {
+        // Стартовая вершина всегда имеет расстояние 0
+        items.push({
+          label: `${nodeLabel}:`,
+          value: '0',
+        });
+      } else if (dist !== undefined && dist !== Infinity) {
         const path = this.reconstructPath(startNode, node.id);
         if (path.length > 1) {
           const pathStr = path.map(n => this.getNodeLabel(n)).join(' → ');
           items.push({
-            label: `d(${this.getNodeLabel(node.id)})`,
-            value: `${dist} (путь: ${pathStr})`,
+            label: `${nodeLabel}:`,
+            value: `${dist} (${pathStr})`,
           });
         } else {
+          // Путь не найден (недостижима)
           items.push({
-            label: `d(${this.getNodeLabel(node.id)})`,
-            value: `${dist}`,
+            label: `${nodeLabel}:`,
+            value: '∞ (недостижима)',
           });
         }
       } else {
         items.push({
-          label: `d(${this.getNodeLabel(node.id)})`,
+          label: `${nodeLabel}:`,
           value: '∞ (недостижима)',
         });
       }
     }
 
-    for (let i = this.steps.length - 1; i >= 0; i--) {
-      const step = this.steps[i];
-      if (step && step.explanation) {
-        step.explanation.finalResult = {
-          title: 'Итоговый результат: кратчайшие расстояния',
-          items,
-          summary: `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
-        };
-        break;
-      }
+    // Добавляем специальный шаг для финального результата, чтобы гарантировать его отображение
+    const finalStep: HighlightNodeStep = {
+      id: `step_${this.stepCounter++}`,
+      timestamp: Date.now(),
+      type: 'HIGHLIGHT_NODE',
+      nodeId: startNode,
+      state: 'path',
+      description: 'Итоговый результат: кратчайшие расстояния найдены',
+    };
+
+    const explanation = explanationGeneratorRegistry.generate(finalStep, 'bellman-ford', {
+      isStartNode: true,
+      distances: this.distances,
+      predecessors: this.predecessors,
+    });
+    if (explanation) {
+      finalStep.explanation = explanation;
+      finalStep.explanation.finalResult = {
+        title: 'Итоговый результат: кратчайшие расстояния',
+        items,
+        summary: `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
+      };
     }
+
+    this.steps.push(finalStep);
   }
 }
