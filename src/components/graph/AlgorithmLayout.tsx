@@ -341,7 +341,7 @@ export function AlgorithmLayout({
    * Получить шаг с пояснением, проверяя предыдущие шаги если у текущего нет пояснения
    */
   const getStepWithExplanation = useCallback(
-    (controller: StepController, index: number): Step | null => {
+    (controller: StepController, index: number, totalSteps: number): Step | null => {
       if (!controller || index < 0) {
         return null;
       }
@@ -351,16 +351,19 @@ export function AlgorithmLayout({
         return null;
       }
 
-      // Если у текущего шага есть пояснение, возвращаем его как есть
+      const isLastStep = index === totalSteps - 1;
+
       if (currentStep.explanation) {
         return currentStep;
       }
 
-      // Иначе ищем пояснение в предыдущих шагах (проверяем до 5 предыдущих)
+      if (isLastStep) {
+        return currentStep;
+      }
+
       for (let i = index - 1; i >= Math.max(0, index - 5); i--) {
         const prevStep = controller.getStepByIndex(i);
         if (prevStep?.explanation) {
-          // Возвращаем текущий шаг, но с пояснением из предыдущего
           return {
             ...currentStep,
             explanation: prevStep.explanation,
@@ -368,7 +371,6 @@ export function AlgorithmLayout({
         }
       }
 
-      // Если не нашли пояснение в предыдущих шагах, возвращаем текущий шаг без пояснения
       return currentStep;
     },
     []
@@ -389,8 +391,7 @@ export function AlgorithmLayout({
       renderer,
       onIndexChange: index => {
         dispatch(setIndex(index));
-        // Обновляем currentStep при изменении индекса с проверкой предыдущих пояснений
-        const step = getStepWithExplanation(controller, index);
+        const step = getStepWithExplanation(controller, index, totalSteps);
         setCurrentStep(step);
       },
       onComplete: () => {
@@ -723,7 +724,7 @@ export function AlgorithmLayout({
       controllerRef.current.goToIndex(currentIndex);
 
       // Обновляем currentStep при изменении индекса с проверкой предыдущих пояснений
-      const step = getStepWithExplanation(controllerRef.current, currentIndex);
+      const step = getStepWithExplanation(controllerRef.current, currentIndex, totalSteps);
       setCurrentStep(step);
 
       if (currentIndex >= 0 && totalSteps > 0) {
