@@ -30,7 +30,8 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
 
     const nodeId = step.nodeId;
     const state = step.state;
-    const nodeLabel = this.formatNode(nodeId);
+    // Используем label из контекста, если есть, иначе форматируем ID
+    const nodeLabel = (context?.nodeLabel as string | undefined) || this.formatNode(nodeId);
 
     switch (state) {
       case 'current':
@@ -73,16 +74,19 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
     const row = context?.matrixRow as number | undefined;
     const col = context?.matrixCol as number | undefined;
 
+    // Используем label из контекста, если есть, иначе форматируем ID
+    const fromLabel =
+      (context?.edgeFromLabel as string | undefined) || (from ? this.formatNode(from) : '?');
+    const toLabel =
+      (context?.edgeToLabel as string | undefined) || (to ? this.formatNode(to) : '?');
+    const costStr = cost !== undefined ? cost.toString() : '?';
+
     if (!from || !to) {
       if (step.description) {
         return this.createExplanation('general', step.description, context);
       }
       return undefined;
     }
-
-    const fromLabel = this.formatNode(from);
-    const toLabel = this.formatNode(to);
-    const costStr = cost !== undefined ? cost.toString() : '?';
 
     switch (state) {
       case 'active':

@@ -44,11 +44,19 @@ function HungarianContent() {
         return;
       }
 
-      const rows = matrixText.trim().split('\n');
+      const rows = matrixText
+        .trim()
+        .split('\n')
+        .filter(row => row.trim());
       const matrix = rows.map(row =>
         row.split(',').map(cell => {
           const trimmed = cell.trim();
-          return trimmed === '' ? 0 : parseInt(trimmed, 10);
+          if (trimmed === '') return 0;
+          const parsed = parseInt(trimmed, 10);
+          if (isNaN(parsed)) {
+            throw new Error(`Некорректное значение в матрице: "${trimmed}"`);
+          }
+          return parsed;
         })
       );
 
@@ -102,21 +110,16 @@ function HungarianContent() {
 
       let edgeId = 0;
 
+      // Создаём рёбра для всех элементов матрицы
+      // Для венгерского алгоритма нужно создать рёбра для всех пар (source_i, target_j)
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row) continue;
         for (let j = 0; j < nodeCount; j++) {
           const weight = row[j];
-          if (
-            i >= 0 &&
-            i < nodeCount &&
-            j >= 0 &&
-            j < nodeCount &&
-            weight !== undefined &&
-            weight !== 0 &&
-            !isNaN(weight) &&
-            isFinite(weight)
-          ) {
+          // Для венгерского алгоритма нулевые веса - это валидные значения!
+          // Создаём ребро для каждого элемента матрицы
+          if (weight !== undefined && !isNaN(weight) && isFinite(weight)) {
             const sourceId = `source_${i}`;
             const targetId = `target_${j}`;
 
