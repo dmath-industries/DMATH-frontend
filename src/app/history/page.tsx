@@ -155,9 +155,9 @@ export default function HistoryPage() {
         maxWidth="lg"
         sx={{
           minHeight: '100vh',
-          py: { xs: 4, sm: 6, md: 8 },
+          py: { xs: 2, sm: 3, md: 4 },
           px: { xs: 4, sm: 6, lg: 8 },
-          mt: { xs: 4, sm: 6, md: 8, lg: '10%' },
+          mt: { xs: 2, sm: 3, md: 4 },
         }}
       >
         <Box
@@ -168,7 +168,7 @@ export default function HistoryPage() {
             alignItems: 'center',
             color: 'text.secondary',
             textDecoration: 'none',
-            mb: 4,
+            mb: 2,
             ml: { xs: 0, sm: 4, md: 10 },
             transition: 'color 0.2s',
             '&:hover': {
@@ -189,7 +189,7 @@ export default function HistoryPage() {
           variant="h3"
           sx={{
             fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.25rem' },
-            mb: { xs: 4, sm: 6 },
+            mb: { xs: 2, sm: 3 },
             textAlign: { xs: 'center', sm: 'left' },
             ml: { xs: 0, sm: 4, md: 10 },
           }}
@@ -202,10 +202,10 @@ export default function HistoryPage() {
             backgroundColor: '#756565',
             display: 'flex',
             flexDirection: 'column',
-            gap: { xs: 4, sm: 6, md: 8 },
+            gap: { xs: 2, sm: 3, md: 4 },
             px: { xs: 4, sm: 6, md: 8 },
-            py: { xs: 4, sm: 6 },
-            pb: { xs: 8, sm: 12, md: '100px' },
+            py: { xs: 3, sm: 4 },
+            pb: { xs: 4, sm: 6, md: 8 },
           }}
         >
           <Typography
@@ -220,7 +220,7 @@ export default function HistoryPage() {
               },
               textAlign: { xs: 'center', sm: 'left' },
               ml: { xs: 0, sm: 3 },
-              mb: { xs: 4, sm: 0 },
+              mb: { xs: 2, sm: 0 },
               color: '#ffffff',
             }}
           >
@@ -233,10 +233,10 @@ export default function HistoryPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                py: 12,
+                py: 6,
               }}
             >
-              <CircularProgress sx={{ mb: 4, color: 'rgba(255,255,255,0.3)' }} />
+              <CircularProgress sx={{ mb: 2, color: 'rgba(255,255,255,0.3)' }} />
               <Typography variant="body1" sx={{ color: '#ffffff' }}>
                 Загрузка истории...
               </Typography>
@@ -245,21 +245,21 @@ export default function HistoryPage() {
             <Box
               sx={{
                 textAlign: 'center',
-                py: 12,
+                py: 6,
               }}
             >
               <Paper
                 sx={{
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  p: 8,
+                  p: 4,
                   maxWidth: 448,
                   mx: 'auto',
                 }}
               >
-                <Typography variant="body1" sx={{ color: '#ffffff', mb: 4 }}>
+                <Typography variant="body1" sx={{ color: '#ffffff', mb: 2 }}>
                   История пуста
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 4 }}>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3 }}>
                   Запустите алгоритм, чтобы создать первую запись в истории решений.
                 </Typography>
                 <Box
@@ -267,7 +267,7 @@ export default function HistoryPage() {
                   href="/algorithms"
                   sx={{
                     display: 'inline-block',
-                    mt: 6,
+                    mt: 2,
                     px: 6,
                     py: 3,
                     backgroundColor: '#3b82f6',
@@ -285,7 +285,7 @@ export default function HistoryPage() {
               </Paper>
             </Box>
           ) : (
-            <Stack spacing={{ xs: 4, sm: 6, md: 8 }}>
+            <Stack spacing={{ xs: 2, sm: 3, md: 4 }}>
               {sessions.map(session => {
                 const nodeCount = session.graphDTO?.nodes?.length || 0;
                 const edgeCount = session.graphDTO?.edges?.length || 0;

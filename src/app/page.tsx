@@ -3,25 +3,18 @@
 import { Box, Container, Typography, Button, Link as MuiLink } from '@mui/material';
 import Link from 'next/link';
 import { AnalyticsEvents } from '@/shared/lib';
-import { useEffect } from 'react';
 
 export default function Home() {
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: '100vh',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'center',
-        py: 4,
+        pt: { xs: 5, sm: 6, md: 8 },
+        pb: 4,
+        overflow: 'hidden',
       }}
     >
       <Container
@@ -29,16 +22,16 @@ export default function Home() {
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          gap: { xs: 2, sm: 3 },
+          gap: { xs: 1.5, sm: 2 },
           px: { xs: 2, sm: 3, md: '10%' },
         }}
       >
         <Typography
           variant="h1"
           sx={{
-            fontSize: { xs: '1.5rem', sm: '1.875rem', md: '2.25rem', lg: '3rem' },
+            fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem', lg: '1.75rem' },
             fontWeight: 400,
-            mb: { xs: 2, sm: 3 },
+            mb: { xs: 1.5, sm: 2 },
             textAlign: { xs: 'center', sm: 'left' },
             lineHeight: 1.2,
           }}
@@ -47,11 +40,11 @@ export default function Home() {
           дискретной математики и сетей
         </Typography>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 } }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, sm: 1.5 } }}>
           <Typography
             variant="h2"
             sx={{
-              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.875rem' },
+              fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
               fontWeight: 600,
               textAlign: { xs: 'center', sm: 'left' },
             }}
@@ -60,37 +53,37 @@ export default function Home() {
           </Typography>
           <Box
             component="ul"
-            sx={{ pl: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', gap: 1 }}
+            sx={{ pl: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', gap: 0.5 }}
           >
             <Typography
               component="li"
               variant="body1"
-              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' } }}
             >
               Запускать алгоритмы шаг за шагом
             </Typography>
             <Typography
               component="li"
               variant="body1"
-              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' } }}
             >
               Видеть, как они работают — визуально и понятно
             </Typography>
             <Typography
               component="li"
               variant="body1"
-              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' } }}
             >
               Анализировать каждый этап решения
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 } }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, sm: 1.5 } }}>
           <Typography
             variant="h2"
             sx={{
-              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.875rem' },
+              fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' },
               fontWeight: 600,
               textAlign: { xs: 'center', sm: 'left' },
             }}
@@ -99,12 +92,12 @@ export default function Home() {
           </Typography>
           <Box
             component="ul"
-            sx={{ pl: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', gap: 1 }}
+            sx={{ pl: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', gap: 0.5 }}
           >
             <Typography
               component="li"
               variant="body1"
-              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' } }}
             >
               <strong>Графы:</strong> обход в ширину (BFS), в глубину (DFS), алгоритм Дейкстры,
               минимальное остовное дерево
@@ -112,7 +105,7 @@ export default function Home() {
             <Typography
               component="li"
               variant="body1"
-              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' } }}
             >
               <strong>Транспортные задачи:</strong> метод минимальной стоимости, распределение
               ресурсов
@@ -120,7 +113,7 @@ export default function Home() {
             <Typography
               component="li"
               variant="body1"
-              sx={{ fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' } }}
+              sx={{ fontSize: { xs: '0.875rem', sm: '1rem', md: '1.125rem' } }}
             >
               <strong>Нейросети:</strong> распространение сигнала в простой нейронной сети (MLP) —
               без формул, но с пониманием процесса
@@ -130,7 +123,7 @@ export default function Home() {
 
         <Box
           sx={{
-            mt: { xs: 3, sm: 4 },
+            mt: { xs: 2, sm: 2.5 },
             display: 'flex',
             justifyContent: { xs: 'center', sm: 'flex-start' },
           }}
