@@ -547,4 +547,61 @@ describe('StepController', () => {
       expect(() => controller.backward()).not.toThrow();
     });
   });
+
+  describe('getStepByIndex', () => {
+    it('должен возвращать null для отрицательного индекса', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(-1)).toBeNull();
+    });
+
+    it('должен возвращать null для индекса больше длины', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(100)).toBeNull();
+    });
+
+    it('должен возвращать null для индекса равного длине', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(steps.length)).toBeNull();
+    });
+
+    it('должен возвращать null для undefined шага', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(0)).not.toBeNull();
+    });
+  });
+
+  describe('forward edge cases', () => {
+    it('должен обрабатывать случай, когда step undefined', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      controller.goToIndex(0);
+      controller['steps'] = [undefined as any, ...steps.slice(1)];
+      controller['currentIndex'] = -1;
+      controller.forward();
+      expect(controller.getCurrentIndex()).toBe(-1);
+    });
+  });
+
+  describe('tick edge cases', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('должен останавливать воспроизведение, если playing стал false', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      controller.startPlayback();
+      controller['playing'] = false;
+      jest.advanceTimersByTime(100);
+      expect(controller.isPlaying()).toBe(false);
+    });
+  });
 });

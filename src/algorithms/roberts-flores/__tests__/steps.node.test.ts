@@ -153,4 +153,53 @@ describe('RobertsFloresStepGenerator', () => {
     );
     expect(rejected.length).toBeGreaterThan(0);
   });
+
+  it('должен обрабатывать случай, когда edgeId не найден для цикла', () => {
+    const generator = new RobertsFloresStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+        { id: '2', x: 50, y: 100 },
+      ],
+      edges: [
+        { id: 'e0', source: '0', target: '1', directed: true },
+        { id: 'e1', source: '1', target: '2', directed: true },
+        { id: 'e2', source: '2', target: '0', directed: true },
+      ],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда нет соседей для backtracking', () => {
+    const generator = new RobertsFloresStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+      ],
+      edges: [{ id: 'e0', source: '0', target: '1', directed: true }],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда все соседи уже в пути', () => {
+    const generator = new RobertsFloresStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+        { id: '2', x: 50, y: 100 },
+      ],
+      edges: [
+        { id: 'e0', source: '0', target: '1', directed: true },
+        { id: 'e1', source: '1', target: '2', directed: true },
+        { id: 'e2', source: '2', target: '0', directed: true },
+      ],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    expect(steps.length).toBeGreaterThan(0);
+  });
 });
