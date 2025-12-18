@@ -453,19 +453,25 @@ export class BellmanFordStepGenerator {
       description: 'Итоговый результат: кратчайшие расстояния найдены',
     };
 
-    const explanation = explanationGeneratorRegistry.generate(finalStep, 'bellman-ford', {
+    let explanation = explanationGeneratorRegistry.generate(finalStep, 'bellman-ford', {
       isStartNode: true,
       distances: this.distances,
       predecessors: this.predecessors,
     });
-    if (explanation) {
-      finalStep.explanation = explanation;
-      finalStep.explanation.finalResult = {
-        title: 'Итоговый результат: кратчайшие расстояния',
-        items,
-        summary: `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
+
+    if (!explanation) {
+      explanation = {
+        type: 'general',
+        text: 'Итоговый результат: кратчайшие расстояния найдены',
       };
     }
+
+    finalStep.explanation = explanation;
+    finalStep.explanation.finalResult = {
+      title: 'Итоговый результат: кратчайшие расстояния',
+      items,
+      summary: `Все кратчайшие расстояния от вершины ${this.getNodeLabel(startNode)}`,
+    };
 
     this.steps.push(finalStep);
   }
