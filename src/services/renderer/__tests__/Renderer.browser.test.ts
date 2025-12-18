@@ -998,12 +998,97 @@ describe('Renderer', () => {
       } as any;
 
       renderer.setViewportAdapter(mockViewportAdapter);
-      // Проверяем, что метод не выбрасывает ошибку
       expect(() => renderer.setViewportAdapter(mockViewportAdapter)).not.toThrow();
     });
 
     it('should allow setting null viewport adapter', () => {
       expect(() => renderer.setViewportAdapter(null)).not.toThrow();
+    });
+  });
+
+  describe('setShowWeights', () => {
+    beforeEach(async () => {
+      await renderer.init(canvas, {
+        width: 800,
+        height: 600,
+        backgroundColor: 0x1f2937,
+      });
+    });
+
+    it('should set showWeights to true', () => {
+      expect(() => renderer.setShowWeights(true)).not.toThrow();
+    });
+
+    it('should set showWeights to false', () => {
+      expect(() => renderer.setShowWeights(false)).not.toThrow();
+    });
+
+    it('should draw edge weights when showWeights is true', () => {
+      renderer.setShowWeights(true);
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      model.addNode({ id: 'node2', x: 200, y: 200 });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2', weight: 5 });
+
+      renderer.drawAll(model);
+
+      expect(mockText).toHaveBeenCalled();
+    });
+
+    it('should not draw edge weights when showWeights is false', () => {
+      renderer.setShowWeights(false);
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      model.addNode({ id: 'node2', x: 200, y: 200 });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2', weight: 5 });
+
+      jest.clearAllMocks();
+      renderer.drawAll(model);
+
+      const textCalls = mockText.mock.calls.length;
+      expect(textCalls).toBe(2);
+    });
+
+    it('should toggle between showing and hiding weights', () => {
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      model.addNode({ id: 'node2', x: 200, y: 200 });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2', weight: 5 });
+
+      renderer.setShowWeights(true);
+      renderer.drawAll(model);
+      expect(mockText).toHaveBeenCalled();
+
+      jest.clearAllMocks();
+      renderer.setShowWeights(false);
+      const textCallsBefore = mockText.mock.calls.length;
+      renderer.renderDirty(new Set(['edge1']), model);
+      const textCallsAfter = mockText.mock.calls.length;
+
+      expect(textCallsAfter).toBe(textCallsBefore);
+    });
+
+    it('should handle edge with zero weight', () => {
+      renderer.setShowWeights(true);
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      model.addNode({ id: 'node2', x: 200, y: 200 });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2', weight: 0 });
+
+      renderer.drawAll(model);
+
+      expect(mockText).toHaveBeenCalled();
+    });
+
+    it('should remove edge weight label when showWeights changed to false', () => {
+      renderer.setShowWeights(true);
+      model.addNode({ id: 'node1', x: 100, y: 100 });
+      model.addNode({ id: 'node2', x: 200, y: 200 });
+      model.addEdge({ id: 'edge1', source: 'node1', target: 'node2', weight: 5 });
+
+      renderer.drawAll(model);
+
+      renderer.setShowWeights(false);
+      jest.clearAllMocks();
+      renderer.renderDirty(new Set(['edge1']), model);
+
+      expect(mockRemoveChild).toHaveBeenCalled();
     });
   });
 

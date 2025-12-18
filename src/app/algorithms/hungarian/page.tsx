@@ -1,21 +1,46 @@
 'use client';
 
-import { Box, Paper, Typography, Alert } from '@mui/material';
+import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
 import { graphConfig } from '@/shared/lib/config';
 import { getAlgorithmConfig } from '@/algorithms';
+import { Alert } from '@/components/elements';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
+import { useState } from 'react';
 
 const algorithmConfig = getAlgorithmConfig('hungarian');
 
 function HungarianContent() {
   const { loadGraph } = useAlgorithmLayout();
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'warning' | 'error' | 'success';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    variant: 'info' | 'warning' | 'error' | 'success' = 'error'
+  ) => {
+    setAlertState({ open: true, title, message, variant });
+  };
+
+  const closeAlert = () => {
+    setAlertState(prev => ({ ...prev, open: false }));
+  };
 
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
@@ -29,14 +54,14 @@ function HungarianContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          alert('Матрица должна быть квадратной!');
+          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
           return;
         }
       }
@@ -118,7 +143,7 @@ function HungarianContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      alert('Ошибка при парсинге матрицы. Проверьте формат!');
+      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
     }
   };
 
@@ -153,12 +178,12 @@ function HungarianContent() {
           <Typography variant="body2">
             Временная сложность: O(n³), где n — размер матрицы.
           </Typography>
-          <Alert severity="info" sx={{ mt: 1 }}>
+          <MuiAlert severity="info" sx={{ mt: 1 }}>
             <Typography variant="body2">
               💡 Совет: Используйте квадратную матрицу стоимостей. Граф будет представлен как
               двудольный граф, где левая часть — источники, правая — цели.
             </Typography>
-          </Alert>
+          </MuiAlert>
         </Box>
       </Paper>
 
@@ -188,6 +213,27 @@ function HungarianContent() {
           </Typography>
         </Box>
       </Paper>
+
+      <Alert
+        open={alertState.open}
+        onClose={closeAlert}
+        title={alertState.title}
+        variant={alertState.variant}
+        actions={
+          <Button
+            onClick={closeAlert}
+            variant="contained"
+            sx={{
+              textTransform: 'none',
+              px: 4,
+            }}
+          >
+            ОК
+          </Button>
+        }
+      >
+        {alertState.message}
+      </Alert>
     </>
   );
 }
