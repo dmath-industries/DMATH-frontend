@@ -17,12 +17,12 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
   const explanation: StepExplanation | undefined = currentStep?.explanation;
   const description = currentStep?.description;
 
+  const isLastStep = currentIndex >= 0 && currentIndex === totalSteps - 1;
+  const finalResult = isLastStep && explanation?.finalResult ? explanation.finalResult : undefined;
+
   const displayExplanation: StepExplanation | null = hasActiveStep
     ? explanation || (description ? { type: 'general', text: description } : null)
     : null;
-
-  const isLastStep = currentIndex >= 0 && currentIndex === totalSteps - 1;
-  const finalResult = isLastStep ? displayExplanation?.finalResult : undefined;
 
   if (totalSteps === 0) {
     return null;
