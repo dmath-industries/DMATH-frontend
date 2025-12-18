@@ -300,18 +300,44 @@ export class HungarianStepGenerator {
   }
 
   private emitAssignments(assignments: Assignment[]): void {
+    // Находим индексы строк и столбцов для передачи в контекст
+    const sourceNodesList = this.nodeOrder
+      .filter(id => id.startsWith('source_'))
+      .sort((a, b) => {
+        const aNum = parseInt(a.replace('source_', ''), 10);
+        const bNum = parseInt(b.replace('source_', ''), 10);
+        return aNum - bNum;
+      });
+    const targetNodesList = this.nodeOrder
+      .filter(id => id.startsWith('target_'))
+      .sort((a, b) => {
+        const aNum = parseInt(a.replace('target_', ''), 10);
+        const bNum = parseInt(b.replace('target_', ''), 10);
+        return aNum - bNum;
+      });
+
     for (const { rowId, colId, weight, edgeId } of assignments) {
       const rowLabel = this.formatNodeLabel(rowId);
       const colLabel = this.formatNodeLabel(colId);
+      const rowIndex = sourceNodesList.indexOf(rowId);
+      const colIndex = targetNodesList.indexOf(colId);
 
-      this.addHighlightNodeStep(rowId, 'current', `Строка ${rowLabel}`);
-      this.addHighlightNodeStep(colId, 'current', `Столбец ${colLabel}`);
+      this.addHighlightNodeStep(rowId, 'current', `Строка ${rowLabel}`, {
+        rowIndex: rowIndex >= 0 ? rowIndex : undefined,
+      });
+      this.addHighlightNodeStep(colId, 'current', `Столбец ${colLabel}`, {
+        colIndex: colIndex >= 0 ? colIndex : undefined,
+      });
 
       if (edgeId) {
         this.addHighlightEdgeStep(
           edgeId,
           'path',
-          `Назначение ${rowLabel} → ${colLabel}, стоимость ${this.formatWeight(weight)}`
+          `Назначение ${rowLabel} → ${colLabel}, стоимость ${this.formatWeight(weight)}`,
+          {
+            matrixRow: rowIndex >= 0 ? rowIndex : undefined,
+            matrixCol: colIndex >= 0 ? colIndex : undefined,
+          }
         );
       }
 
@@ -351,7 +377,17 @@ export class HungarianStepGenerator {
     return Number.isFinite(weight) ? weight : Number.POSITIVE_INFINITY;
   }
 
-  private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
+  private addHighlightNodeStep(
+    nodeId: string,
+    state: ElementState,
+    description?: string,
+    additionalContext?: {
+      rowIndex?: number;
+      colIndex?: number;
+      minValue?: number;
+      maxValue?: number;
+    }
+  ): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -364,6 +400,7 @@ export class HungarianStepGenerator {
     const nodeLabel = this.formatNodeLabel(nodeId);
     const algorithmContext: AlgorithmContext = {
       nodeLabel: nodeLabel,
+      ...(additionalContext || {}),
     };
 
     const explanation = explanationGeneratorRegistry.generate(step, 'hungarian', algorithmContext);
@@ -374,7 +411,18 @@ export class HungarianStepGenerator {
     this.steps.push(step);
   }
 
-  private addHighlightEdgeStep(edgeId: string, state: ElementState, description?: string): void {
+  private addHighlightEdgeStep(
+    edgeId: string,
+    state: ElementState,
+    description?: string,
+    additionalContext?: {
+      matrixRow?: number;
+      matrixCol?: number;
+      uValue?: number;
+      vValue?: number;
+      reducedCost?: number;
+    }
+  ): void {
     const step: HighlightEdgeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -395,6 +443,7 @@ export class HungarianStepGenerator {
       edgeFromLabel: fromLabel,
       edgeToLabel: toLabel,
       cost: Number.isFinite(weight) ? weight : undefined,
+      ...(additionalContext || {}),
     };
 
     const explanation = explanationGeneratorRegistry.generate(step, 'hungarian', algorithmContext);

@@ -28,15 +28,47 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
     const state = step.state;
 
     const nodeLabel = (context?.nodeLabel as string | undefined) || this.formatNode(nodeId);
+    const rowIndex = context?.rowIndex as number | undefined;
+    const colIndex = context?.colIndex as number | undefined;
+    const minValue = context?.minValue as number | undefined;
+    const maxValue = context?.maxValue as number | undefined;
 
     switch (state) {
       case 'current':
+        let formulas: string[] = [];
+        let reason = `Венгерский алгоритм последовательно обрабатывает строки и столбцы матрицы, выполняя приведение матрицы (вычитание минимумов) и поиск полного паросочетания в графе назначений`;
+
+        if (rowIndex !== undefined && minValue !== undefined) {
+          // Обработка строки - находим минимум
+          formulas = [
+            `\\min_{j} c[${rowIndex}][j] = ${minValue}`,
+            `u[${rowIndex}] = ${minValue}`,
+            `c'[${rowIndex}][j] = c[${rowIndex}][j] - u[${rowIndex}]`,
+          ];
+          reason = `Для строки ${nodeLabel} (индекс ${rowIndex}) находим минимальный элемент и вычитаем его из всех элементов строки. Это приведение строки, которое не изменяет оптимальность решения, но упрощает поиск назначений`;
+        } else if (colIndex !== undefined && minValue !== undefined) {
+          // Обработка столбца - находим минимум
+          formulas = [
+            `\\min_{i} c[i][${colIndex}] = ${minValue}`,
+            `v[${colIndex}] = ${minValue}`,
+            `c'[i][${colIndex}] = c[i][${colIndex}] - v[${colIndex}]`,
+          ];
+          reason = `Для столбца ${nodeLabel} (индекс ${colIndex}) находим минимальный элемент и вычитаем его из всех элементов столбца. Это приведение столбца, которое не изменяет оптимальность решения`;
+        } else if (minValue !== undefined) {
+          // Общая обработка с минимумом
+          formulas = [
+            `\\min = ${minValue}`,
+            `Приведение матрицы: вычитаем минимум из строк/столбцов`,
+          ];
+        }
+
         return this.createExplanation(
           'general',
           `Обрабатываем строку/столбец ${nodeLabel}`,
           { nodes: [nodeId] },
           {
-            reason: `Венгерский алгоритм последовательно обрабатывает строки и столбцы матрицы, выполняя приведение матрицы (вычитание минимумов) и поиск полного паросочетания в графе назначений`,
+            reason,
+            formula: formulas.length > 0 ? formulas : undefined,
           }
         );
 
@@ -46,7 +78,8 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
           `Назначение: строка ${nodeLabel}`,
           { nodes: [nodeId] },
           {
-            reason: `Строка ${nodeLabel} включена в текущее частичное назначение. Алгоритм строит паросочетание (назначения), где каждая строка и каждый столбец используются ровно один раз`,
+            reason: `Строка ${nodeLabel} включена в текущее частичное назначение. Алгоритм строит паросочетание (назначения), где каждая строка и каждый столбец используются ровно один раз. Математически это соответствует поиску полного паросочетания минимальной стоимости в двудольном графе`,
+            formula: `\\text{Назначение}: \\sum_{i,j \\in M} c[i][j] \\to \\min`,
           }
         );
 
@@ -69,6 +102,9 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
     const cost = context?.cost as number | undefined;
     const row = context?.matrixRow as number | undefined;
     const col = context?.matrixCol as number | undefined;
+    const uValue = context?.uValue as number | undefined;
+    const vValue = context?.vValue as number | undefined;
+    const reducedCost = context?.reducedCost as number | undefined;
 
     const fromLabel =
       (context?.edgeFromLabel as string | undefined) || (from ? this.formatNode(from) : '?');
@@ -86,7 +122,25 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
     switch (state) {
       case 'active':
         if (row !== undefined && col !== undefined) {
-          const formula = `c[${row}][${col}] - u[${row}] - v[${col}] = ${costStr}`;
+          const formulas: string[] = [];
+
+          if (uValue !== undefined && vValue !== undefined && reducedCost !== undefined) {
+            // Полная формула с потенциалами
+            formulas.push(
+              `c'[${row}][${col}] = c[${row}][${col}] - u[${row}] - v[${col}]`,
+              `= ${costStr} - ${uValue} - ${vValue} = ${reducedCost}`
+            );
+          } else if (uValue !== undefined && vValue !== undefined) {
+            // Формула с потенциалами, но без вычисленного значения
+            formulas.push(
+              `c'[${row}][${col}] = c[${row}][${col}] - u[${row}] - v[${col}]`,
+              `= ${costStr} - ${uValue} - ${vValue}`
+            );
+          } else {
+            // Базовая формула
+            formulas.push(`c'[${row}][${col}] = c[${row}][${col}] - u[${row}] - v[${col}]`);
+          }
+
           return this.createExplanation(
             'matrix',
             `Рассматриваем элемент матрицы (${row}, ${col})`,
@@ -96,8 +150,8 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
               matrix: { row, col },
             },
             {
-              reason: `Венгерский алгоритм работает с приведённой матрицей стоимостей. Элементы вычисляются как c[i][j] - u[i] - v[j], где u[i] и v[j] - потенциалы строки и столбца. Нулевые элементы в приведённой матрице соответствуют возможным оптимальным назначениям`,
-              formula: formula,
+              reason: `Венгерский алгоритм работает с приведённой матрицей стоимостей. Элементы вычисляются как c'[i][j] = c[i][j] - u[i] - v[j], где u[i] = min_j(c[i][j]) - минимум строки i, а v[j] = min_i(c'[i][j]) - минимум столбца j в приведённой матрице. Нулевые элементы в приведённой матрице соответствуют возможным оптимальным назначениям`,
+              formula: formulas,
             }
           );
         }
@@ -106,17 +160,30 @@ export class HungarianExplanationGenerator extends ExplanationGenerator {
           `Рассматриваем назначение: ${fromLabel} → ${toLabel}`,
           { edges: [edgeId], values: { cost: costStr } },
           {
-            reason: `Проверяем возможность назначения строки ${fromLabel} на столбец ${toLabel} с учётом текущей приведённой матрицы стоимостей`,
+            reason: `Проверяем возможность назначения строки ${fromLabel} на столбец ${toLabel} с учётом текущей приведённой матрицы стоимостей. Ищем элементы с нулевой приведённой стоимостью для построения оптимального паросочетания`,
+            formula: `c'[${fromLabel}][${toLabel}] = c[${fromLabel}][${toLabel}] - u[${fromLabel}] - v[${toLabel}]`,
           }
         );
 
       case 'path':
+        const assignmentFormulas: string[] = [];
+        if (row !== undefined && col !== undefined && cost !== undefined) {
+          assignmentFormulas.push(
+            `c[${row}][${col}] = ${costStr}`,
+            `\\text{Общая стоимость} = \\sum_{(i,j) \\in M} c[i][j]`
+          );
+        }
+
         return this.createExplanation(
           'selection',
           `Выбрано назначение: ${fromLabel} → ${toLabel}`,
           { edges: [edgeId], values: { cost: costStr } },
           {
-            reason: `Это назначение соответствует нулевому элементу в приведённой матрице стоимостей, что означает его оптимальность при текущих потенциалах. Назначения с нулевой приведённой стоимостью не увеличивают общую стоимость решения`,
+            reason: `Это назначение соответствует нулевому элементу в приведённой матрице стоимостей (c'[i][j] = 0), что означает его оптимальность при текущих потенциалах. Назначения с нулевой приведённой стоимостью не увеличивают общую стоимость решения. Алгоритм минимизирует сумму стоимостей всех назначений`,
+            formula:
+              assignmentFormulas.length > 0
+                ? assignmentFormulas
+                : `\\min \\sum_{(i,j) \\in M} c[i][j]`,
           }
         );
 
