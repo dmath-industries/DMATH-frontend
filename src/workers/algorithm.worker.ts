@@ -73,7 +73,6 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
   }
 
   const { name, graphDTO, params, requestId } = message.payload;
-  const startTime = Date.now();
   const chunkSize = params.chunkSize || 50;
 
   if (currentExecution) {
@@ -91,50 +90,67 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
 
   try {
     let steps: Step[] = [];
+    let executionTime = 0;
+
+    const algorithmStartTime = performance.now();
 
     switch (name) {
       case 'roberts-flores': {
         const generator = new RobertsFloresStepGenerator();
+        const genStart = performance.now();
         steps = generator.generateSteps(graphDTO, params);
+        executionTime = performance.now() - genStart;
         break;
       }
 
       case 'prim': {
         const generator = new PrimStepGenerator();
+        const genStart = performance.now();
         steps = generator.generateSteps(graphDTO, params);
+        executionTime = performance.now() - genStart;
         break;
       }
 
       case 'hungarian': {
         const generator = new HungarianStepGenerator();
+        const genStart = performance.now();
         steps = generator.generateSteps(graphDTO, params);
+        executionTime = performance.now() - genStart;
         break;
       }
 
       case 'bron-kerbosch': {
         const generator = new BronKerboschStepGenerator();
+        const genStart = performance.now();
         steps = generator.generateSteps(graphDTO, params);
+        executionTime = performance.now() - genStart;
         break;
       }
 
       case 'graph-coloring': {
         const generator = new GraphColoringStepGenerator();
+        const genStart = performance.now();
         steps = generator.generateSteps(graphDTO, params);
+        executionTime = performance.now() - genStart;
         break;
       }
 
       case 'bellman-ford': {
         const generator = new BellmanFordStepGenerator();
+        const genStart = performance.now();
         steps = generator.generateSteps(graphDTO, params);
+        executionTime = performance.now() - genStart;
         break;
       }
 
       case 'bfs':
         steps = [];
+        executionTime = 0;
         break;
 
       case 'dfs':
         steps = [];
+        executionTime = 0;
         break;
 
       default:
@@ -155,7 +171,7 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
       type: 'DONE',
       payload: {
         totalSteps: steps.length,
-        executionTime: Date.now() - startTime,
+        executionTime: Math.round(executionTime * 100) / 100,
         requestId,
       },
     };
