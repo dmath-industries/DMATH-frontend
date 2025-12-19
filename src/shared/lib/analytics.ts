@@ -2,6 +2,8 @@
  * Google Analytics Event Tracking
  */
 
+import { getAlgorithmConfig } from '@/algorithms';
+
 declare global {
   interface Window {
     dataLayer: unknown[];
@@ -40,15 +42,24 @@ export function trackEvent(
 }
 
 /**
+ * Получить читаемое название алгоритма по его ID
+ */
+function getAlgorithmName(algorithmId: string): string {
+  const config = getAlgorithmConfig(algorithmId);
+  return config?.name || algorithmId;
+}
+
+/**
  * События для алгоритмов
  */
 export const AnalyticsEvents = {
   /**
    * Просмотр страницы алгоритма
    */
-  algorithmViewed: (algorithmName: string, pagePath: string) => {
+  algorithmViewed: (algorithmId: string, pagePath: string) => {
     trackEvent('algorithm_viewed', {
-      algorithm_name: algorithmName,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
       page_path: pagePath,
     });
   },
@@ -57,50 +68,67 @@ export const AnalyticsEvents = {
    * Запуск алгоритма
    */
   algorithmStarted: (
-    algorithmName: string,
-    graphNodesCount: number,
-    graphEdgesCount: number,
-    inputMethod: 'matrix' | 'manual' | 'history'
+    algorithmId: string,
+    withWeights: boolean,
+    graphNodesCount?: number,
+    graphEdgesCount?: number,
+    inputMethod?: 'matrix' | 'manual' | 'history'
   ) => {
-    trackEvent('algorithm_started', {
-      algorithm_name: algorithmName,
-      graph_nodes_count: graphNodesCount,
-      graph_edges_count: graphEdgesCount,
-      input_method: inputMethod,
-    });
+    const params: Record<string, string | number | boolean> = {
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
+      with_weights: withWeights,
+    };
+    if (graphNodesCount !== undefined) {
+      params.graph_nodes_count = graphNodesCount;
+    }
+    if (graphEdgesCount !== undefined) {
+      params.graph_edges_count = graphEdgesCount;
+    }
+    if (inputMethod) {
+      params.input_method = inputMethod;
+    }
+    trackEvent('algorithm_started', params);
   },
 
   /**
    * Завершение алгоритма
    */
   algorithmCompleted: (
-    algorithmName: string,
-    totalSteps: number,
+    algorithmId: string,
+    stepsTotal: number,
     executionTimeMs: number,
-    graphNodesCount: number,
-    graphEdgesCount: number
+    graphNodesCount?: number,
+    graphEdgesCount?: number
   ) => {
-    trackEvent('algorithm_completed', {
-      algorithm_name: algorithmName,
-      total_steps: totalSteps,
+    const params: Record<string, string | number | boolean> = {
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
+      steps_total: stepsTotal,
       execution_time_ms: executionTimeMs,
-      graph_nodes_count: graphNodesCount,
-      graph_edges_count: graphEdgesCount,
-    });
+    };
+    if (graphNodesCount !== undefined) {
+      params.graph_nodes_count = graphNodesCount;
+    }
+    if (graphEdgesCount !== undefined) {
+      params.graph_edges_count = graphEdgesCount;
+    }
+    trackEvent('algorithm_completed', params);
   },
 
   /**
    * Просмотр шага
    */
   stepViewed: (
-    algorithmName: string,
-    stepNumber: number,
+    algorithmId: string,
+    stepIndex: number,
     totalSteps: number,
     viewMethod: 'auto' | 'manual'
   ) => {
     trackEvent('step_viewed', {
-      algorithm_name: algorithmName,
-      step_number: stepNumber,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
+      step_index: stepIndex,
       total_steps: totalSteps,
       view_method: viewMethod,
     });
@@ -109,19 +137,24 @@ export const AnalyticsEvents = {
   /**
    * Сохранение сессии
    */
-  sessionSaved: (algorithmName: string, totalSteps: number) => {
-    trackEvent('session_saved', {
-      algorithm_name: algorithmName,
-      total_steps: totalSteps,
-    });
+  sessionSaved: (algorithmId: string, stepsTotal?: number) => {
+    const params: Record<string, string | number | boolean> = {
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
+    };
+    if (stepsTotal !== undefined) {
+      params.steps_total = stepsTotal;
+    }
+    trackEvent('session_saved', params);
   },
 
   /**
    * Загрузка сессии из истории
    */
-  sessionLoadedFromHistory: (algorithmName: string, sessionAgeDays: number) => {
+  sessionLoadedFromHistory: (algorithmId: string, sessionAgeDays: number) => {
     trackEvent('session_loaded_from_history', {
-      algorithm_name: algorithmName,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
       session_age_days: sessionAgeDays,
     });
   },
@@ -138,18 +171,20 @@ export const AnalyticsEvents = {
   /**
    * Удаление сессии
    */
-  sessionDeleted: (algorithmName: string) => {
+  sessionDeleted: (algorithmId: string) => {
     trackEvent('session_deleted', {
-      algorithm_name: algorithmName,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
     });
   },
 
   /**
    * Ошибка парсинга матрицы
    */
-  matrixParseError: (algorithmName: string, errorType: string) => {
+  matrixParseError: (algorithmId: string, errorType: string) => {
     trackEvent('matrix_parse_error', {
-      algorithm_name: algorithmName,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
       error_type: errorType,
     });
   },
@@ -158,13 +193,14 @@ export const AnalyticsEvents = {
    * Ошибка выполнения алгоритма
    */
   algorithmExecutionError: (
-    algorithmName: string,
+    algorithmId: string,
     errorMessage: string,
     graphNodesCount?: number,
     graphEdgesCount?: number
   ) => {
     const params: Record<string, string | number> = {
-      algorithm_name: algorithmName,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
       error_message: errorMessage.substring(0, 100),
     };
     if (graphNodesCount !== undefined) {
@@ -179,16 +215,21 @@ export const AnalyticsEvents = {
   /**
    * Переход к алгоритмам
    */
-  navigateToAlgorithms: () => {
-    trackEvent('navigate_to_algorithms');
+  navigateToAlgorithms: (from?: 'home' | 'header' | 'history' | 'other') => {
+    const params: Record<string, string> = {};
+    if (from) {
+      params.from = from;
+    }
+    trackEvent('navigate_to_algorithms', params);
   },
 
   /**
    * Выбор алгоритма из списка
    */
-  algorithmSelected: (algorithmName: string) => {
+  algorithmSelected: (algorithmId: string) => {
     trackEvent('algorithm_selected', {
-      algorithm_name: algorithmName,
+      algorithm_id: algorithmId,
+      algorithm_name: getAlgorithmName(algorithmId),
     });
   },
 } as const;
