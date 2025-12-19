@@ -12,9 +12,6 @@ interface GraphCanvasProps {
   height?: number;
 }
 
-/**
- * Компонент для отрисовки графа на canvas с использованием Pixi.js
- */
 export function GraphCanvas({
   model,
   onRendererReady,
@@ -106,19 +103,13 @@ export function GraphCanvas({
   useEffect(() => {
     if (!isReady || !rendererRef.current || !viewportRef.current) return;
 
-    console.log('📐 Canvas size changed:', { width, height });
-
     rendererRef.current.resize(width, height);
     viewportRef.current.resize(width, height);
 
     if (model.nodeCount > 0) {
-      // Граф уже отрисован, автоцентрирование отключено
     }
   }, [width, height, isReady, model, onRendererReady]);
 
-  /**
-   * Обработчик кнопки "Найти граф" (центрирование)
-   */
   const handleFitToGraph = () => {
     if (!viewportRef.current || model.nodeCount === 0) {
       return;
@@ -173,7 +164,7 @@ export function GraphCanvas({
       {isReady && model.nodeCount > 0 && (
         <button
           onClick={handleFitToGraph}
-          className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10"
+          className="absolute top-4 left-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10"
           title="Найти граф (центрировать)"
         >
           <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
