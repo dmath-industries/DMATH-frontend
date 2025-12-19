@@ -134,7 +134,7 @@ export default function Home() {
             variant="contained"
             color="primary"
             size="large"
-            onClick={() => AnalyticsEvents.navigateToAlgorithms()}
+            onClick={() => AnalyticsEvents.navigateToAlgorithms('home')}
             sx={{
               px: { xs: 4, sm: 5 },
               py: { xs: 2, sm: 2.5 },

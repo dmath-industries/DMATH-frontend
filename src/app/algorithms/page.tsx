@@ -5,14 +5,31 @@
  * Страница со списком доступных алгоритмов
  */
 
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Box, Container, GridLegacy as Grid } from '@mui/material';
 import { AlgorithmsItem } from '@/components/elements';
+import { AnalyticsEvents } from '@/shared/lib';
 import type { IAlgorithmsItem } from '@/types';
 
 /**
  * Страница списка алгоритмов
  */
 export default function AlgorithmsPage() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Определяем источник перехода
+    const referrer = typeof window !== 'undefined' ? document.referrer : '';
+    const from =
+      referrer.includes('/history') || pathname.includes('/history')
+        ? 'history'
+        : referrer.includes('/') && !referrer.includes('/algorithms')
+          ? 'home'
+          : 'other';
+
+    AnalyticsEvents.navigateToAlgorithms(from);
+  }, [pathname]);
   const algorithms: IAlgorithmsItem[] = [
     {
       title: 'Алгоритм Робертса-Флореса',

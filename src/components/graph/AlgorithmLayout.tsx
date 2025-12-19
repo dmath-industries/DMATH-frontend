@@ -447,8 +447,10 @@ export function AlgorithmLayout({
     setHasRunAlgorithm(true);
 
     const inputMethod = loadedSessionInfo ? 'history' : 'manual';
+    const withWeights = algorithmConfig?.useWeights ?? false;
     AnalyticsEvents.algorithmStarted(
       algorithmName,
+      withWeights,
       graphDTO.nodes.length,
       graphDTO.edges.length,
       inputMethod
@@ -728,7 +730,7 @@ export function AlgorithmLayout({
 
       if (currentIndex >= 0 && totalSteps > 0) {
         const viewMethod = playing ? 'auto' : 'manual';
-        AnalyticsEvents.stepViewed(algorithmName, currentIndex + 1, totalSteps, viewMethod);
+        AnalyticsEvents.stepViewed(algorithmName, currentIndex, totalSteps, viewMethod);
       }
     }
 

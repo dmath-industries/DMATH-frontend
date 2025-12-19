@@ -6,6 +6,7 @@ export const env = {
   sentryOrg: process.env.SENTRY_ORG,
   sentryProject: process.env.SENTRY_PROJECT,
   sentryAuthToken: process.env.SENTRY_AUTH_TOKEN,
+  ga4Id: process.env.NEXT_PUBLIC_GA4_ID,
   isDev: process.env.NODE_ENV === 'development',
   isProd: process.env.NODE_ENV === 'production',
   isTest: process.env.NODE_ENV === 'test',

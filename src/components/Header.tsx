@@ -5,6 +5,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import Link from 'next/link';
 import Image from 'next/image';
+import { AnalyticsEvents } from '@/shared/lib';
 
 const Header = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -99,7 +100,10 @@ const Header = () => {
             <MenuItem
               component={Link}
               href="/algorithms"
-              onClick={handleMenuClose}
+              onClick={() => {
+                AnalyticsEvents.navigateToAlgorithms('header');
+                handleMenuClose();
+              }}
               sx={{
                 px: 3,
                 py: 1.5,
