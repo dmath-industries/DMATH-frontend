@@ -18,6 +18,9 @@ export function ControlPanel() {
   const { currentIndex, totalSteps, playing, speedMs } = useAppSelector(state => state.steps);
 
   const handlePlay = () => {
+    if (currentIndex >= totalSteps - 1 && totalSteps > 0) {
+      dispatch(setIndex(-1));
+    }
     dispatch(play());
   };
 
@@ -168,9 +171,6 @@ export function ControlPanel() {
       </Box>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          Скорость: {speedMs}ms
-        </Typography>
         <ButtonGroup variant="outlined" size="small" fullWidth>
           {[4000, 2000, 1000, 500, 250].map(speed => (
             <Button
