@@ -1,21 +1,37 @@
 'use client';
 
-import { Box, Typography, IconButton, LinearProgress, Button, ButtonGroup } from '@mui/material';
+import { useState } from 'react';
+import {
+  Box,
+  Typography,
+  IconButton,
+  LinearProgress,
+  Menu,
+  MenuItem,
+  ListItemText,
+} from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import FastRewindIcon from '@mui/icons-material/FastRewind';
 import FastForwardIcon from '@mui/icons-material/FastForward';
+import SettingsIcon from '@mui/icons-material/Settings';
+import CheckIcon from '@mui/icons-material/Check';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { play, pause, nextStep, prevStep, setSpeed, setIndex } from '@/shared/store';
+
+interface ControlPanelProps {
+  compact?: boolean;
+}
 
 /**
  * Компонент панели управления воспроизведением алгоритма
  */
-export function ControlPanel() {
+export function ControlPanel({ compact = false }: ControlPanelProps) {
   const dispatch = useAppDispatch();
   const { currentIndex, totalSteps, playing, speedMs } = useAppSelector(state => state.steps);
+  const [speedMenuAnchor, setSpeedMenuAnchor] = useState<null | HTMLElement>(null);
 
   const handlePlay = () => {
     if (currentIndex >= totalSteps - 1 && totalSteps > 0) {
@@ -43,43 +59,79 @@ export function ControlPanel() {
 
   const handleSpeedChange = (speed: number) => {
     dispatch(setSpeed(speed));
+    setSpeedMenuAnchor(null);
+  };
+
+  const handleSpeedMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setSpeedMenuAnchor(event.currentTarget);
+  };
+
+  const handleSpeedMenuClose = () => {
+    setSpeedMenuAnchor(null);
   };
 
   const progress = totalSteps > 0 ? ((currentIndex + 1) / totalSteps) * 100 : 0;
 
-  const speedLabels: Record<number, string> = {
-    4000: '0.25x',
-    2000: '0.5x',
-    1000: '1x',
-    500: '2x',
-    250: '4x',
-  };
+  const speedOptions = [
+    { value: 4000, label: '0.25x' },
+    { value: 2000, label: '0.5x' },
+    { value: 1000, label: '1x' },
+    { value: 500, label: '2x' },
+    { value: 250, label: '4x' },
+  ];
+
+  const currentSpeedLabel = speedOptions.find(opt => opt.value === speedMs)?.label || '1x';
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Управление воспроизведением
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: compact ? 0.5 : 3 }}>
+      {!compact && (
+        <>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Управление воспроизведением
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              {currentIndex === -1 ? 'Начало' : `Шаг ${currentIndex + 1} / ${totalSteps}`}
+            </Typography>
+          </Box>
+
+          <LinearProgress
+            variant="determinate"
+            value={progress}
+            sx={{
+              height: 8,
+              borderRadius: 1,
+              bgcolor: 'action.disabledBackground',
+              '& .MuiLinearProgress-bar': {
+                bgcolor: 'primary.main',
+              },
+            }}
+          />
+        </>
+      )}
+
+      {compact && (
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'text.secondary',
+            textAlign: 'center',
+            fontSize: '0.7rem',
+            mb: 0.5,
+          }}
+        >
           {currentIndex === -1 ? 'Начало' : `Шаг ${currentIndex + 1} / ${totalSteps}`}
         </Typography>
-      </Box>
+      )}
 
-      <LinearProgress
-        variant="determinate"
-        value={progress}
+      <Box
         sx={{
-          height: 8,
-          borderRadius: 1,
-          bgcolor: 'action.disabledBackground',
-          '& .MuiLinearProgress-bar': {
-            bgcolor: 'primary.main',
-          },
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: compact ? 0.5 : 1,
         }}
-      />
-
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+      >
         <IconButton
           onClick={handleReset}
           disabled={currentIndex === -1}
@@ -168,24 +220,64 @@ export function ControlPanel() {
         >
           <FastForwardIcon />
         </IconButton>
+
+        <IconButton
+          onClick={handleSpeedMenuOpen}
+          title={`Скорость: ${currentSpeedLabel}`}
+          sx={{
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <SettingsIcon />
+        </IconButton>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <ButtonGroup variant="outlined" size="small" fullWidth>
-          {[4000, 2000, 1000, 500, 250].map(speed => (
-            <Button
-              key={speed}
-              onClick={() => handleSpeedChange(speed)}
-              variant={speedMs === speed ? 'contained' : 'outlined'}
-              sx={{
-                flex: 1,
-              }}
-            >
-              {speedLabels[speed]}
-            </Button>
-          ))}
-        </ButtonGroup>
-      </Box>
+      <Menu
+        anchorEl={speedMenuAnchor}
+        open={Boolean(speedMenuAnchor)}
+        onClose={handleSpeedMenuClose}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(42, 42, 42, 0.95)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(115, 115, 115, 0.5)',
+            minWidth: 120,
+          },
+        }}
+      >
+        {speedOptions.map(option => (
+          <MenuItem
+            key={option.value}
+            onClick={() => handleSpeedChange(option.value)}
+            selected={speedMs === option.value}
+            sx={{
+              color: 'text.primary',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+              '&.Mui-selected': {
+                bgcolor: 'action.selected',
+                '&:hover': {
+                  bgcolor: 'action.selected',
+                },
+              },
+            }}
+          >
+            <ListItemText primary={option.label} />
+            {speedMs === option.value && <CheckIcon sx={{ ml: 1, fontSize: 20 }} />}
+          </MenuItem>
+        ))}
+      </Menu>
     </Box>
   );
 }

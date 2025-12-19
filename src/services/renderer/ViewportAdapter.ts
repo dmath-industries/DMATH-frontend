@@ -36,10 +36,9 @@ export class ViewportAdapter {
   private viewport: Viewport | null = null;
   private onViewportChange?: (state: ViewportState) => void;
   private settings: ViewportSettings = DEFAULT_SETTINGS;
+  private currentWidth: number = 0;
+  private currentHeight: number = 0;
 
-  /**
-   * Создать viewport с взаимодействием
-   */
   create(
     app: Application,
     config: ViewportConfig,
@@ -90,25 +89,22 @@ export class ViewportAdapter {
     this.viewport.moveCenter(worldSize / 2, worldSize / 2);
     this.viewport.setZoom(1, true);
 
+    this.currentWidth = config.screenWidth;
+    this.currentHeight = config.screenHeight;
+
     return this.viewport;
   }
 
-  /**
-   * Установить обработчик изменений viewport
-   */
   setOnChange(callback: (state: ViewportState) => void): void {
     this.onViewportChange = callback;
   }
 
-  /**
-   * Получить текущий viewport
-   */
   getViewport(): Viewport | null {
     return this.viewport;
   }
 
   /**
-   * Вписать граф в видимую область И ЦЕНТРИРОВАТЬ
+   * Вписать граф в видимую область и центрировать
    * Это основной метод для правильного отображения графа
    */
   fitToGraph(model: GraphModel): void {
@@ -280,7 +276,12 @@ export class ViewportAdapter {
   resize(width: number, height: number): void {
     if (!this.viewport) return;
 
-    console.log('📐 Resizing viewport to:', { width, height });
+    if (this.currentWidth === width && this.currentHeight === height) {
+      return;
+    }
+
+    this.currentWidth = width;
+    this.currentHeight = height;
 
     this.viewport.resize(width, height);
 
