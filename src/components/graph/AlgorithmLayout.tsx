@@ -22,7 +22,7 @@ import {
   StepController,
 } from '@/services';
 import { GraphDTO, Step } from '@/types';
-import { ChevronLeft, X, Info, CheckCircle } from 'lucide-react';
+import { ChevronLeft, X, Info, CheckCircle, Plus, Minus, Network } from 'lucide-react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
@@ -39,7 +39,14 @@ import {
   IconButton,
   GridLegacy as Grid,
   Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Stack,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { Alert } from '@/components/elements';
 import '@/services/explanations/registry';
 
@@ -124,6 +131,12 @@ export function AlgorithmLayout({
   const [loadedSessionInfo, setLoadedSessionInfo] = useState<{ name: string; date: string } | null>(
     null
   );
+  const [showNodeDialog, setShowNodeDialog] = useState(false);
+  const [showEdgeDialog, setShowEdgeDialog] = useState(false);
+  const [nodeId, setNodeId] = useState('');
+  const [edgeSource, setEdgeSource] = useState('');
+  const [edgeTarget, setEdgeTarget] = useState('');
+  const [edgeWeight, setEdgeWeight] = useState('1');
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -269,6 +282,25 @@ export function AlgorithmLayout({
 
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
+    }
+  };
+
+  const handleAddNodeFromDialog = () => {
+    if (nodeId.trim()) {
+      handleAddNode(nodeId.trim());
+      setNodeId('');
+      setShowNodeDialog(false);
+    }
+  };
+
+  const handleAddEdgeFromDialog = () => {
+    if (edgeSource.trim() && edgeTarget.trim()) {
+      const weight = algorithmConfig?.useWeights ? parseFloat(edgeWeight) || 1 : 1;
+      handleAddEdge(edgeSource.trim(), edgeTarget.trim(), weight);
+      setEdgeSource('');
+      setEdgeTarget('');
+      setEdgeWeight('1');
+      setShowEdgeDialog(false);
     }
   };
 
@@ -972,13 +1004,97 @@ export function AlgorithmLayout({
                     </Box>
                   </Box>
 
-                  <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      position: 'relative',
+                    }}
+                  >
                     <GraphCanvas
                       model={graphModel}
                       onRendererReady={handleRendererReady}
                       width={canvasSize.width}
                       height={canvasSize.height}
                     />
+
+                    {/* Компактные кнопки редактирования графа для экранов < 1200px */}
+                    <Box
+                      sx={{
+                        display: { xs: 'flex', lg: 'none' },
+                        position: 'absolute',
+                        top: 16,
+                        right: 16,
+                        gap: 1,
+                        backgroundColor: 'rgba(42, 42, 42, 0.95)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(115, 115, 115, 0.5)',
+                        borderRadius: 2,
+                        p: 1,
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                      }}
+                    >
+                      <IconButton
+                        onClick={() => setShowNodeDialog(true)}
+                        title="Добавить вершину"
+                        sx={{
+                          color: 'text.primary',
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                          },
+                        }}
+                      >
+                        <Plus size={20} />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => setShowEdgeDialog(true)}
+                        title="Добавить ребро"
+                        sx={{
+                          color: 'text.primary',
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                          },
+                        }}
+                      >
+                        <Network size={20} />
+                      </IconButton>
+                      <IconButton
+                        onClick={handleClear}
+                        title="Очистить граф"
+                        sx={{
+                          color: 'error.main',
+                          '&:hover': {
+                            bgcolor: 'error.dark',
+                            color: 'white',
+                          },
+                        }}
+                      >
+                        <Minus size={20} />
+                      </IconButton>
+                    </Box>
+
+                    {/* Плеер поверх канваса внизу для экранов < 1200px */}
+                    {hasRunAlgorithm && totalSteps > 0 && (
+                      <Box
+                        sx={{
+                          display: { xs: 'block', lg: 'none' },
+                          position: 'absolute',
+                          bottom: 16,
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          backgroundColor: 'rgba(42, 42, 42, 0.95)',
+                          backdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(115, 115, 115, 0.5)',
+                          borderRadius: 2,
+                          px: 2,
+                          py: 1.5,
+                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                        }}
+                      >
+                        <ControlPanel compact />
+                      </Box>
+                    )}
                   </Box>
 
                   {hasRunAlgorithm && !playing && currentIndex === -1 && totalSteps > 0 && (
@@ -1017,16 +1133,20 @@ export function AlgorithmLayout({
             </Grid>
             <Grid item xs={12} lg="auto" sx={{ width: { lg: 320, xl: 380 } }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Paper
-                  sx={{
-                    backgroundColor: 'rgba(42, 42, 42, 0.5)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(115, 115, 115, 0.5)',
-                    p: 4,
-                  }}
-                >
-                  <ControlPanel />
-                </Paper>
+                {/* Плеер справа для экранов >= 1200px */}
+                {hasRunAlgorithm && totalSteps > 0 && (
+                  <Paper
+                    sx={{
+                      display: { xs: 'none', lg: 'block' },
+                      backgroundColor: 'rgba(42, 42, 42, 0.5)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(115, 115, 115, 0.5)',
+                      p: 4,
+                    }}
+                  >
+                    <ControlPanel />
+                  </Paper>
+                )}
 
                 <Box>
                   <GraphEditor
@@ -1108,6 +1228,112 @@ export function AlgorithmLayout({
         >
           {alertState.message}
         </Alert>
+
+        {/* Диалог добавления вершины */}
+        <Dialog
+          open={showNodeDialog}
+          onClose={() => setShowNodeDialog(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              backgroundColor: 'rgba(42, 42, 42, 0.95)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(115, 115, 115, 0.5)',
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            Добавить вершину
+            <IconButton
+              aria-label="close"
+              onClick={() => setShowNodeDialog(false)}
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              label="ID вершины"
+              placeholder="0, 1, 2, ..."
+              value={nodeId}
+              onChange={e => setNodeId(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddNodeFromDialog()}
+              sx={{ mt: 1 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowNodeDialog(false)}>Отмена</Button>
+            <Button onClick={handleAddNodeFromDialog} variant="contained">
+              Добавить
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Диалог добавления ребра */}
+        <Dialog
+          open={showEdgeDialog}
+          onClose={() => setShowEdgeDialog(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              backgroundColor: 'rgba(42, 42, 42, 0.95)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(115, 115, 115, 0.5)',
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            Добавить ребро
+            <IconButton
+              aria-label="close"
+              onClick={() => setShowEdgeDialog(false)}
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <TextField
+                autoFocus
+                fullWidth
+                label="Из вершины"
+                value={edgeSource}
+                onChange={e => setEdgeSource(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                label="В вершину"
+                value={edgeTarget}
+                onChange={e => setEdgeTarget(e.target.value)}
+              />
+              {algorithmConfig?.useWeights && (
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Вес (опционально)"
+                  value={edgeWeight}
+                  onChange={e => setEdgeWeight(e.target.value)}
+                />
+              )}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowEdgeDialog(false)}>Отмена</Button>
+            <Button onClick={handleAddEdgeFromDialog} variant="contained" color="success">
+              Добавить
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </AlgorithmLayoutContext.Provider>
   );
