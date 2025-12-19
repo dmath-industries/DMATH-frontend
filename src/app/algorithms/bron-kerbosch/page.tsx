@@ -176,36 +176,6 @@ function BronKerboschContent() {
         </Box>
       </Paper>
 
-      <Paper
-        sx={{
-          p: 3,
-          background:
-            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
-          Как использовать
-        </Typography>
-        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography component="li" variant="body2">
-            Введите симметричную матрицу смежности неориентированного графа
-          </Typography>
-          <Typography component="li" variant="body2">
-            Нажмите "Отправить" чтобы построить граф
-          </Typography>
-          <Typography component="li" variant="body2">
-            Нажмите "Запустить" чтобы выполнить алгоритм
-          </Typography>
-          <Typography component="li" variant="body2">
-            Просмотрите найденные максимальные клики в визуализации
-          </Typography>
-          <Typography component="li" variant="body2">
-            Используйте панель управления для пошагового просмотра алгоритма
-          </Typography>
-        </Box>
-      </Paper>
-
       <Alert
         open={alertState.open}
         onClose={closeAlert}

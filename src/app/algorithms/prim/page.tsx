@@ -175,33 +175,6 @@ function PrimContent() {
         </Box>
       </Paper>
 
-      <Paper
-        sx={{
-          p: 3,
-          background:
-            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1))',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
-          Как использовать
-        </Typography>
-        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography component="li" variant="body2">
-            Введите симметричную матрицу весов (0 — нет ребра)
-          </Typography>
-          <Typography component="li" variant="body2">
-            Нажмите «Отправить», чтобы построить граф
-          </Typography>
-          <Typography component="li" variant="body2">
-            Нажмите «Запустить», чтобы выполнить алгоритм Прима
-          </Typography>
-          <Typography component="li" variant="body2">
-            Шаги и подсветка появятся на холсте и в панели управления
-          </Typography>
-        </Box>
-      </Paper>
-
       <Alert
         open={alertState.open}
         onClose={closeAlert}
