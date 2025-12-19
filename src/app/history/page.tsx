@@ -264,7 +264,7 @@ export default function HistoryPage() {
                 </Typography>
                 <Box
                   component={Link}
-                  href="/algorithms"
+                  href="/"
                   sx={{
                     display: 'inline-block',
                     mt: 2,

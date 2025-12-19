@@ -47,7 +47,7 @@ export function UserMenu() {
         <>
           <div className="absolute right-0 mt-2 w-52 bg-neutral-700 rounded-xl shadow-2xl overflow-hidden z-50 border border-neutral-600">
             <Link
-              href="/algorithms"
+              href="/"
               className="block px-4 py-3 text-white hover:bg-neutral-600 transition-colors border-b border-neutral-600"
               onClick={() => setIsOpen(false)}
             >
