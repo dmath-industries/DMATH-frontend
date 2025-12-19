@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Renderer, ViewportAdapter } from '@/services';
 import { GraphModel } from '@/services';
-import { Maximize2 } from 'lucide-react';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 interface GraphCanvasProps {
   model: GraphModel;
@@ -176,7 +176,7 @@ export function GraphCanvas({
           className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10"
           title="Найти граф (центрировать)"
         >
-          <Maximize2 className="w-5 h-5 text-neutral-200" />
+          <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
         </button>
       )}
     </div>

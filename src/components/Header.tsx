@@ -22,6 +22,7 @@ const Header = () => {
   return (
     <AppBar
       position="fixed"
+      suppressHydrationWarning
       sx={{
         top: 0,
         left: 0,
@@ -99,7 +100,7 @@ const Header = () => {
           >
             <MenuItem
               component={Link}
-              href="/algorithms"
+              href="/"
               onClick={() => {
                 AnalyticsEvents.navigateToAlgorithms('header');
                 handleMenuClose();

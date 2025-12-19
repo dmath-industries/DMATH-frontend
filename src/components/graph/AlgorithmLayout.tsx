@@ -1,6 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback, createContext, useContext } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  createContext,
+  useContext,
+  useMemo,
+} from 'react';
 import { GraphCanvas } from './GraphCanvas';
 import { ControlPanel } from './ControlPanel';
 import { GraphEditor } from './GraphEditor';
@@ -33,7 +41,7 @@ import {
   Paper,
 } from '@mui/material';
 import { Alert } from '@/components/elements';
-import '@/services/explanations/registry'; // Инициализация реестра генераторов пояснений
+import '@/services/explanations/registry';
 
 const STORAGE_KEYS = {
   SESSION: (algorithmName: string) => `currentSession-${algorithmName}`,
@@ -46,6 +54,7 @@ const TIMING = {
   SESSION_RESTORE: 100,
   STEP_RESTORE: 50,
   AUTO_CENTER: 150,
+  RESIZE_DEBOUNCE: 150,
 } as const;
 
 const DEFAULT_GRAPH_CENTER = { x: 5000, y: 5000 } as const;
@@ -74,9 +83,6 @@ interface AlgorithmLayoutProps {
   graphDescription?: string | React.ReactNode;
 }
 
-/**
- * Компонент layout для страниц с алгоритмами
- */
 export function AlgorithmLayout({
   algorithmName,
   algorithmTitle,
@@ -84,18 +90,18 @@ export function AlgorithmLayout({
   graphDescription,
 }: AlgorithmLayoutProps) {
   const dispatch = useAppDispatch();
-  const { playing, currentIndex, speedMs, totalSteps } = useAppSelector(state => state.steps);
+  const { playing, currentIndex, speedMs, totalSteps, sessionId } = useAppSelector(
+    state => state.steps
+  );
   const pathname = usePathname();
 
-  const algorithmConfig = getAlgorithmConfig(algorithmName);
+  const algorithmConfig = useMemo(() => getAlgorithmConfig(algorithmName), [algorithmName]);
 
   const [graphModel] = useState(() => new GraphModel(true));
   const [applier] = useState(() => new Applier());
   const [workerClient] = useState(() => new WorkerClient());
+
   const [hasGraph, setHasGraph] = useState(false);
-  const [loadedSessionInfo, setLoadedSessionInfo] = useState<{ name: string; date: string } | null>(
-    null
-  );
   const [hasRunAlgorithm, setHasRunAlgorithm] = useState(false);
   const [currentGraphHash, setCurrentGraphHash] = useState<string | null>(null);
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({
@@ -115,25 +121,23 @@ export function AlgorithmLayout({
     variant: 'info',
   });
   const [currentStep, setCurrentStep] = useState<Step | null>(null);
+  const [loadedSessionInfo, setLoadedSessionInfo] = useState<{ name: string; date: string } | null>(
+    null
+  );
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
   const controllerRef = useRef<StepController | null>(null);
-  const currentAlgorithmRef = useRef<string | null>(null);
-  const currentGraphDTORef = useRef(graphModel.toDTO());
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
-  const prevGraphHashRef = useRef<string | null>(null);
+  const currentGraphDTORef = useRef<GraphDTO>(graphModel.toDTO());
+  const isInitializedRef = useRef(false);
+  const isRestoringRef = useRef(false);
   const pendingStepsRef = useRef<Step[] | null>(null);
-  const prevAlgorithmNameRef = useRef<string>(algorithmName);
+  const pendingSessionRef = useRef<{ sessionId: string; restoredIndex: number } | null>(null);
 
-  /**
-   * Создает уникальный хеш для структуры графа для обнаружения изменений
-   * @param graphDTO - Объект передачи данных графа
-   * @returns Строка хеша, представляющая структуру графа
-   */
   const createGraphHash = useCallback((graphDTO: GraphDTO): string => {
     const nodesStr = graphDTO.nodes
-      .map(n => `${n.id}`)
+      .map(n => n.id)
       .sort()
       .join(',');
     const edgesStr = graphDTO.edges
@@ -143,49 +147,86 @@ export function AlgorithmLayout({
     return `${nodesStr}|${edgesStr}`;
   }, []);
 
-  /**
-   * Загружает граф из DTO и обновляет canvas
-   * @param graphDTO - Данные графа для загрузки
-   * @param skipReset - Если true, не сбрасывает состояние алгоритма
-   */
+  const centerGraph = useCallback(() => {
+    if (!viewportRef.current || !graphModel || graphModel.nodeCount === 0) return;
+
+    requestAnimationFrame(() => {
+      if (viewportRef.current && graphModel.nodeCount > 0) {
+        viewportRef.current.fitToGraph(graphModel);
+      }
+    });
+  }, [graphModel]);
+
+  const updateCurrentStep = useCallback(
+    (index: number) => {
+      if (!controllerRef.current || index < 0) {
+        setCurrentStep(null);
+        return;
+      }
+
+      const step = controllerRef.current.getStepByIndex(index);
+      if (!step) {
+        setCurrentStep(null);
+        return;
+      }
+
+      if (!step.explanation && index < totalSteps - 1) {
+        for (let i = index - 1; i >= Math.max(0, index - 5); i--) {
+          const prevStep = controllerRef.current.getStepByIndex(i);
+          if (prevStep?.explanation) {
+            setCurrentStep({ ...step, explanation: prevStep.explanation });
+            return;
+          }
+        }
+      }
+
+      setCurrentStep(step);
+    },
+    [totalSteps]
+  );
+
+  const saveStepIndex = useCallback(
+    (index: number) => {
+      if (totalSteps > 0 && algorithmName) {
+        localStorage.setItem(STORAGE_KEYS.STEP(algorithmName), index.toString());
+      }
+    },
+    [algorithmName, totalSteps]
+  );
+
   const loadGraph = useCallback(
     (graphDTO: GraphDTO, skipReset = false) => {
       console.log('📥 Loading graph with', graphDTO.nodes.length, 'nodes');
 
       graphModel.fromDTO(graphDTO);
+      currentGraphDTORef.current = graphDTO;
       setHasGraph(true);
 
       const newHash = createGraphHash(graphDTO);
 
       if (!skipReset) {
-        setCurrentGraphHash(prevHash => {
-          if (newHash !== prevHash) {
-            setHasRunAlgorithm(false);
-            setLoadedSessionInfo(null);
-
-            if (controllerRef.current) {
-              controllerRef.current.setSteps([]);
-            }
+        if (newHash !== currentGraphHash) {
+          setHasRunAlgorithm(false);
+          setLoadedSessionInfo(null);
+          if (controllerRef.current) {
+            controllerRef.current.setSteps([]);
           }
-          return newHash;
-        });
-      } else {
-        setCurrentGraphHash(newHash);
-      }
-
-      if (rendererRef.current && viewportRef.current) {
-        rendererRef.current.drawAll(graphModel);
-        if (graphModel.nodeCount > 0) {
-          viewportRef.current.fitToGraph(graphModel);
+          dispatch(reset());
         }
       }
+
+      setCurrentGraphHash(newHash);
+
+      if (rendererRef.current) {
+        rendererRef.current.drawAll(graphModel);
+        centerGraph();
+      }
     },
-    [graphModel, createGraphHash]
+    [graphModel, createGraphHash, currentGraphHash, dispatch, centerGraph]
   );
 
   /**
-   * Получает центральную позицию viewport или центр по умолчанию
-   * @returns Координаты центра viewport
+   * Получает центральную позицию viewport
    */
   const getCenterPosition = (): { x: number; y: number } => {
     if (viewportRef.current) {
@@ -197,12 +238,6 @@ export function AlgorithmLayout({
     return DEFAULT_GRAPH_CENTER;
   };
 
-  /**
-   * Обрабатывает добавление новой вершины в граф
-   * @param id - Уникальный идентификатор вершины
-   * @param x - Координата X (опционально, использует центр viewport если не указано)
-   * @param y - Координата Y (опционально, использует центр viewport если не указано)
-   */
   const handleAddNode = (id: string, x?: number, y?: number) => {
     let position: { x: number; y: number };
 
@@ -211,11 +246,9 @@ export function AlgorithmLayout({
     } else {
       const center = getCenterPosition();
       const offsetRange = 150;
-      const randomOffsetX = (Math.random() - 0.5) * offsetRange * 2;
-      const randomOffsetY = (Math.random() - 0.5) * offsetRange * 2;
       position = {
-        x: center.x + randomOffsetX,
-        y: center.y + randomOffsetY,
+        x: center.x + (Math.random() - 0.5) * offsetRange * 2,
+        y: center.y + (Math.random() - 0.5) * offsetRange * 2,
       };
     }
 
@@ -224,12 +257,7 @@ export function AlgorithmLayout({
       return;
     }
 
-    graphModel.addNode({
-      id,
-      x: position.x,
-      y: position.y,
-      label: id,
-    });
+    graphModel.addNode({ id, x: position.x, y: position.y, label: id });
 
     if (hasRunAlgorithm) {
       setHasRunAlgorithm(false);
@@ -244,12 +272,6 @@ export function AlgorithmLayout({
     }
   };
 
-  /**
-   * Обрабатывает добавление нового ребра в граф
-   * @param source - ID исходной вершины
-   * @param target - ID целевой вершины
-   * @param weight - Вес ребра (опционально)
-   */
   const handleAddEdge = (source: string, target: string, weight?: number) => {
     if (!graphModel.hasNode(source)) {
       showAlert('Ошибка', `Вершина "${source}" не существует!`, 'error');
@@ -265,19 +287,12 @@ export function AlgorithmLayout({
     }
 
     const edgeId = `${source}-${target}`;
-
     if (graphModel.hasEdge(edgeId)) {
       showAlert('Ошибка', `Ребро между "${source}" и "${target}" уже существует!`, 'error');
       return;
     }
 
-    graphModel.addEdge({
-      id: edgeId,
-      source,
-      target,
-      weight,
-      directed: true,
-    });
+    graphModel.addEdge({ id: edgeId, source, target, weight, directed: true });
 
     if (hasRunAlgorithm) {
       setHasRunAlgorithm(false);
@@ -292,9 +307,6 @@ export function AlgorithmLayout({
     }
   };
 
-  /**
-   * Обработчик очистки графа
-   */
   const handleClear = () => {
     setShowClearConfirm(true);
   };
@@ -304,17 +316,18 @@ export function AlgorithmLayout({
     setHasGraph(false);
     setHasRunAlgorithm(false);
     setCurrentGraphHash(null);
+    setLoadedSessionInfo(null);
+
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
     }
     if (controllerRef.current) {
       controllerRef.current.setSteps([]);
     }
-    dispatch(reset());
 
+    dispatch(reset());
     localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
     localStorage.removeItem(STORAGE_KEYS.STEP(algorithmName));
-
     setShowClearConfirm(false);
   };
 
@@ -322,9 +335,6 @@ export function AlgorithmLayout({
     setShowClearConfirm(false);
   };
 
-  /**
-   * Показать кастомный алерт
-   */
   const showAlert = (
     title: string,
     message: string,
@@ -337,87 +347,155 @@ export function AlgorithmLayout({
     setAlertState(prev => ({ ...prev, open: false }));
   };
 
-  /**
-   * Получить шаг с пояснением, проверяя предыдущие шаги если у текущего нет пояснения
-   */
-  const getStepWithExplanation = useCallback(
-    (controller: StepController, index: number, totalSteps: number): Step | null => {
-      if (!controller || index < 0) {
-        return null;
+  const restoreSession = useCallback(async () => {
+    if (isRestoringRef.current) return;
+    isRestoringRef.current = true;
+
+    try {
+      let sessionIdToLoad = localStorage.getItem(STORAGE_KEYS.LOAD_SESSION);
+      let fromHistory = false;
+
+      if (sessionIdToLoad) {
+        localStorage.removeItem(STORAGE_KEYS.LOAD_SESSION);
+        fromHistory = true;
+      } else {
+        sessionIdToLoad = localStorage.getItem(STORAGE_KEYS.SESSION(algorithmName));
       }
 
-      const currentStep = controller.getStepByIndex(index);
-      if (!currentStep) {
-        return null;
+      if (!sessionIdToLoad) {
+        isRestoringRef.current = false;
+        return;
       }
 
-      const isLastStep = index === totalSteps - 1;
-
-      if (currentStep.explanation) {
-        return currentStep;
+      const session = await sessionRepository.loadSession(sessionIdToLoad);
+      if (!session) {
+        localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
+        isRestoringRef.current = false;
+        return;
       }
 
-      if (isLastStep) {
-        return currentStep;
-      }
+      loadGraph(session.graphDTO, true);
+      setHasRunAlgorithm(true);
 
-      for (let i = index - 1; i >= Math.max(0, index - 5); i--) {
-        const prevStep = controller.getStepByIndex(i);
-        if (prevStep?.explanation) {
-          return {
-            ...currentStep,
-            explanation: prevStep.explanation,
-          };
+      if (session.steps && session.steps.length > 0) {
+        if (controllerRef.current) {
+          controllerRef.current.setSteps(session.steps);
+        } else {
+          pendingStepsRef.current = session.steps;
         }
       }
 
-      return currentStep;
-    },
-    []
-  );
+      dispatch(
+        setSession({
+          sessionId: session.id,
+          totalSteps: session.steps.length,
+        })
+      );
 
-  /**
-   * Обработчик готовности renderer и viewport
-   */
-  const handleRendererReady = (renderer: Renderer, viewport: ViewportAdapter) => {
-    rendererRef.current = renderer;
-    viewportRef.current = viewport;
+      const savedStepIndex = localStorage.getItem(STORAGE_KEYS.STEP(algorithmName));
+      const restoredIndex = savedStepIndex ? parseInt(savedStepIndex, 10) : -1;
 
-    renderer.setShowWeights(algorithmConfig?.useWeights ?? true);
+      if (restoredIndex >= -1 && restoredIndex < session.steps.length) {
+        dispatch(setIndex(restoredIndex));
 
-    const controller = new StepController({
-      model: graphModel,
-      applier,
-      renderer,
-      onIndexChange: index => {
-        dispatch(setIndex(index));
-        const step = getStepWithExplanation(controller, index, totalSteps);
-        setCurrentStep(step);
-      },
-      onComplete: () => {
-        dispatch(pause());
-      },
-    });
-
-    controller.setSpeed(speedMs);
-    controllerRef.current = controller;
-
-    if (pendingStepsRef.current && pendingStepsRef.current.length > 0) {
-      controller.setSteps(pendingStepsRef.current);
-      pendingStepsRef.current = null;
-
-      if (currentIndex >= 0 && currentIndex < totalSteps) {
-        setTimeout(() => {
-          controller.goToIndex(currentIndex);
-        }, TIMING.STEP_RESTORE);
+        if (!controllerRef.current) {
+          pendingSessionRef.current = { sessionId: session.id, restoredIndex };
+        } else {
+          setTimeout(() => {
+            if (controllerRef.current && restoredIndex >= 0) {
+              controllerRef.current.goToIndex(restoredIndex);
+              updateCurrentStep(restoredIndex);
+            }
+            centerGraph();
+          }, TIMING.STEP_RESTORE);
+        }
       }
-    }
 
-    if (hasGraph && graphModel.nodeCount > 0) {
-      renderer.drawAll(graphModel);
-      viewport.fitToGraph(graphModel);
+      if (fromHistory) {
+        const date = new Date(session.updatedAt);
+        setLoadedSessionInfo({
+          name: session.algorithmName,
+          date: date.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        });
+
+        const sessionAgeDays = Math.floor((Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24));
+        AnalyticsEvents.sessionLoadedFromHistory(session.algorithmName, sessionAgeDays);
+      }
+    } catch (error) {
+      console.error('Failed to restore session:', error);
+      localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
+    } finally {
+      isRestoringRef.current = false;
     }
-  };
+  }, [algorithmName, loadGraph, dispatch, centerGraph, updateCurrentStep]);
+
+  const handleRendererReady = useCallback(
+    (renderer: Renderer, viewport: ViewportAdapter) => {
+      rendererRef.current = renderer;
+      viewportRef.current = viewport;
+      renderer.setShowWeights(algorithmConfig?.useWeights ?? true);
+
+      const controller = new StepController({
+        model: graphModel,
+        applier,
+        renderer,
+        onIndexChange: index => {
+          dispatch(setIndex(index));
+          updateCurrentStep(index);
+        },
+        onComplete: () => {
+          dispatch(pause());
+        },
+      });
+
+      controller.setSpeed(speedMs);
+      controllerRef.current = controller;
+
+      if (pendingStepsRef.current) {
+        controller.setSteps(pendingStepsRef.current);
+        pendingStepsRef.current = null;
+      }
+
+      if (hasGraph && graphModel.nodeCount > 0) {
+        renderer.drawAll(graphModel);
+        centerGraph();
+      }
+
+      if (pendingSessionRef.current) {
+        const { restoredIndex } = pendingSessionRef.current;
+        setTimeout(() => {
+          if (controllerRef.current && restoredIndex >= 0) {
+            controllerRef.current.goToIndex(restoredIndex);
+            updateCurrentStep(restoredIndex);
+          }
+          centerGraph();
+        }, TIMING.STEP_RESTORE);
+        pendingSessionRef.current = null;
+      }
+
+      if (!isInitializedRef.current) {
+        isInitializedRef.current = true;
+        restoreSession();
+      }
+    },
+    [
+      graphModel,
+      applier,
+      algorithmConfig,
+      speedMs,
+      hasGraph,
+      dispatch,
+      centerGraph,
+      updateCurrentStep,
+      restoreSession,
+    ]
+  );
 
   const handleRunAlgorithm = () => {
     if (!hasGraph) {
@@ -441,8 +519,6 @@ export function AlgorithmLayout({
     }
 
     const graphDTO = graphModel.toDTO();
-
-    currentAlgorithmRef.current = algorithmName;
     currentGraphDTORef.current = graphDTO;
 
     setHasRunAlgorithm(true);
@@ -465,171 +541,95 @@ export function AlgorithmLayout({
   const isRunning = workerClient.isRunning();
 
   useEffect(() => {
+    let debounceTimer: NodeJS.Timeout | null = null;
+
     const updateCanvasSize = () => {
-      if (canvasContainerRef.current) {
-        const isMobile = window.innerWidth < mobileConfig.breakpoint;
-        const padding = isMobile
-          ? mobileConfig.canvas.padding.mobile
-          : mobileConfig.canvas.padding.desktop;
-        const containerWidth = canvasContainerRef.current.offsetWidth - padding * 2;
-        const minWidth = isMobile
-          ? mobileConfig.canvas.width.min.mobile
-          : mobileConfig.canvas.width.min.desktop;
-        const maxWidth = isMobile
-          ? mobileConfig.canvas.width.max.mobile
-          : mobileConfig.canvas.width.max.desktop;
-        const width = Math.max(minWidth, Math.min(containerWidth, maxWidth));
-        const headerHeight = isMobile
-          ? mobileConfig.canvas.headerHeight.mobile
-          : mobileConfig.canvas.headerHeight.desktop;
-        const extraSpace = isMobile
-          ? mobileConfig.canvas.extraSpace.mobile
-          : mobileConfig.canvas.extraSpace.desktop;
-        const minHeight = isMobile
-          ? mobileConfig.canvas.height.min.mobile
-          : mobileConfig.canvas.height.min.desktop;
-        const maxHeight = isMobile
-          ? mobileConfig.canvas.height.max.mobile
-          : mobileConfig.canvas.height.max.desktop;
-        const height = Math.min(
-          maxHeight,
-          Math.max(minHeight, window.innerHeight - headerHeight - extraSpace)
-        );
+      if (!canvasContainerRef.current) return;
 
-        setCanvasSize({ width, height });
+      const isMobile = window.innerWidth < mobileConfig.breakpoint;
+      const padding = isMobile
+        ? mobileConfig.canvas.padding.mobile
+        : mobileConfig.canvas.padding.desktop;
+      const containerWidth = canvasContainerRef.current.offsetWidth - padding * 2;
+      const minWidth = isMobile
+        ? mobileConfig.canvas.width.min.mobile
+        : mobileConfig.canvas.width.min.desktop;
+      const maxWidth = isMobile
+        ? mobileConfig.canvas.width.max.mobile
+        : mobileConfig.canvas.width.max.desktop;
+      const width = Math.max(minWidth, Math.min(containerWidth, maxWidth));
+      const headerHeight = isMobile
+        ? mobileConfig.canvas.headerHeight.mobile
+        : mobileConfig.canvas.headerHeight.desktop;
+      const extraSpace = isMobile
+        ? mobileConfig.canvas.extraSpace.mobile
+        : mobileConfig.canvas.extraSpace.desktop;
+      const minHeight = isMobile
+        ? mobileConfig.canvas.height.min.mobile
+        : mobileConfig.canvas.height.min.desktop;
+      const maxHeight = isMobile
+        ? mobileConfig.canvas.height.max.mobile
+        : mobileConfig.canvas.height.max.desktop;
+      const height = Math.min(
+        maxHeight,
+        Math.max(minHeight, window.innerHeight - headerHeight - extraSpace)
+      );
 
-        if (rendererRef.current && viewportRef.current) {
-          viewportRef.current.resize(width, height);
-        }
+      setCanvasSize({ width, height });
+
+      if (viewportRef.current) {
+        viewportRef.current.resize(width, height);
       }
+    };
+
+    const debouncedUpdate = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(updateCanvasSize, TIMING.RESIZE_DEBOUNCE);
     };
 
     const timeoutId = setTimeout(updateCanvasSize, 100);
 
     let resizeObserver: ResizeObserver | null = null;
     if (canvasContainerRef.current) {
-      resizeObserver = new ResizeObserver(() => {
-        updateCanvasSize();
-      });
+      resizeObserver = new ResizeObserver(debouncedUpdate);
       resizeObserver.observe(canvasContainerRef.current);
     }
 
-    window.addEventListener('resize', updateCanvasSize);
+    window.addEventListener('resize', debouncedUpdate);
     return () => {
       clearTimeout(timeoutId);
-      window.removeEventListener('resize', updateCanvasSize);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      window.removeEventListener('resize', debouncedUpdate);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
     };
-  }, [hasGraph, graphModel]);
+  }, []);
 
   useEffect(() => {
-    if (hasGraph && hasRunAlgorithm && rendererRef.current && viewportRef.current) {
-      const timer = setTimeout(() => {
-        if (graphModel.nodeCount > 0 && viewportRef.current) {
-          viewportRef.current.fitToGraph(graphModel);
-        }
-      }, TIMING.AUTO_CENTER);
-
+    if (hasGraph && hasRunAlgorithm && viewportRef.current && graphModel.nodeCount > 0) {
+      const timer = setTimeout(centerGraph, TIMING.AUTO_CENTER);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [hasGraph, hasRunAlgorithm, graphModel]);
+  }, [hasGraph, hasRunAlgorithm, centerGraph, graphModel]);
 
   useEffect(() => {
-    if (currentGraphHash === null) {
-      prevGraphHashRef.current = null;
-      return;
-    }
+    if (currentGraphHash === null) return undefined;
 
-    if (prevGraphHashRef.current !== null && prevGraphHashRef.current !== currentGraphHash) {
-      dispatch(reset());
-    }
-
-    prevGraphHashRef.current = currentGraphHash;
+    const prevHash = currentGraphHash;
+    return () => {
+      if (prevHash !== currentGraphHash && currentGraphHash !== null) {
+        dispatch(reset());
+      }
+    };
   }, [currentGraphHash, dispatch]);
 
   useEffect(() => {
-    const loadSessionFromHistory = async () => {
-      let sessionId = localStorage.getItem(STORAGE_KEYS.LOAD_SESSION);
-      let fromHistory = false;
-
-      if (sessionId) {
-        localStorage.removeItem(STORAGE_KEYS.LOAD_SESSION);
-        fromHistory = true;
-      } else {
-        sessionId = localStorage.getItem(STORAGE_KEYS.SESSION(algorithmName));
-      }
-
-      if (!sessionId) return;
-
-      try {
-        const session = await sessionRepository.loadSession(sessionId);
-        if (!session) {
-          localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
-          return;
-        }
-
-        loadGraph(session.graphDTO, true);
-
-        setHasRunAlgorithm(true);
-
-        if (session.steps && session.steps.length > 0) {
-          pendingStepsRef.current = session.steps;
-
-          if (controllerRef.current) {
-            controllerRef.current.setSteps(session.steps);
-            pendingStepsRef.current = null;
-          }
-        }
-
-        const savedStepIndex = localStorage.getItem(STORAGE_KEYS.STEP(algorithmName));
-        const restoredIndex = savedStepIndex ? parseInt(savedStepIndex, 10) : -1;
-
-        dispatch(
-          setSession({
-            sessionId: session.id,
-            totalSteps: session.steps.length,
-          })
-        );
-
-        if (restoredIndex >= -1 && restoredIndex < session.steps.length) {
-          dispatch(setIndex(restoredIndex));
-        }
-
-        setTimeout(() => {
-          if (rendererRef.current && viewportRef.current && graphModel.nodeCount > 0) {
-            viewportRef.current.fitToGraph(graphModel);
-          }
-        }, TIMING.SESSION_RESTORE);
-
-        if (fromHistory) {
-          const date = new Date(session.updatedAt);
-          setLoadedSessionInfo({
-            name: session.algorithmName,
-            date: date.toLocaleString('ru-RU', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-          });
-
-          const sessionAgeDays = Math.floor(
-            (Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24)
-          );
-          AnalyticsEvents.sessionLoadedFromHistory(session.algorithmName, sessionAgeDays);
-        }
-      } catch (error) {
-        console.error('Failed to load session:', error);
-        localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
-      }
-    };
-
-    loadSessionFromHistory();
-  }, [dispatch, loadGraph, algorithmName, graphModel]);
+    if (!isInitializedRef.current) {
+      restoreSession();
+    }
+  }, [restoreSession]);
 
   useEffect(() => {
     workerClient.init();
@@ -647,66 +647,55 @@ export function AlgorithmLayout({
         }
       },
       onDone: async (totalSteps, executionTime, requestId) => {
-        if (currentAlgorithmRef.current && allSteps.length > 0) {
-          const sessionId = requestId;
-          const graphDTO = currentGraphDTORef.current;
+        if (allSteps.length === 0) return;
 
-          try {
-            await sessionRepository.saveSession(
-              sessionId,
-              currentAlgorithmRef.current,
-              graphDTO,
-              allSteps,
-              {
-                totalSteps,
-                executionTime,
-              }
-            );
+        const sessionId = requestId;
+        const graphDTO = currentGraphDTORef.current;
 
-            dispatch(setSession({ sessionId, totalSteps }));
+        try {
+          await sessionRepository.saveSession(sessionId, algorithmName, graphDTO, allSteps, {
+            totalSteps,
+            executionTime,
+          });
 
-            localStorage.setItem(STORAGE_KEYS.SESSION(currentAlgorithmRef.current), sessionId);
+          dispatch(setSession({ sessionId, totalSteps }));
+          localStorage.setItem(STORAGE_KEYS.SESSION(algorithmName), sessionId);
 
-            AnalyticsEvents.algorithmCompleted(
-              currentAlgorithmRef.current,
-              totalSteps,
-              executionTime,
-              graphDTO.nodes.length,
-              graphDTO.edges.length
-            );
+          AnalyticsEvents.algorithmCompleted(
+            algorithmName,
+            totalSteps,
+            executionTime,
+            graphDTO.nodes.length,
+            graphDTO.edges.length
+          );
 
-            AnalyticsEvents.sessionSaved(currentAlgorithmRef.current, totalSteps);
-          } catch (error) {
-            console.error('Failed to save session:', error);
-          }
+          AnalyticsEvents.sessionSaved(algorithmName, totalSteps);
+        } catch (error) {
+          console.error('Failed to save session:', error);
         }
 
         allSteps = [];
-        currentAlgorithmRef.current = null;
       },
       onError: error => {
         console.error('Worker error:', error);
         showAlert('Ошибка выполнения', String(error), 'error');
 
-        if (currentAlgorithmRef.current) {
-          const graphDTO = currentGraphDTORef.current;
-          AnalyticsEvents.algorithmExecutionError(
-            currentAlgorithmRef.current,
-            String(error),
-            graphDTO.nodes.length,
-            graphDTO.edges.length
-          );
-        }
+        const graphDTO = currentGraphDTORef.current;
+        AnalyticsEvents.algorithmExecutionError(
+          algorithmName,
+          String(error),
+          graphDTO.nodes.length,
+          graphDTO.edges.length
+        );
 
         allSteps = [];
-        currentAlgorithmRef.current = null;
       },
     });
 
     return () => {
       workerClient.terminate();
     };
-  }, [dispatch, workerClient]);
+  }, [algorithmName, dispatch, workerClient]);
 
   useEffect(() => {
     if (!controllerRef.current) return;
@@ -724,10 +713,7 @@ export function AlgorithmLayout({
     const controllerIndex = controllerRef.current.getCurrentIndex();
     if (controllerIndex !== currentIndex) {
       controllerRef.current.goToIndex(currentIndex);
-
-      // Обновляем currentStep при изменении индекса с проверкой предыдущих пояснений
-      const step = getStepWithExplanation(controllerRef.current, currentIndex, totalSteps);
-      setCurrentStep(step);
+      updateCurrentStep(currentIndex);
 
       if (currentIndex >= 0 && totalSteps > 0) {
         const viewMethod = playing ? 'auto' : 'manual';
@@ -735,10 +721,8 @@ export function AlgorithmLayout({
       }
     }
 
-    if (totalSteps > 0) {
-      localStorage.setItem(STORAGE_KEYS.STEP(algorithmName), currentIndex.toString());
-    }
-  }, [currentIndex, algorithmName, totalSteps, playing, getStepWithExplanation]);
+    saveStepIndex(currentIndex);
+  }, [currentIndex, algorithmName, totalSteps, playing, updateCurrentStep, saveStepIndex]);
 
   useEffect(() => {
     if (!controllerRef.current) return;
@@ -749,9 +733,6 @@ export function AlgorithmLayout({
     AnalyticsEvents.algorithmViewed(algorithmName, pathname);
   }, [algorithmName, pathname]);
 
-  /**
-   * Отслеживание смены алгоритма
-   */
   useEffect(() => {
     const lastAlgorithm = sessionStorage.getItem(STORAGE_KEYS.LAST_ALGORITHM);
     const isAlgorithmChange = lastAlgorithm && lastAlgorithm !== algorithmName;
@@ -773,27 +754,20 @@ export function AlgorithmLayout({
 
       dispatch(reset());
       dispatch(setIndex(-1));
-      pendingStepsRef.current = null;
-      currentAlgorithmRef.current = null;
     }
 
     sessionStorage.setItem(STORAGE_KEYS.LAST_ALGORITHM, algorithmName);
-    prevAlgorithmNameRef.current = algorithmName;
   }, [algorithmName, graphModel, dispatch]);
 
-  // Синхронизация currentStep при инициализации или изменении индекса извне
-  useEffect(() => {
-    if (!controllerRef.current) return;
-    const step = getStepWithExplanation(controllerRef.current, currentIndex, totalSteps);
-    setCurrentStep(step);
-  }, [currentIndex, totalSteps, getStepWithExplanation]);
-
-  const contextValue: AlgorithmLayoutContextType = {
-    loadGraph,
-    hasGraph,
-    hasRunAlgorithm,
-    graphModel,
-  };
+  const contextValue: AlgorithmLayoutContextType = useMemo(
+    () => ({
+      loadGraph,
+      hasGraph,
+      hasRunAlgorithm,
+      graphModel,
+    }),
+    [loadGraph, hasGraph, hasRunAlgorithm, graphModel]
+  );
 
   return (
     <AlgorithmLayoutContext.Provider value={contextValue}>
@@ -824,7 +798,7 @@ export function AlgorithmLayout({
           >
             <Box
               component={Link}
-              href="/algorithms"
+              href="/"
               sx={{
                 display: 'inline-flex',
                 alignItems: 'center',
