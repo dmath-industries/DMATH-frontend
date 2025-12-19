@@ -1,7 +1,3 @@
-/**
- * E2E тесты для главной страницы
- */
-
 import { test, expect } from '@playwright/test';
 
 test.describe('Главная страница', () => {
@@ -10,58 +6,41 @@ test.describe('Главная страница', () => {
   });
 
   test('должна загружаться и отображать основной контент', async ({ page }) => {
-    await expect(page.getByRole('heading', { 
-      name: /Добро пожаловать в интерактивный учебный инструмент/i 
-    })).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
   });
 
   test('должна отображать список возможностей', async ({ page }) => {
-    await expect(page.getByRole('heading', { 
-      name: 'Здесь вы можете:' 
-    })).toBeVisible();
-
-    await expect(page.getByText('Запускать алгоритмы шаг за шагом')).toBeVisible();
-    await expect(page.getByText('Видеть, как они работают — визуально и понятно')).toBeVisible();
-    await expect(page.getByText('Анализировать каждый этап решения')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Прима')).toBeVisible();
+    await expect(page.getByText('Алгоритм раскраски графа')).toBeVisible();
   });
 
   test('должна отображать список тем для изучения', async ({ page }) => {
-    await expect(page.getByRole('heading', { 
-      name: 'Что можно изучать:' 
-    })).toBeVisible();
-
-    await expect(page.getByText('Графы:')).toBeVisible();
-    await expect(page.getByText('Транспортные задачи:')).toBeVisible();
-    await expect(page.getByText('Нейросети:')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Форда-Беллмана')).toBeVisible();
+    await expect(page.getByText('Венгерский алгоритм')).toBeVisible();
   });
 
   test('должна иметь кнопку перехода к алгоритмам', async ({ page }) => {
-    const algorithmLink = page.getByRole('link', { name: 'Перейти к алгоритмам' });
+    const algorithmLink = page.locator('a[href="/algorithms/roberts-flores"]').first();
     await expect(algorithmLink).toBeVisible();
-    await expect(algorithmLink).toHaveAttribute('href', '/algorithms');
   });
 
   test('должна переходить на страницу алгоритмов при клике на кнопку', async ({ page }) => {
-    await page.getByRole('link', { name: 'Перейти к алгоритмам' }).click();
-    
-    await expect(page).toHaveURL('/algorithms');
+    await page.locator('a[href="/algorithms/roberts-flores"]').first().click();
+
+    await expect(page).toHaveURL('/algorithms/roberts-flores');
   });
 
   test('должна иметь адаптивный дизайн', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await expect(page.getByRole('heading', { 
-      name: /Добро пожаловать/i 
-    })).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
 
     await page.setViewportSize({ width: 768, height: 1024 });
-    await expect(page.getByRole('heading', { 
-      name: /Добро пожаловать/i 
-    })).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
 
     await page.setViewportSize({ width: 375, height: 667 });
-    await expect(page.getByRole('heading', { 
-      name: /Добро пожаловать/i 
-    })).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
   });
 
   test('должна иметь правильный title', async ({ page }) => {

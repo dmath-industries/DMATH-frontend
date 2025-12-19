@@ -1,7 +1,3 @@
-/**
- * E2E тесты для страницы истории сессий
- */
-
 import { test, expect } from '@playwright/test';
 
 test.describe('Страница истории', () => {
@@ -47,35 +43,24 @@ test.describe('Страница истории', () => {
   test('должна отображать индикатор загрузки', async ({ page }) => {
     await page.goto('/history');
 
-    // Loading indicator may appear briefly, so we check if spinner or loading text exists
     const spinner = page.locator('.animate-spin').first();
     const loadingText = page.getByText(/загрузка/i).first();
 
-    // Check if either the spinner or loading text appears (at least one should exist)
-    // Since loading is fast, we check if at least one exists or wait briefly
     const spinnerCount = await spinner.count();
     const textCount = await loadingText.count();
 
-    // The test passes if either indicator exists (loading may be too fast to catch)
     if (spinnerCount === 0 && textCount === 0) {
-      // If neither exists, it might have loaded too fast, which is acceptable
-      // We just verify the page loaded successfully
       await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
     } else {
-      // If loading indicator exists, verify it's visible
       if (spinnerCount > 0) {
         await expect(spinner)
           .toBeVisible({ timeout: 1000 })
-          .catch(() => {
-            // Loading might have finished, which is fine
-          });
+          .catch(() => {});
       }
       if (textCount > 0) {
         await expect(loadingText)
           .toBeVisible({ timeout: 1000 })
-          .catch(() => {
-            // Loading might have finished, which is fine
-          });
+          .catch(() => {});
       }
     }
   });
@@ -98,7 +83,7 @@ test.describe('Страница истории', () => {
 
     if ((await algorithmsLink.count()) > 0) {
       await expect(algorithmsLink).toBeVisible();
-      await expect(algorithmsLink).toHaveAttribute('href', '/algorithms');
+      await expect(algorithmsLink).toHaveAttribute('href', '/');
     }
   });
 
