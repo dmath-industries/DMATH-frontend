@@ -5,13 +5,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_GA4_ID=${NEXT_PUBLIC_GA4_ID:-}
+        - NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN:-}
+        - NEXT_PUBLIC_SENTRY_RELEASE=${NEXT_PUBLIC_SENTRY_RELEASE:-}
     container_name: dmath-nextjs
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
       - PORT=3000
       - HOSTNAME=0.0.0.0
+      - NEXT_PUBLIC_GA4_ID=${NEXT_PUBLIC_GA4_ID:-}
     networks:
       - dmath-network
     healthcheck:
