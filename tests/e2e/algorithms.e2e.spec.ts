@@ -1,16 +1,12 @@
-/**
- * E2E тесты для страницы списка алгоритмов
- */
-
 import { test, expect } from '@playwright/test';
 
 test.describe('Страница списка алгоритмов', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/algorithms');
+    await page.goto('/');
   });
 
   test('должна загружаться и отображать список алгоритмов', async ({ page }) => {
-    await expect(page).toHaveURL('/algorithms');
+    await expect(page).toHaveURL('/');
   });
 
   test('должна отображать карточку алгоритма Робертса-Флореса', async ({ page }) => {
@@ -36,7 +32,6 @@ test.describe('Страница списка алгоритмов', () => {
   });
 
   test('должна иметь адаптивную сетку карточек', async ({ page }) => {
-    // Проверяем адаптивность через видимость карточек алгоритмов при разных размерах экрана
     await page.setViewportSize({ width: 1920, height: 1080 });
     const algorithmLinks = page.locator('a[href^="/algorithms/"]');
     const countDesktop = await algorithmLinks.count();
