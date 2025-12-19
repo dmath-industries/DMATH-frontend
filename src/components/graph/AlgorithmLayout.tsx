@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, createContext, useCont
 import { GraphCanvas } from './GraphCanvas';
 import { ControlPanel } from './ControlPanel';
 import { GraphEditor } from './GraphEditor';
+import { StepExplanationPanel } from './StepExplanationPanel';
 import {
   GraphModel,
   Renderer,
@@ -13,14 +14,41 @@ import {
   StepController,
 } from '@/services';
 import { GraphDTO, Step } from '@/types';
-import { ChevronLeft, RotateCcw, X, Info, CheckCircle } from 'lucide-react';
+import { ChevronLeft, X, Info, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/shared/store';
 import { pause, updateTotalSteps, reset, setSession, setIndex } from '@/shared/store';
 import { sessionRepository } from '@/shared/persistence';
 import { mobileConfig, AnalyticsEvents } from '@/shared/lib';
+import { getAlgorithmConfig } from '@/algorithms';
 import { usePathname } from 'next/navigation';
-import { Box, Container, Typography, Button, Alert, IconButton, GridLegacy as Grid, Paper } from '@mui/material';
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Alert as MuiAlert,
+  IconButton,
+  GridLegacy as Grid,
+  Paper,
+} from '@mui/material';
+import { Alert } from '@/components/elements';
+import '@/services/explanations/registry'; // Инициализация реестра генераторов пояснений
+
+const STORAGE_KEYS = {
+  SESSION: (algorithmName: string) => `currentSession-${algorithmName}`,
+  STEP: (algorithmName: string) => `currentStep-${algorithmName}`,
+  LOAD_SESSION: 'loadSessionId',
+  LAST_ALGORITHM: 'lastAlgorithmVisited',
+} as const;
+
+const TIMING = {
+  SESSION_RESTORE: 100,
+  STEP_RESTORE: 50,
+  AUTO_CENTER: 150,
+} as const;
+
+const DEFAULT_GRAPH_CENTER = { x: 5000, y: 5000 } as const;
 
 interface AlgorithmLayoutContextType {
   loadGraph: (graphDTO: GraphDTO, skipReset?: boolean) => void;
@@ -31,9 +59,6 @@ interface AlgorithmLayoutContextType {
 
 const AlgorithmLayoutContext = createContext<AlgorithmLayoutContextType | null>(null);
 
-/**
- * Хук для доступа к контексту AlgorithmLayout
- */
 export const useAlgorithmLayout = () => {
   const context = useContext(AlgorithmLayoutContext);
   if (!context) {
@@ -62,6 +87,8 @@ export function AlgorithmLayout({
   const { playing, currentIndex, speedMs, totalSteps } = useAppSelector(state => state.steps);
   const pathname = usePathname();
 
+  const algorithmConfig = getAlgorithmConfig(algorithmName);
+
   const [graphModel] = useState(() => new GraphModel(true));
   const [applier] = useState(() => new Applier());
   const [workerClient] = useState(() => new WorkerClient());
@@ -75,6 +102,19 @@ export function AlgorithmLayout({
     width: mobileConfig.canvas.defaultSize.width,
     height: mobileConfig.canvas.defaultSize.height,
   });
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'warning' | 'error' | 'success';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    variant: 'info',
+  });
+  const [currentStep, setCurrentStep] = useState<Step | null>(null);
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -83,7 +123,14 @@ export function AlgorithmLayout({
   const currentGraphDTORef = useRef(graphModel.toDTO());
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   const prevGraphHashRef = useRef<string | null>(null);
+  const pendingStepsRef = useRef<Step[] | null>(null);
+  const prevAlgorithmNameRef = useRef<string>(algorithmName);
 
+  /**
+   * Создает уникальный хеш для структуры графа для обнаружения изменений
+   * @param graphDTO - Объект передачи данных графа
+   * @returns Строка хеша, представляющая структуру графа
+   */
   const createGraphHash = useCallback((graphDTO: GraphDTO): string => {
     const nodesStr = graphDTO.nodes
       .map(n => `${n.id}`)
@@ -97,7 +144,9 @@ export function AlgorithmLayout({
   }, []);
 
   /**
-   * Загрузить граф из DTO
+   * Загружает граф из DTO и обновляет canvas
+   * @param graphDTO - Данные графа для загрузки
+   * @param skipReset - Если true, не сбрасывает состояние алгоритма
    */
   const loadGraph = useCallback(
     (graphDTO: GraphDTO, skipReset = false) => {
@@ -135,32 +184,43 @@ export function AlgorithmLayout({
   );
 
   /**
-   * Получить позицию в центре видимой области viewport
+   * Получает центральную позицию viewport или центр по умолчанию
+   * @returns Координаты центра viewport
    */
   const getCenterPosition = (): { x: number; y: number } => {
     if (viewportRef.current) {
       const viewport = viewportRef.current.getViewport();
       if (viewport) {
-        // Получаем центр экрана в мировых координатах
-        const centerX = viewport.center.x;
-        const centerY = viewport.center.y;
-        return { x: centerX, y: centerY };
+        return { x: viewport.center.x, y: viewport.center.y };
       }
     }
-    // Если viewport не готов, используем центр по умолчанию
-    return { x: 5000, y: 5000 };
+    return DEFAULT_GRAPH_CENTER;
   };
 
   /**
-   * Обработчик добавления вершины
+   * Обрабатывает добавление новой вершины в граф
+   * @param id - Уникальный идентификатор вершины
+   * @param x - Координата X (опционально, использует центр viewport если не указано)
+   * @param y - Координата Y (опционально, использует центр viewport если не указано)
    */
   const handleAddNode = (id: string, x?: number, y?: number) => {
-    // Если координаты не указаны, размещаем в центре viewport
-    const position = x !== undefined && y !== undefined ? { x, y } : getCenterPosition();
+    let position: { x: number; y: number };
 
-    // Проверяем, существует ли уже вершина с таким ID
+    if (x !== undefined && y !== undefined) {
+      position = { x, y };
+    } else {
+      const center = getCenterPosition();
+      const offsetRange = 150;
+      const randomOffsetX = (Math.random() - 0.5) * offsetRange * 2;
+      const randomOffsetY = (Math.random() - 0.5) * offsetRange * 2;
+      position = {
+        x: center.x + randomOffsetX,
+        y: center.y + randomOffsetY,
+      };
+    }
+
     if (graphModel.hasNode(id)) {
-      alert(`Вершина с ID "${id}" уже существует!`);
+      showAlert('Ошибка', `Вершина с ID "${id}" уже существует!`, 'error');
       return;
     }
 
@@ -171,34 +231,43 @@ export function AlgorithmLayout({
       label: id,
     });
 
+    if (hasRunAlgorithm) {
+      setHasRunAlgorithm(false);
+      if (controllerRef.current) {
+        controllerRef.current.setSteps([]);
+      }
+      dispatch(reset());
+    }
+
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
     }
   };
 
   /**
-   * Обработчик добавления ребра
+   * Обрабатывает добавление нового ребра в граф
+   * @param source - ID исходной вершины
+   * @param target - ID целевой вершины
+   * @param weight - Вес ребра (опционально)
    */
   const handleAddEdge = (source: string, target: string, weight?: number) => {
-    // Проверяем существование вершин
     if (!graphModel.hasNode(source)) {
-      alert(`Вершина "${source}" не существует!`);
+      showAlert('Ошибка', `Вершина "${source}" не существует!`, 'error');
       return;
     }
     if (!graphModel.hasNode(target)) {
-      alert(`Вершина "${target}" не существует!`);
+      showAlert('Ошибка', `Вершина "${target}" не существует!`, 'error');
       return;
     }
     if (source === target) {
-      alert('Нельзя создать ребро из вершины в саму себя!');
+      showAlert('Ошибка', 'Нельзя создать ребро из вершины в саму себя!', 'error');
       return;
     }
 
     const edgeId = `${source}-${target}`;
 
-    // Проверяем, существует ли уже такое ребро
     if (graphModel.hasEdge(edgeId)) {
-      alert(`Ребро между "${source}" и "${target}" уже существует!`);
+      showAlert('Ошибка', `Ребро между "${source}" и "${target}" уже существует!`, 'error');
       return;
     }
 
@@ -210,6 +279,14 @@ export function AlgorithmLayout({
       directed: true,
     });
 
+    if (hasRunAlgorithm) {
+      setHasRunAlgorithm(false);
+      if (controllerRef.current) {
+        controllerRef.current.setSteps([]);
+      }
+      dispatch(reset());
+    }
+
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
     }
@@ -219,67 +296,85 @@ export function AlgorithmLayout({
    * Обработчик очистки графа
    */
   const handleClear = () => {
-    if (confirm('Вы уверены, что хотите очистить граф?')) {
-      graphModel.clear();
-      setHasGraph(false);
-      setHasRunAlgorithm(false);
-      setCurrentGraphHash(null);
-      if (rendererRef.current) {
-        rendererRef.current.drawAll(graphModel);
-      }
-      if (controllerRef.current) {
-        controllerRef.current.setSteps([]);
-      }
-      dispatch(reset());
-    }
+    setShowClearConfirm(true);
   };
 
-  /**
-   * Загрузить тестовый граф с примером
-   */
-  const handleLoadSample = () => {
+  const confirmClear = () => {
     graphModel.clear();
-
-    const offset = 5000; // Используем центр по умолчанию
-    const nodes = [
-      { id: 'a', x: offset + 0, y: offset - 150, label: 'a' },
-      { id: 'b', x: offset + 150, y: offset - 50, label: 'b' },
-      { id: 'c', x: offset + 150, y: offset + 100, label: 'c' },
-      { id: 'd', x: offset - 150, y: offset + 100, label: 'd' },
-      { id: 'e', x: offset - 150, y: offset - 50, label: 'e' },
-    ];
-
-    const edges = [
-      { source: 'a', target: 'b' },
-      { source: 'b', target: 'c' },
-      { source: 'c', target: 'd' },
-      { source: 'd', target: 'e' },
-      { source: 'e', target: 'a' },
-      { source: 'a', target: 'c' },
-      { source: 'e', target: 'b' },
-    ];
-
-    for (const node of nodes) {
-      graphModel.addNode(node);
-    }
-
-    for (const edge of edges) {
-      graphModel.addEdge({
-        id: `${edge.source}-${edge.target}`,
-        source: edge.source,
-        target: edge.target,
-        directed: true,
-      });
-    }
-
-    // Загружаем граф через loadGraph для правильной инициализации состояния
-    const graphDTO = graphModel.toDTO();
-    loadGraph(graphDTO);
-
+    setHasGraph(false);
+    setHasRunAlgorithm(false);
+    setCurrentGraphHash(null);
     if (rendererRef.current) {
       rendererRef.current.drawAll(graphModel);
     }
+    if (controllerRef.current) {
+      controllerRef.current.setSteps([]);
+    }
+    dispatch(reset());
+
+    localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
+    localStorage.removeItem(STORAGE_KEYS.STEP(algorithmName));
+
+    setShowClearConfirm(false);
   };
+
+  const cancelClear = () => {
+    setShowClearConfirm(false);
+  };
+
+  /**
+   * Показать кастомный алерт
+   */
+  const showAlert = (
+    title: string,
+    message: string,
+    variant: 'info' | 'warning' | 'error' | 'success' = 'error'
+  ) => {
+    setAlertState({ open: true, title, message, variant });
+  };
+
+  const closeAlert = () => {
+    setAlertState(prev => ({ ...prev, open: false }));
+  };
+
+  /**
+   * Получить шаг с пояснением, проверяя предыдущие шаги если у текущего нет пояснения
+   */
+  const getStepWithExplanation = useCallback(
+    (controller: StepController, index: number, totalSteps: number): Step | null => {
+      if (!controller || index < 0) {
+        return null;
+      }
+
+      const currentStep = controller.getStepByIndex(index);
+      if (!currentStep) {
+        return null;
+      }
+
+      const isLastStep = index === totalSteps - 1;
+
+      if (currentStep.explanation) {
+        return currentStep;
+      }
+
+      if (isLastStep) {
+        return currentStep;
+      }
+
+      for (let i = index - 1; i >= Math.max(0, index - 5); i--) {
+        const prevStep = controller.getStepByIndex(i);
+        if (prevStep?.explanation) {
+          return {
+            ...currentStep,
+            explanation: prevStep.explanation,
+          };
+        }
+      }
+
+      return currentStep;
+    },
+    []
+  );
 
   /**
    * Обработчик готовности renderer и viewport
@@ -288,12 +383,16 @@ export function AlgorithmLayout({
     rendererRef.current = renderer;
     viewportRef.current = viewport;
 
+    renderer.setShowWeights(algorithmConfig?.useWeights ?? true);
+
     const controller = new StepController({
       model: graphModel,
       applier,
       renderer,
       onIndexChange: index => {
         dispatch(setIndex(index));
+        const step = getStepWithExplanation(controller, index, totalSteps);
+        setCurrentStep(step);
       },
       onComplete: () => {
         dispatch(pause());
@@ -303,6 +402,17 @@ export function AlgorithmLayout({
     controller.setSpeed(speedMs);
     controllerRef.current = controller;
 
+    if (pendingStepsRef.current && pendingStepsRef.current.length > 0) {
+      controller.setSteps(pendingStepsRef.current);
+      pendingStepsRef.current = null;
+
+      if (currentIndex >= 0 && currentIndex < totalSteps) {
+        setTimeout(() => {
+          controller.goToIndex(currentIndex);
+        }, TIMING.STEP_RESTORE);
+      }
+    }
+
     if (hasGraph && graphModel.nodeCount > 0) {
       renderer.drawAll(graphModel);
       viewport.fitToGraph(graphModel);
@@ -311,13 +421,15 @@ export function AlgorithmLayout({
 
   const handleRunAlgorithm = () => {
     if (!hasGraph) {
-      alert('Сначала загрузите граф!');
+      showAlert('Внимание', 'Сначала загрузите граф!', 'warning');
       return;
     }
 
     if (hasRunAlgorithm) {
-      alert(
-        'Алгоритм уже был запущен для этого графа. Просмотрите результаты в панели управления или загрузите новый граф.'
+      showAlert(
+        'Внимание',
+        'Алгоритм уже был запущен для этого графа. Просмотрите результаты в панели управления или загрузите новый граф.',
+        'warning'
       );
       return;
     }
@@ -336,8 +448,10 @@ export function AlgorithmLayout({
     setHasRunAlgorithm(true);
 
     const inputMethod = loadedSessionInfo ? 'history' : 'manual';
+    const withWeights = algorithmConfig?.useWeights ?? false;
     AnalyticsEvents.algorithmStarted(
       algorithmName,
+      withWeights,
       graphDTO.nodes.length,
       graphDTO.edges.length,
       inputMethod
@@ -346,23 +460,6 @@ export function AlgorithmLayout({
     workerClient.runAlgorithm(algorithmName, graphDTO, {
       startNode: graphDTO.nodes[0]?.id || '0',
     });
-  };
-
-  const handleReset = () => {
-    dispatch(reset());
-    setHasGraph(false);
-    setHasRunAlgorithm(false);
-    setCurrentGraphHash(null);
-    setLoadedSessionInfo(null);
-    graphModel.clear();
-
-    if (controllerRef.current) {
-      controllerRef.current.setSteps([]);
-    }
-
-    if (rendererRef.current) {
-      rendererRef.current.drawAll(graphModel);
-    }
   };
 
   const isRunning = workerClient.isRunning();
@@ -403,8 +500,6 @@ export function AlgorithmLayout({
 
         if (rendererRef.current && viewportRef.current) {
           viewportRef.current.resize(width, height);
-
-          // Автоцентрирование отключено
         }
       }
     };
@@ -430,6 +525,19 @@ export function AlgorithmLayout({
   }, [hasGraph, graphModel]);
 
   useEffect(() => {
+    if (hasGraph && hasRunAlgorithm && rendererRef.current && viewportRef.current) {
+      const timer = setTimeout(() => {
+        if (graphModel.nodeCount > 0 && viewportRef.current) {
+          viewportRef.current.fitToGraph(graphModel);
+        }
+      }, TIMING.AUTO_CENTER);
+
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [hasGraph, hasRunAlgorithm, graphModel]);
+
+  useEffect(() => {
     if (currentGraphHash === null) {
       prevGraphHashRef.current = null;
       return;
@@ -444,14 +552,22 @@ export function AlgorithmLayout({
 
   useEffect(() => {
     const loadSessionFromHistory = async () => {
-      const sessionId = localStorage.getItem('loadSessionId');
-      if (!sessionId) return;
+      let sessionId = localStorage.getItem(STORAGE_KEYS.LOAD_SESSION);
+      let fromHistory = false;
 
-      localStorage.removeItem('loadSessionId');
+      if (sessionId) {
+        localStorage.removeItem(STORAGE_KEYS.LOAD_SESSION);
+        fromHistory = true;
+      } else {
+        sessionId = localStorage.getItem(STORAGE_KEYS.SESSION(algorithmName));
+      }
+
+      if (!sessionId) return;
 
       try {
         const session = await sessionRepository.loadSession(sessionId);
         if (!session) {
+          localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
           return;
         }
 
@@ -459,9 +575,17 @@ export function AlgorithmLayout({
 
         setHasRunAlgorithm(true);
 
-        if (controllerRef.current && session.steps) {
-          controllerRef.current.setSteps(session.steps);
+        if (session.steps && session.steps.length > 0) {
+          pendingStepsRef.current = session.steps;
+
+          if (controllerRef.current) {
+            controllerRef.current.setSteps(session.steps);
+            pendingStepsRef.current = null;
+          }
         }
+
+        const savedStepIndex = localStorage.getItem(STORAGE_KEYS.STEP(algorithmName));
+        const restoredIndex = savedStepIndex ? parseInt(savedStepIndex, 10) : -1;
 
         dispatch(
           setSession({
@@ -470,28 +594,42 @@ export function AlgorithmLayout({
           })
         );
 
-        const date = new Date(session.updatedAt);
-        setLoadedSessionInfo({
-          name: session.algorithmName,
-          date: date.toLocaleString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        });
+        if (restoredIndex >= -1 && restoredIndex < session.steps.length) {
+          dispatch(setIndex(restoredIndex));
+        }
 
-        const sessionAgeDays = Math.floor((Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24));
-        AnalyticsEvents.sessionLoadedFromHistory(session.algorithmName, sessionAgeDays);
+        setTimeout(() => {
+          if (rendererRef.current && viewportRef.current && graphModel.nodeCount > 0) {
+            viewportRef.current.fitToGraph(graphModel);
+          }
+        }, TIMING.SESSION_RESTORE);
+
+        if (fromHistory) {
+          const date = new Date(session.updatedAt);
+          setLoadedSessionInfo({
+            name: session.algorithmName,
+            date: date.toLocaleString('ru-RU', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          });
+
+          const sessionAgeDays = Math.floor(
+            (Date.now() - session.updatedAt) / (1000 * 60 * 60 * 24)
+          );
+          AnalyticsEvents.sessionLoadedFromHistory(session.algorithmName, sessionAgeDays);
+        }
       } catch (error) {
         console.error('Failed to load session:', error);
-        alert('Ошибка при загрузке сессии');
+        localStorage.removeItem(STORAGE_KEYS.SESSION(algorithmName));
       }
     };
 
     loadSessionFromHistory();
-  }, [dispatch, loadGraph]);
+  }, [dispatch, loadGraph, algorithmName, graphModel]);
 
   useEffect(() => {
     workerClient.init();
@@ -500,7 +638,6 @@ export function AlgorithmLayout({
     workerClient.setHandlers({
       onStepChunk: async (newSteps, _chunkId, isLast) => {
         allSteps.push(...newSteps);
-
         if (controllerRef.current) {
           controllerRef.current.addSteps(newSteps);
         }
@@ -528,6 +665,8 @@ export function AlgorithmLayout({
 
             dispatch(setSession({ sessionId, totalSteps }));
 
+            localStorage.setItem(STORAGE_KEYS.SESSION(currentAlgorithmRef.current), sessionId);
+
             AnalyticsEvents.algorithmCompleted(
               currentAlgorithmRef.current,
               totalSteps,
@@ -547,7 +686,7 @@ export function AlgorithmLayout({
       },
       onError: error => {
         console.error('Worker error:', error);
-        alert(`Ошибка выполнения: ${error}`);
+        showAlert('Ошибка выполнения', String(error), 'error');
 
         if (currentAlgorithmRef.current) {
           const graphDTO = currentGraphDTORef.current;
@@ -586,12 +725,20 @@ export function AlgorithmLayout({
     if (controllerIndex !== currentIndex) {
       controllerRef.current.goToIndex(currentIndex);
 
+      // Обновляем currentStep при изменении индекса с проверкой предыдущих пояснений
+      const step = getStepWithExplanation(controllerRef.current, currentIndex, totalSteps);
+      setCurrentStep(step);
+
       if (currentIndex >= 0 && totalSteps > 0) {
         const viewMethod = playing ? 'auto' : 'manual';
-        AnalyticsEvents.stepViewed(algorithmName, currentIndex + 1, totalSteps, viewMethod);
+        AnalyticsEvents.stepViewed(algorithmName, currentIndex, totalSteps, viewMethod);
       }
     }
-  }, [currentIndex, algorithmName, totalSteps, playing]);
+
+    if (totalSteps > 0) {
+      localStorage.setItem(STORAGE_KEYS.STEP(algorithmName), currentIndex.toString());
+    }
+  }, [currentIndex, algorithmName, totalSteps, playing, getStepWithExplanation]);
 
   useEffect(() => {
     if (!controllerRef.current) return;
@@ -601,6 +748,45 @@ export function AlgorithmLayout({
   useEffect(() => {
     AnalyticsEvents.algorithmViewed(algorithmName, pathname);
   }, [algorithmName, pathname]);
+
+  /**
+   * Отслеживание смены алгоритма
+   */
+  useEffect(() => {
+    const lastAlgorithm = sessionStorage.getItem(STORAGE_KEYS.LAST_ALGORITHM);
+    const isAlgorithmChange = lastAlgorithm && lastAlgorithm !== algorithmName;
+
+    if (isAlgorithmChange) {
+      graphModel.clear();
+      setHasGraph(false);
+      setHasRunAlgorithm(false);
+      setCurrentGraphHash(null);
+      setLoadedSessionInfo(null);
+
+      if (rendererRef.current) {
+        rendererRef.current.drawAll(graphModel);
+      }
+
+      if (controllerRef.current) {
+        controllerRef.current.setSteps([]);
+      }
+
+      dispatch(reset());
+      dispatch(setIndex(-1));
+      pendingStepsRef.current = null;
+      currentAlgorithmRef.current = null;
+    }
+
+    sessionStorage.setItem(STORAGE_KEYS.LAST_ALGORITHM, algorithmName);
+    prevAlgorithmNameRef.current = algorithmName;
+  }, [algorithmName, graphModel, dispatch]);
+
+  // Синхронизация currentStep при инициализации или изменении индекса извне
+  useEffect(() => {
+    if (!controllerRef.current) return;
+    const step = getStepWithExplanation(controllerRef.current, currentIndex, totalSteps);
+    setCurrentStep(step);
+  }, [currentIndex, totalSteps, getStepWithExplanation]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
@@ -696,7 +882,7 @@ export function AlgorithmLayout({
             <Grid item xs={12} lg sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {loadedSessionInfo && (
-                  <Alert
+                  <MuiAlert
                     severity="info"
                     icon={<Info size={20} />}
                     action={
@@ -727,7 +913,7 @@ export function AlgorithmLayout({
                     <Typography variant="caption" sx={{ color: 'info.light' }}>
                       {loadedSessionInfo.name} • {loadedSessionInfo.date}
                     </Typography>
-                  </Alert>
+                  </MuiAlert>
                 )}
 
                 <Paper
@@ -809,22 +995,6 @@ export function AlgorithmLayout({
                       >
                         {hasRunAlgorithm ? 'Алгоритм выполнен' : 'Запустить алгоритм'}
                       </Button>
-                      <Button
-                        onClick={handleReset}
-                        disabled={!hasGraph}
-                        variant="outlined"
-                        startIcon={<RotateCcw size={16} />}
-                        sx={{
-                          width: { xs: '100%', sm: 'auto' },
-                        }}
-                      >
-                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                          Сброс
-                        </Box>
-                        <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-                          Сброс
-                        </Box>
-                      </Button>
                     </Box>
                   </Box>
 
@@ -837,8 +1007,8 @@ export function AlgorithmLayout({
                     />
                   </Box>
 
-                  {hasRunAlgorithm && !playing && currentIndex === -1 && (
-                    <Alert
+                  {hasRunAlgorithm && !playing && currentIndex === -1 && totalSteps > 0 && (
+                    <MuiAlert
                       severity="success"
                       icon={<CheckCircle size={20} />}
                       sx={{
@@ -856,9 +1026,15 @@ export function AlgorithmLayout({
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'success.light' }}>
                         Используйте панель управления для просмотра шагов. Чтобы запустить алгоритм
-                        снова, загрузите новую матрицу или нажмите "Сброс".
+                        снова, загрузите новую матрицу или нажмите кнопку "Очистить".
                       </Typography>
-                    </Alert>
+                    </MuiAlert>
+                  )}
+
+                  {hasRunAlgorithm && currentIndex >= 0 && totalSteps > 0 && (
+                    <Box sx={{ px: 3, pb: 3 }}>
+                      <StepExplanationPanel currentStep={currentStep} />
+                    </Box>
                   )}
                 </Paper>
 
@@ -883,13 +1059,81 @@ export function AlgorithmLayout({
                     onAddNode={handleAddNode}
                     onAddEdge={handleAddEdge}
                     onClear={handleClear}
-                    onLoadSample={handleLoadSample}
+                    useWeights={algorithmConfig?.useWeights ?? true}
                   />
                 </Box>
               </Box>
             </Grid>
           </Grid>
         </Container>
+
+        <Alert
+          open={showClearConfirm}
+          onClose={cancelClear}
+          title="Очистка графа"
+          variant="warning"
+          actions={
+            <>
+              <Button
+                onClick={cancelClear}
+                variant="outlined"
+                sx={{
+                  borderColor: 'rgba(115, 115, 115, 0.5)',
+                  color: 'text.primary',
+                  textTransform: 'none',
+                  px: 3,
+                  '&:hover': {
+                    borderColor: 'rgba(115, 115, 115, 0.8)',
+                    backgroundColor: 'rgba(115, 115, 115, 0.1)',
+                  },
+                }}
+              >
+                Отмена
+              </Button>
+              <Button
+                onClick={confirmClear}
+                variant="contained"
+                sx={{
+                  backgroundColor: '#f59e0b',
+                  textTransform: 'none',
+                  px: 3,
+                  '&:hover': {
+                    backgroundColor: '#f59e0b',
+                    filter: 'brightness(1.1)',
+                  },
+                }}
+              >
+                Очистить
+              </Button>
+            </>
+          }
+        >
+          <Typography variant="body1">
+            Вы уверены, что хотите очистить граф? Все вершины, рёбра и результаты алгоритма будут
+            удалены.
+          </Typography>
+        </Alert>
+
+        <Alert
+          open={alertState.open}
+          onClose={closeAlert}
+          title={alertState.title}
+          variant={alertState.variant}
+          actions={
+            <Button
+              onClick={closeAlert}
+              variant="contained"
+              sx={{
+                textTransform: 'none',
+                px: 4,
+              }}
+            >
+              ОК
+            </Button>
+          }
+        >
+          {alertState.message}
+        </Alert>
       </Box>
     </AlgorithmLayoutContext.Provider>
   );

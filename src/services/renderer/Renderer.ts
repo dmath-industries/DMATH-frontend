@@ -1,8 +1,3 @@
-/**
- * Renderer — отрисовка графа с помощью Pixi.js
- * Полностью переписанный с нуля для корректного отображения
- */
-
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { GraphModel } from '@/services/graph/GraphModel';
 import { ElementState } from '@/types';
@@ -29,10 +24,8 @@ export class Renderer {
   private draggingNodeId: string | null = null;
   private dragOffset: { x: number; y: number } | null = null;
   private viewportAdapter: ViewportAdapter | null = null;
+  private showWeights: boolean = true;
 
-  /**
-   * Инициализация Pixi Application
-   */
   async init(canvas: HTMLCanvasElement, config: RendererConfig): Promise<void> {
     try {
       this.app = new Application();
@@ -60,16 +53,10 @@ export class Renderer {
     }
   }
 
-  /**
-   * Получить Pixi Application
-   */
   getApp(): Application | null {
     return this.app;
   }
 
-  /**
-   * Получить контейнеры для добавления в viewport
-   */
   getContainers() {
     return {
       edges: this.edgesContainer,
@@ -78,16 +65,14 @@ export class Renderer {
     };
   }
 
-  /**
-   * Установить viewport adapter для управления перетаскиванием
-   */
   setViewportAdapter(viewportAdapter: ViewportAdapter | null): void {
     this.viewportAdapter = viewportAdapter;
   }
 
-  /**
-   * Полная отрисовка графа
-   */
+  setShowWeights(show: boolean): void {
+    this.showWeights = show;
+  }
+
   drawAll(model: GraphModel): void {
     if (!this.app) return;
 
@@ -105,9 +90,6 @@ export class Renderer {
     this.setupNodeInteractivity();
   }
 
-  /**
-   * Отрисовка только изменённых элементов (dirty rendering)
-   */
   renderDirty(dirtyIds: Set<string>, model: GraphModel): void {
     if (!this.app) return;
 
@@ -132,15 +114,11 @@ export class Renderer {
       this.drawNode(nodeId, model);
     }
 
-    // Настраиваем интерактивность для новых или обновлённых узлов
     if (dirtyNodes.length > 0) {
       this.setupNodeInteractivity();
     }
   }
 
-  /**
-   * Отрисовка узла
-   */
   private drawNode(nodeId: string, model: GraphModel): void {
     if (!this.nodesContainer || !this.labelsContainer) return;
 
@@ -171,7 +149,6 @@ export class Renderer {
     graphic.position.set(node.x, node.y);
     graphic.zIndex = 10;
 
-    // Делаем вершину интерактивной
     graphic.eventMode = 'static';
     graphic.cursor = 'pointer';
 
@@ -191,15 +168,12 @@ export class Renderer {
     label.anchor.set(0.5);
     label.position.set(node.x, node.y);
     label.zIndex = 20;
-    label.eventMode = 'none'; // Метка не должна перехватывать события
+    label.eventMode = 'none';
 
     this.labelsContainer.addChild(label);
     this.labelGraphics.set(nodeId, label);
   }
 
-  /**
-   * Отрисовка ребра
-   */
   private drawEdge(edgeId: string, model: GraphModel): void {
     if (!this.edgesContainer) return;
 
@@ -251,15 +225,22 @@ export class Renderer {
     this.edgesContainer.addChild(graphic);
     this.edgeGraphics.set(edgeId, graphic);
 
-    // Отрисовка веса ребра, если он указан
-    if (edge.weight !== undefined && edge.weight !== null) {
+    if (this.showWeights && edge.weight !== undefined && edge.weight !== null) {
       this.drawEdgeWeight(edgeId, edge.weight, startX, startY, endX, endY);
+    } else if (!this.showWeights) {
+      const oldLabelData = this.edgeWeightLabels.get(edgeId);
+      if (oldLabelData) {
+        this.labelsContainer?.removeChild(oldLabelData.text);
+        oldLabelData.text.destroy();
+        if (oldLabelData.bg) {
+          this.labelsContainer?.removeChild(oldLabelData.bg);
+          oldLabelData.bg.destroy();
+        }
+        this.edgeWeightLabels.delete(edgeId);
+      }
     }
   }
 
-  /**
-   * Отрисовка веса ребра (белые цифры без фона)
-   */
   private drawEdgeWeight(
     edgeId: string,
     weight: number,
@@ -280,33 +261,28 @@ export class Renderer {
       }
     }
 
-    // Позиция по середине ребра, смещённая перпендикулярно
     const midX = (startX + endX) / 2;
     const midY = (startY + endY) / 2;
 
-    // Вычисляем перпендикулярное смещение для избежания пересечений
     const dx = endX - startX;
     const dy = endY - startY;
     const length = Math.sqrt(dx * dx + dy * dy);
     if (length === 0) return;
 
-    // Перпендикулярный вектор (поворот на 90 градусов)
     const perpX = -dy / length;
     const perpY = dx / length;
 
-    // Смещение на 20 пикселей перпендикулярно ребру
     const offset = 20;
     const labelX = midX + perpX * offset;
     const labelY = midY + perpY * offset;
 
-    // Создаём текст для веса (белые цифры без фона, с чёрной обводкой)
     const weightText = new Text({
       text: String(weight),
       style: {
         fontSize: 14,
         fill: 0xffffff,
         fontWeight: 'bold',
-        stroke: { color: 0x000000, width: 2 }, // Чёрная обводка для лучшей читаемости
+        stroke: { color: 0x000000, width: 2 },
       },
     });
 
@@ -318,9 +294,6 @@ export class Renderer {
     this.edgeWeightLabels.set(edgeId, { text: weightText, bg: null });
   }
 
-  /**
-   * Отрисовка стрелки для направленного ребра
-   */
   private drawArrow(
     graphic: Graphics,
     tipX: number,
@@ -352,35 +325,29 @@ export class Renderer {
     graphic.stroke({ width: width + 1, color });
   }
 
-  /**
-   * Получить цвет в зависимости от состояния
-   */
   private getStateColor(state?: ElementState, defaultColor?: string): number {
     switch (state) {
       case 'active':
-        return 0xfbbf24; // amber-400
+        return 0xfbbf24;
       case 'visited':
-        return 0x60a5fa; // blue-400
+        return 0x60a5fa;
       case 'current':
-        return 0xf59e0b; // amber-500
+        return 0xf59e0b;
       case 'path':
-        return 0x10b981; // emerald-500
+        return 0x10b981;
       case 'rejected':
-        return 0xef4444; // red-500
+        return 0xef4444;
       case 'candidate':
-        return 0x8b5cf6; // violet-500
+        return 0x8b5cf6;
       default:
         if (defaultColor) {
           const hex = defaultColor.startsWith('#') ? defaultColor.slice(1) : defaultColor;
           return parseInt(hex, 16);
         }
-        return 0x3b82f6; // blue-500 по умолчанию
+        return 0x3b82f6;
     }
   }
 
-  /**
-   * Очистить всё
-   */
   clear(): void {
     for (const graphic of this.nodeGraphics.values()) {
       this.nodesContainer?.removeChild(graphic);
@@ -411,21 +378,14 @@ export class Renderer {
     this.edgeWeightLabels.clear();
   }
 
-  /**
-   * Изменить размер canvas
-   */
   resize(width: number, height: number): void {
     if (!this.app) return;
     this.app.renderer.resize(width, height);
   }
 
-  /**
-   * Настроить интерактивность вершин (перетаскивание)
-   */
   private setupNodeInteractivity(): void {
     if (!this.app || !this.model) return;
 
-    // Удаляем старые глобальные обработчики, если они есть
     if (this.app.stage) {
       this.app.stage.removeAllListeners('pointermove');
       this.app.stage.removeAllListeners('pointerup');
@@ -433,10 +393,8 @@ export class Renderer {
     }
 
     for (const [nodeId, graphic] of this.nodeGraphics.entries()) {
-      // Удаляем старые обработчики, если они есть
       graphic.removeAllListeners('pointerdown');
 
-      // Обработчик начала перетаскивания
       graphic.on('pointerdown', event => {
         if (!this.model) return;
 
@@ -445,12 +403,9 @@ export class Renderer {
 
         this.draggingNodeId = nodeId;
 
-        // Приостанавливаем перетаскивание viewport
         this.viewportAdapter?.pauseDrag();
 
-        // Получаем глобальные координаты клика
         const globalPos = event.global;
-        // Преобразуем в локальные координаты контейнера узлов
         const localPos = this.nodesContainer?.toLocal(globalPos);
 
         if (localPos) {
@@ -464,7 +419,6 @@ export class Renderer {
       });
     }
 
-    // Глобальные обработчики для перетаскивания
     if (this.app.stage) {
       this.app.stage.eventMode = 'static';
 
@@ -474,19 +428,15 @@ export class Renderer {
         const node = this.model.getNode(this.draggingNodeId);
         if (!node) return;
 
-        // Получаем глобальные координаты мыши
         const globalPos = event.global;
-        // Преобразуем в локальные координаты контейнера узлов
         const localPos = this.nodesContainer?.toLocal(globalPos);
 
         if (localPos) {
           const newX = localPos.x - this.dragOffset.x;
           const newY = localPos.y - this.dragOffset.y;
 
-          // Обновляем позицию в модели
           this.model.updateNode(this.draggingNodeId, { x: newX, y: newY });
 
-          // Обновляем позицию графики и метки
           const graphic = this.nodeGraphics.get(this.draggingNodeId);
           const label = this.labelGraphics.get(this.draggingNodeId);
 
@@ -497,7 +447,6 @@ export class Renderer {
             label.position.set(newX, newY);
           }
 
-          // Перерисовываем связанные рёбра
           const edges = this.model.getEdges();
           for (const edgeId of edges) {
             const edge = this.model.getEdge(edgeId);
@@ -512,7 +461,6 @@ export class Renderer {
       };
 
       const handlePointerUp = () => {
-        // Возобновляем перетаскивание viewport
         if (this.draggingNodeId) {
           this.viewportAdapter?.resumeDrag();
         }
@@ -526,9 +474,6 @@ export class Renderer {
     }
   }
 
-  /**
-   * Уничтожить renderer
-   */
   destroy(): void {
     this.clear();
     if (this.app) {

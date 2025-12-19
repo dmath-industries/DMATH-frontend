@@ -3,6 +3,7 @@ import Script from 'next/script';
 import './globals.css';
 import { Providers } from './providers';
 import Header from '@/components/Header';
+import { env } from '@/shared/lib';
 
 export const metadata: Metadata = {
   title: 'DMath - Graph Visualizer',
@@ -31,20 +32,24 @@ export default function RootLayout({
     <html lang="ru">
       <body className="antialiased">
         {/* Google tag (gtag.js) */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-0679Q052ZK"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-0679Q052ZK', {
-              ${process.env.NODE_ENV === 'development' ? 'debug_mode: true,' : ''}
-            });
-          `}
-        </Script>
+        {env.ga4Id && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${env.ga4Id}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${env.ga4Id}', {
+                  ${env.isDev ? 'debug_mode: true,' : ''}
+                });
+              `}
+            </Script>
+          </>
+        )}
         <Providers>
           <Header />
           {children}

@@ -45,7 +45,7 @@ class DMathDB extends Dexie {
 
   constructor() {
     super('DMathDB');
-    
+
     this.version(1).stores({
       sessions: 'id, createdAt, updatedAt, algorithmName',
       graphs: 'id, sessionId, at, createdAt',
@@ -57,8 +57,7 @@ class DMathDB extends Dexie {
 
 export const db = new DMathDB();
 
-export async function migrateDatabase(): Promise<void> {
-}
+export async function migrateDatabase(): Promise<void> {}
 
 export function isIndexedDBAvailable(): boolean {
   return typeof window !== 'undefined' && 'indexedDB' in window;
@@ -75,13 +74,12 @@ export async function initDatabase(): Promise<void> {
     }
 
     await db.open();
-    
+
     await migrateDatabase();
-    
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Failed to initialize database:', error);
     throw error;
   }
 }
-

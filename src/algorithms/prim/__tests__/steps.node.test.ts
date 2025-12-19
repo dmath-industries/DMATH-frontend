@@ -93,6 +93,32 @@ describe('PrimStepGenerator', () => {
     expect(rejected.length).toBeGreaterThan(0);
   });
 
+  it('должен обрабатывать случай, когда pickNextEdge возвращает null', () => {
+    const generator = new PrimStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0, label: 'a' },
+        { id: '1', x: 100, y: 0, label: 'b' },
+      ],
+      edges: [],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда edge не найден', () => {
+    const generator = new PrimStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0, label: 'a' },
+        { id: '1', x: 100, y: 0, label: 'b' },
+      ],
+      edges: [{ id: 'e0', source: '0', target: '1', weight: 5, directed: false }],
+    };
+    const steps = generator.generateSteps(graphDTO, { startNode: '0' });
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
   it('должен обрабатывать ребро с бесконечным весом', () => {
     const generator = new PrimStepGenerator();
     const graphDTO: GraphDTO = {

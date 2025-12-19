@@ -584,7 +584,7 @@ describe('Applier', () => {
     it('должен корректно обрабатывать неизвестные типы шагов', () => {
       // Мокаем console.warn чтобы не засорять вывод
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       const unknownStep: any = {
         type: 'UNKNOWN_TYPE',
         id: 'step1',
@@ -594,7 +594,7 @@ describe('Applier', () => {
       const dirtyIds = applier.apply(unknownStep, model);
       expect(dirtyIds).toEqual([]);
       expect(consoleWarnSpy).toHaveBeenCalledWith('Unknown step type:', 'UNKNOWN_TYPE');
-      
+
       consoleWarnSpy.mockRestore();
     });
 
@@ -779,4 +779,3 @@ describe('Applier', () => {
     });
   });
 });
-

@@ -35,32 +35,26 @@ const uiSlice = createSlice({
     setViewport(state, action: PayloadAction<Partial<ViewportState>>) {
       state.viewport = { ...state.viewport, ...action.payload };
     },
-    
+
     setTheme(state, action: PayloadAction<'light' | 'dark'>) {
       state.theme = action.payload;
     },
-    
+
     selectAlgorithm(state, action: PayloadAction<string>) {
       state.selectedAlgorithm = action.payload;
     },
-    
+
     toggleSidebar(state) {
       state.sidebarOpen = !state.sidebarOpen;
     },
-    
+
     setSidebarOpen(state, action: PayloadAction<boolean>) {
       state.sidebarOpen = action.payload;
     },
   },
 });
 
-export const {
-  setViewport,
-  setTheme,
-  selectAlgorithm,
-  toggleSidebar,
-  setSidebarOpen,
-} = uiSlice.actions;
+export const { setViewport, setTheme, selectAlgorithm, toggleSidebar, setSidebarOpen } =
+  uiSlice.actions;
 
 export default uiSlice.reducer;
-

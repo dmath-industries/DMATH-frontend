@@ -1,96 +1,97 @@
-/**
- * Типы для Step-based представления алгоритмов
- * Каждый шаг описывает минимальную атомарную операцию над графом
- */
-
 import type { NodeDTO, EdgeDTO, ElementState } from './dto.types';
 
-/**
- * Базовый тип для всех шагов
- */
+export type ExplanationType =
+  | 'comparison'
+  | 'formula'
+  | 'matrix'
+  | 'selection'
+  | 'update'
+  | 'iteration'
+  | 'decision'
+  | 'path'
+  | 'general';
+
+export interface AlgorithmFinalResult {
+  title: string;
+  items: Array<{
+    label: string;
+    value: string;
+  }>;
+  summary?: string;
+}
+
+export interface StepExplanation {
+  type: ExplanationType;
+  text: string;
+  reason?: string;
+  formula?: string | string[];
+  currentPath?: string;
+  finalResult?: AlgorithmFinalResult;
+  context?: {
+    nodes?: string[];
+    edges?: string[];
+    values?: Record<string, number | string>;
+    matrix?: { row?: number; col?: number };
+  };
+}
+
 export interface BaseStep {
   id: string;
   timestamp: number;
   type: string;
-  description?: string; // опциональное текстовое описание для UI
+  description?: string;
+  explanation?: StepExplanation;
 }
 
-/**
- * Добавление узла
- */
 export interface AddNodeStep extends BaseStep {
   type: 'ADD_NODE';
   node: NodeDTO;
 }
 
-/**
- * Удаление узла
- */
 export interface RemoveNodeStep extends BaseStep {
   type: 'REMOVE_NODE';
   nodeId: string;
-  prev?: NodeDTO; // для revert
+  prev?: NodeDTO;
 }
 
-/**
- * Обновление атрибутов узла
- */
 export interface UpdateNodeStep extends BaseStep {
   type: 'UPDATE_NODE';
   nodeId: string;
   attrs: Partial<NodeDTO>;
-  prev?: Partial<NodeDTO>; // предыдущие значения для revert
+  prev?: Partial<NodeDTO>;
 }
 
-/**
- * Добавление ребра
- */
 export interface AddEdgeStep extends BaseStep {
   type: 'ADD_EDGE';
   edge: EdgeDTO;
 }
 
-/**
- * Удаление ребра
- */
 export interface RemoveEdgeStep extends BaseStep {
   type: 'REMOVE_EDGE';
   edgeId: string;
-  prev?: EdgeDTO; // для revert
+  prev?: EdgeDTO;
 }
 
-/**
- * Обновление атрибутов ребра
- */
 export interface UpdateEdgeStep extends BaseStep {
   type: 'UPDATE_EDGE';
   edgeId: string;
   attrs: Partial<EdgeDTO>;
-  prev?: Partial<EdgeDTO>; // предыдущие значения для revert
+  prev?: Partial<EdgeDTO>;
 }
 
-/**
- * Установка координат узла (для раскладок)
- */
 export interface SetCoordsStep extends BaseStep {
   type: 'SET_COORDS';
   nodeId: string;
   x: number;
   y: number;
-  prev?: { x: number; y: number }; // для revert
+  prev?: { x: number; y: number };
 }
 
-/**
- * Групповая операция (батч шагов)
- */
 export interface BatchStep extends BaseStep {
   type: 'BATCH';
   ops: Step[];
 }
 
-/**
- * Обновление состояния узла (для подсветки)
- */
 export interface HighlightNodeStep extends BaseStep {
   type: 'HIGHLIGHT_NODE';
   nodeId: string;
@@ -98,9 +99,6 @@ export interface HighlightNodeStep extends BaseStep {
   prev?: ElementState;
 }
 
-/**
- * Обновление состояния ребра (для подсветки)
- */
 export interface HighlightEdgeStep extends BaseStep {
   type: 'HIGHLIGHT_EDGE';
   edgeId: string;
@@ -108,9 +106,6 @@ export interface HighlightEdgeStep extends BaseStep {
   prev?: ElementState;
 }
 
-/**
- * Union type для всех шагов
- */
 export type Step =
   | AddNodeStep
   | RemoveNodeStep
@@ -123,8 +118,4 @@ export type Step =
   | HighlightNodeStep
   | HighlightEdgeStep;
 
-/**
- * Тип для StepType строк
- */
 export type StepType = Step['type'];
-

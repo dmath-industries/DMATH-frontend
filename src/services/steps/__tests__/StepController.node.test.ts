@@ -9,7 +9,6 @@ import { Applier } from '../Applier';
 import { Renderer } from '@/services/renderer/Renderer';
 import { Step, HighlightNodeStep } from '@/types';
 
-
 jest.mock('pixi.js', () => ({
   Application: jest.fn(),
   Container: jest.fn(),
@@ -22,7 +21,7 @@ class MockRenderer extends Renderer {
   renderAll = jest.fn();
   clear = jest.fn();
   destroy = jest.fn();
-  
+
   constructor() {
     super();
   }
@@ -108,28 +107,28 @@ describe('StepController', () => {
       const steps = createTestSteps();
       controller.setSteps(steps);
       controller.forward();
-      
+
       expect(controller.getCurrentIndex()).toBe(0);
 
       controller.setSteps([]);
-      
+
       expect(controller.getCurrentIndex()).toBe(-1);
       expect(controller.getTotalSteps()).toBe(0);
     });
 
     it('должен останавливать воспроизведение при установке новых шагов', () => {
       jest.useFakeTimers();
-      
+
       const steps = createTestSteps();
       controller.setSteps(steps);
       controller.play();
-      
+
       expect(controller.isPlaying()).toBe(true);
 
       controller.setSteps([]);
-      
+
       expect(controller.isPlaying()).toBe(false);
-      
+
       jest.useRealTimers();
     });
   });
@@ -173,7 +172,7 @@ describe('StepController', () => {
 
     it('не должен переходить за последний шаг', () => {
       controller.goToIndex(2);
-      
+
       controller.forward();
 
       expect(controller.getCurrentIndex()).toBe(2);
@@ -282,7 +281,7 @@ describe('StepController', () => {
 
     it('должен автоматически переходить к следующему шагу', () => {
       controller.play();
-      
+
       jest.advanceTimersByTime(1000);
       expect(controller.getCurrentIndex()).toBe(0);
 
@@ -298,7 +297,6 @@ describe('StepController', () => {
       expect(controller.isPlaying()).toBe(false);
     });
 
-
     it('должен начинать сначала если в конце', () => {
       controller.goToIndex(2);
       controller.play();
@@ -312,7 +310,7 @@ describe('StepController', () => {
       controller.play();
 
       jest.advanceTimersByTime(1000);
-      
+
       expect(controller.getCurrentIndex()).toBe(0);
     });
   });
@@ -359,7 +357,7 @@ describe('StepController', () => {
 
     it('должен перезапускать плеер с новой скоростью', () => {
       controller.play();
-      
+
       jest.advanceTimersByTime(1000);
       expect(controller.getCurrentIndex()).toBe(0);
 
@@ -384,13 +382,13 @@ describe('StepController', () => {
 
     it('должен останавливать воспроизведение', () => {
       jest.useFakeTimers();
-      
+
       controller.play();
       expect(controller.isPlaying()).toBe(true);
 
       controller.reset();
       expect(controller.isPlaying()).toBe(false);
-      
+
       jest.useRealTimers();
     });
   });
@@ -408,12 +406,12 @@ describe('StepController', () => {
 
     it('должен останавливать воспроизведение', () => {
       jest.useFakeTimers();
-      
+
       controller.play();
       controller.goToEnd();
 
       expect(controller.isPlaying()).toBe(false);
-      
+
       jest.useRealTimers();
     });
   });
@@ -425,26 +423,26 @@ describe('StepController', () => {
 
     it('должен очищать все ресурсы', () => {
       jest.useFakeTimers();
-      
+
       controller.play();
       controller.destroy();
 
       expect(controller.isPlaying()).toBe(false);
       expect(controller.getCurrentIndex()).toBe(-1);
       expect(controller.getTotalSteps()).toBe(0);
-      
+
       jest.useRealTimers();
     });
 
     it('должен останавливать автовоспроизведение', () => {
       jest.useFakeTimers();
-      
+
       controller.play();
       controller.destroy();
 
       jest.advanceTimersByTime(5000);
       expect(controller.getCurrentIndex()).toBe(-1);
-      
+
       jest.useRealTimers();
     });
   });
@@ -465,36 +463,36 @@ describe('StepController', () => {
 
     it('должен корректно обрабатывать goToIndex -> play', () => {
       jest.useFakeTimers();
-      
+
       controller.goToIndex(1);
       controller.play();
 
       jest.advanceTimersByTime(1000);
       expect(controller.getCurrentIndex()).toBe(2);
-      
+
       jest.useRealTimers();
     });
 
     it('должен корректно обрабатывать pause -> goToIndex -> play', () => {
       jest.useFakeTimers();
-      
+
       controller.play();
       jest.advanceTimersByTime(1000);
-      
+
       controller.pause();
       controller.goToIndex(-1);
       controller.play();
 
       jest.advanceTimersByTime(1000);
       expect(controller.getCurrentIndex()).toBe(0);
-      
+
       jest.useRealTimers();
     });
 
     it('должен вызывать callbacks в правильной последовательности', () => {
       controller.forward();
       controller.forward();
-      
+
       expect(onIndexChange).toHaveBeenCalledTimes(2);
       expect(onIndexChange).toHaveBeenNthCalledWith(1, 0);
       expect(onIndexChange).toHaveBeenNthCalledWith(2, 1);
@@ -549,5 +547,61 @@ describe('StepController', () => {
       expect(() => controller.backward()).not.toThrow();
     });
   });
-});
 
+  describe('getStepByIndex', () => {
+    it('должен возвращать null для отрицательного индекса', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(-1)).toBeNull();
+    });
+
+    it('должен возвращать null для индекса больше длины', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(100)).toBeNull();
+    });
+
+    it('должен возвращать null для индекса равного длине', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(steps.length)).toBeNull();
+    });
+
+    it('должен возвращать null для undefined шага', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      expect(controller.getStepByIndex(0)).not.toBeNull();
+    });
+  });
+
+  describe('forward edge cases', () => {
+    it('должен обрабатывать случай, когда step undefined', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      controller.goToIndex(0);
+      controller['steps'] = [undefined as any, ...steps.slice(1)];
+      controller['currentIndex'] = -1;
+      controller.forward();
+      expect(controller.getCurrentIndex()).toBe(-1);
+    });
+  });
+
+  describe('tick edge cases', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('должен останавливать воспроизведение, если playing стал false', () => {
+      const steps = createTestSteps();
+      controller.setSteps(steps);
+      controller.play();
+      controller['playing'] = false;
+      jest.advanceTimersByTime(100);
+      expect(controller.isPlaying()).toBe(false);
+    });
+  });
+});

@@ -28,7 +28,7 @@ export class LayoutService {
    */
   async runFA2(model: GraphModel, options: LayoutOptions = {}): Promise<void> {
     const graph = model.getGraph();
-    
+
     // Проверяем, есть ли узлы
     if (graph.order === 0) {
       console.warn('Graph is empty, nothing to layout');
@@ -82,7 +82,7 @@ export class LayoutService {
       const angle = (2 * Math.PI * i) / n;
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
-      
+
       model.updateNode(nodeId, { x, y });
     });
   }
@@ -90,13 +90,13 @@ export class LayoutService {
   /**
    * Применить случайную раскладку
    */
-  randomLayout(model: GraphModel, width: number = 3000, height: number = 3000): void {  
+  randomLayout(model: GraphModel, width: number = 3000, height: number = 3000): void {
     const graph = model.getGraph();
-    
-    graph.forEachNode((nodeId) => {
+
+    graph.forEachNode(nodeId => {
       const x = Math.random() * width - width / 2;
       const y = Math.random() * height - height / 2;
-      
+
       model.updateNode(nodeId, { x, y });
     });
   }
@@ -112,15 +112,14 @@ export class LayoutService {
     if (n === 0) return;
 
     const cols = Math.ceil(Math.sqrt(n));
-    
+
     nodes.forEach((nodeId, i) => {
       const row = Math.floor(i / cols);
       const col = i % cols;
       const x = col * spacing - (cols * spacing) / 2;
       const y = row * spacing - (Math.ceil(n / cols) * spacing) / 2;
-      
+
       model.updateNode(nodeId, { x, y });
     });
   }
 }
-

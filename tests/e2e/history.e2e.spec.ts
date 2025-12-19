@@ -28,7 +28,7 @@ test.describe('Страница истории', () => {
 
   test('должна отображать сообщение о пустой истории если сессий нет', async ({ page }) => {
     await page.evaluate(() => {
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const request = indexedDB.deleteDatabase('SessionsDB');
         request.onsuccess = () => resolve();
         request.onerror = () => resolve();
@@ -46,16 +46,16 @@ test.describe('Страница истории', () => {
 
   test('должна отображать индикатор загрузки', async ({ page }) => {
     await page.goto('/history');
-    
+
     // Loading indicator may appear briefly, so we check if spinner or loading text exists
     const spinner = page.locator('.animate-spin').first();
     const loadingText = page.getByText(/загрузка/i).first();
-    
+
     // Check if either the spinner or loading text appears (at least one should exist)
     // Since loading is fast, we check if at least one exists or wait briefly
     const spinnerCount = await spinner.count();
     const textCount = await loadingText.count();
-    
+
     // The test passes if either indicator exists (loading may be too fast to catch)
     if (spinnerCount === 0 && textCount === 0) {
       // If neither exists, it might have loaded too fast, which is acceptable
@@ -64,21 +64,25 @@ test.describe('Страница истории', () => {
     } else {
       // If loading indicator exists, verify it's visible
       if (spinnerCount > 0) {
-        await expect(spinner).toBeVisible({ timeout: 1000 }).catch(() => {
-          // Loading might have finished, which is fine
-        });
+        await expect(spinner)
+          .toBeVisible({ timeout: 1000 })
+          .catch(() => {
+            // Loading might have finished, which is fine
+          });
       }
       if (textCount > 0) {
-        await expect(loadingText).toBeVisible({ timeout: 1000 }).catch(() => {
-          // Loading might have finished, which is fine
-        });
+        await expect(loadingText)
+          .toBeVisible({ timeout: 1000 })
+          .catch(() => {
+            // Loading might have finished, which is fine
+          });
       }
     }
   });
 
   test('должна иметь ссылку на страницу алгоритмов если история пуста', async ({ page }) => {
     await page.evaluate(() => {
-      return new Promise<void>((resolve) => {
+      return new Promise<void>(resolve => {
         const request = indexedDB.deleteDatabase('SessionsDB');
         request.onsuccess = () => resolve();
         request.onerror = () => resolve();
@@ -91,8 +95,8 @@ test.describe('Страница истории', () => {
     await page.waitForLoadState('networkidle');
 
     const algorithmsLink = page.getByRole('link', { name: /перейти к алгоритмам/i });
-    
-    if (await algorithmsLink.count() > 0) {
+
+    if ((await algorithmsLink.count()) > 0) {
       await expect(algorithmsLink).toBeVisible();
       await expect(algorithmsLink).toHaveAttribute('href', '/algorithms');
     }
@@ -101,9 +105,9 @@ test.describe('Страница истории', () => {
   test.describe('Со сохранёнными сессиями', () => {
     test.beforeEach(async ({ page }) => {
       await page.evaluate(() => {
-        return new Promise<void>(async (resolve) => {
+        return new Promise<void>(async resolve => {
           const dbRequest = indexedDB.open('SessionsDB', 1);
-          
+
           dbRequest.onupgradeneeded = (event: IDBVersionChangeEvent) => {
             const db = (event.target as IDBOpenDBRequest).result;
             if (!db.objectStoreNames.contains('sessions')) {
@@ -118,7 +122,7 @@ test.describe('Страница истории', () => {
             const db = (event.target as IDBOpenDBRequest).result;
             const tx = db.transaction('sessions', 'readwrite');
             const store = tx.objectStore('sessions');
-            
+
             const testSession = {
               id: 'test-session-1',
               algorithmName: 'roberts-flores',
@@ -127,9 +131,7 @@ test.describe('Страница истории', () => {
                   { id: 'a', x: 0, y: 0 },
                   { id: 'b', x: 100, y: 100 },
                 ],
-                edges: [
-                  { id: 'e1', source: 'a', target: 'b' },
-                ],
+                edges: [{ id: 'e1', source: 'a', target: 'b' }],
               },
               steps: [],
               createdAt: Date.now() - 86400000,
@@ -141,7 +143,7 @@ test.describe('Страница истории', () => {
             };
 
             store.add(testSession);
-            
+
             tx.oncomplete = () => {
               db.close();
               resolve();
@@ -156,49 +158,47 @@ test.describe('Страница истории', () => {
       await page.waitForLoadState('networkidle');
     });
 
-
     test('должна иметь кнопку открытия сессии', async ({ page }) => {
       const openButton = page.getByRole('button', { name: /открыть|open/i }).first();
-      
-      if (await openButton.count() > 0) {
+
+      if ((await openButton.count()) > 0) {
         await expect(openButton).toBeVisible();
       }
     });
 
     test('должна иметь кнопку удаления сессии', async ({ page }) => {
       const deleteButton = page.getByRole('button', { name: /удалить|delete/i }).first();
-      
-      if (await deleteButton.count() > 0) {
+
+      if ((await deleteButton.count()) > 0) {
         await expect(deleteButton).toBeVisible();
       }
     });
 
-
     test('должна подтверждать удаление сессии', async ({ page }) => {
-      page.on('dialog', async (dialog) => {
+      page.on('dialog', async dialog => {
         expect(dialog.type()).toBe('confirm');
         expect(dialog.message()).toContain('удалить');
         await dialog.dismiss();
       });
 
       const deleteButton = page.getByRole('button', { name: /удалить|delete/i }).first();
-      
-      if (await deleteButton.count() > 0) {
+
+      if ((await deleteButton.count()) > 0) {
         await deleteButton.click();
       }
     });
 
     test('должна удалять сессию после подтверждения', async ({ page }) => {
-      page.on('dialog', async (dialog) => {
+      page.on('dialog', async dialog => {
         await dialog.accept();
       });
 
       const deleteButton = page.getByRole('button', { name: /удалить|delete/i }).first();
-      
-      if (await deleteButton.count() > 0) {
+
+      if ((await deleteButton.count()) > 0) {
         await deleteButton.click();
-        
-          await page.waitForTimeout(1000);
+
+        await page.waitForTimeout(1000);
       }
     });
   });
@@ -219,6 +219,4 @@ test.describe('Страница истории', () => {
       await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
     });
   });
-
 });
-

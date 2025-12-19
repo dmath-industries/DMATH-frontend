@@ -3,30 +3,15 @@
  */
 
 // Element types
-export type {
-  IBtn,
-  IAlgorithmsItem,
-  IHistory,
-} from './elements.types';
+export type { IBtn, IAlgorithmsItem, IHistory } from './elements.types';
 
 // DTO types
-export type {
-  NodeDTO,
-  EdgeDTO,
-  GraphDTO,
-  ElementState,
-} from './dto.types';
+export type { NodeDTO, EdgeDTO, GraphDTO, ElementState } from './dto.types';
 
 // Graph types
-export type {
-  NodeAttrs,
-  EdgeAttrs,
-} from './graph.types';
+export type { NodeAttrs, EdgeAttrs } from './graph.types';
 
-export {
-  DEFAULT_NODE_ATTRS,
-  DEFAULT_EDGE_ATTRS,
-} from './graph.types';
+export { DEFAULT_NODE_ATTRS, DEFAULT_EDGE_ATTRS } from './graph.types';
 
 // Step types
 export type {
@@ -43,6 +28,8 @@ export type {
   HighlightEdgeStep,
   Step,
   StepType,
+  ExplanationType,
+  StepExplanation,
 } from './step.types';
 
 // Worker types
@@ -60,4 +47,3 @@ export type {
   ProgressMessage,
   WorkerMessages,
 } from './worker.types';
-

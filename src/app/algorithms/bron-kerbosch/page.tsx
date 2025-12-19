@@ -5,16 +5,44 @@
  * Страница визуализации алгоритма Брона-Кербоша
  */
 
-import { Box, Paper, Typography, Alert } from '@mui/material';
+import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
+import { getAlgorithmConfig } from '@/algorithms';
+import { Alert } from '@/components/elements';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
+import { useState } from 'react';
+
+const algorithmConfig = getAlgorithmConfig('bron-kerbosch');
 
 /**
  * Контент страницы алгоритма Брона-Кербоша
  */
 function BronKerboschContent() {
   const { loadGraph } = useAlgorithmLayout();
+  const [alertState, setAlertState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: 'info' | 'warning' | 'error' | 'success';
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    variant: 'info' | 'warning' | 'error' | 'success' = 'error'
+  ) => {
+    setAlertState({ open: true, title, message, variant });
+  };
+
+  const closeAlert = () => {
+    setAlertState(prev => ({ ...prev, open: false }));
+  };
 
   /**
    * Обработать ввод матрицы смежности и создать граф
@@ -22,7 +50,7 @@ function BronKerboschContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
@@ -31,14 +59,14 @@ function BronKerboschContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        alert('Матрица пуста!');
+        showAlert('Ошибка', 'Матрица пуста!', 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          alert('Матрица должна быть квадратной!');
+          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
           return;
         }
       }
@@ -77,8 +105,10 @@ function BronKerboschContent() {
           if (row[j] === 1) {
             // Проверяем симметричность (для неориентированного графа)
             if (matrix[j]?.[i] !== 1) {
-              alert(
-                `Граф должен быть неориентированным! Проверьте симметричность матрицы (элемент [${i}][${j}] и [${j}][${i}]).`
+              showAlert(
+                'Ошибка',
+                `Граф должен быть неориентированным! Проверьте симметричность матрицы (элемент [${i}][${j}] и [${j}][${i}]).`,
+                'error'
               );
               return;
             }
@@ -101,7 +131,7 @@ function BronKerboschContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      alert('Ошибка при парсинге матрицы. Проверьте формат!');
+      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
     }
   };
 
@@ -113,7 +143,8 @@ function BronKerboschContent() {
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
-          placeholder="Введите матрицу смежности неориентированного графа построчно, используя запятую как разделитель между элементами"
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
         />
       </Paper>
 
@@ -136,12 +167,12 @@ function BronKerboschContent() {
             <strong>P</strong> (кандидаты для добавления), и <strong>X</strong> (исключённые
             вершины).
           </Typography>
-          <Alert severity="info" sx={{ mt: 1 }}>
+          <MuiAlert severity="info" sx={{ mt: 1 }}>
             <Typography variant="body2">
               💡 Совет: Алгоритм работает только с неориентированными графами. Матрица должна быть
               симметричной.
             </Typography>
-          </Alert>
+          </MuiAlert>
         </Box>
       </Paper>
 
@@ -174,6 +205,27 @@ function BronKerboschContent() {
           </Typography>
         </Box>
       </Paper>
+
+      <Alert
+        open={alertState.open}
+        onClose={closeAlert}
+        title={alertState.title}
+        variant={alertState.variant}
+        actions={
+          <Button
+            onClick={closeAlert}
+            variant="contained"
+            sx={{
+              textTransform: 'none',
+              px: 4,
+            }}
+          >
+            ОК
+          </Button>
+        }
+      >
+        {alertState.message}
+      </Alert>
     </>
   );
 }

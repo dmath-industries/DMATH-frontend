@@ -7,21 +7,24 @@ import type { GraphDTO, HighlightEdgeStep, Step } from '@/types';
 
 function buildSquareCostGraph(): GraphDTO {
   const nodes = [
-    { id: '0', x: 0, y: 0, label: 'a' },
-    { id: '1', x: 100, y: 0, label: 'b' },
-    { id: '2', x: 50, y: 100, label: 'c' },
+    { id: 'source_0', x: 0, y: 0, label: 'a' },
+    { id: 'source_1', x: 100, y: 0, label: 'b' },
+    { id: 'source_2', x: 200, y: 0, label: 'c' },
+    { id: 'target_0', x: 0, y: 100, label: 'A' },
+    { id: 'target_1', x: 100, y: 100, label: 'B' },
+    { id: 'target_2', x: 200, y: 100, label: 'C' },
   ];
 
   const edges = [
-    { id: 'e0', source: '0', target: '0', weight: 4 },
-    { id: 'e1', source: '0', target: '1', weight: 1 },
-    { id: 'e2', source: '0', target: '2', weight: 3 },
-    { id: 'e3', source: '1', target: '0', weight: 2 },
-    { id: 'e4', source: '1', target: '1', weight: 0 },
-    { id: 'e5', source: '1', target: '2', weight: 5 },
-    { id: 'e6', source: '2', target: '0', weight: 3 },
-    { id: 'e7', source: '2', target: '1', weight: 2 },
-    { id: 'e8', source: '2', target: '2', weight: 2 },
+    { id: 'e0', source: 'source_0', target: 'target_0', weight: 4 },
+    { id: 'e1', source: 'source_0', target: 'target_1', weight: 1 },
+    { id: 'e2', source: 'source_0', target: 'target_2', weight: 3 },
+    { id: 'e3', source: 'source_1', target: 'target_0', weight: 2 },
+    { id: 'e4', source: 'source_1', target: 'target_1', weight: 0 },
+    { id: 'e5', source: 'source_1', target: 'target_2', weight: 5 },
+    { id: 'e6', source: 'source_2', target: 'target_0', weight: 3 },
+    { id: 'e7', source: 'source_2', target: 'target_1', weight: 2 },
+    { id: 'e8', source: 'source_2', target: 'target_2', weight: 2 },
   ];
 
   return { nodes, edges };
@@ -56,14 +59,25 @@ describe('HungarianStepGenerator', () => {
     const generator = new HungarianStepGenerator();
     const graphDTO: GraphDTO = {
       nodes: [
-        { id: '0', x: 0, y: 0 },
-        { id: '1', x: 1, y: 0 },
+        { id: 'source_0', x: 0, y: 0 },
+        { id: 'target_0', x: 1, y: 0 },
       ],
-      edges: [{ id: 'e0', source: '0', target: '0', weight: 2, directed: true }],
+      edges: [
+        {
+          id: 'e0',
+          source: 'source_0',
+          target: 'target_0',
+          weight: Number.POSITIVE_INFINITY,
+          directed: true,
+        },
+      ],
     };
 
     const steps = generator.generateSteps(graphDTO, {});
-    expect(steps).toEqual([]);
+    const pathEdges = steps.filter(
+      (s: Step) => s.type === 'HIGHLIGHT_EDGE' && (s as HighlightEdgeStep).state === 'path'
+    );
+    expect(pathEdges.length).toBe(0);
   });
 
   it('должен поддерживать числовые string-идентификаторы', () => {

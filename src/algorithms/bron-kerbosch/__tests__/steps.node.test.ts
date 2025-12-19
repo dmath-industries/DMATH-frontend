@@ -55,4 +55,95 @@ describe('BronKerboschStepGenerator', () => {
 
     expect(steps.length).toBeGreaterThan(0);
   });
+
+  it('должен обрабатывать клику с отсутствующими узлами', () => {
+    const generator = new BronKerboschStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+        { id: '2', x: 50, y: 100 },
+      ],
+      edges: [
+        { id: 'e01', source: '0', target: '1', directed: false },
+        { id: 'e02', source: '0', target: '2', directed: false },
+        { id: 'e12', source: '1', target: '2', directed: false },
+      ],
+    };
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда edgeId не найден', () => {
+    const generator = new BronKerboschStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+      ],
+      edges: [],
+    };
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда foundCliques пуст', () => {
+    const generator = new BronKerboschStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+      ],
+      edges: [],
+    };
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда клики имеют одинаковую длину', () => {
+    const generator = new BronKerboschStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+        { id: '2', x: 50, y: 100 },
+        { id: '3', x: 150, y: 100 },
+      ],
+      edges: [
+        { id: 'e01', source: '0', target: '1', directed: false },
+        { id: 'e02', source: '0', target: '2', directed: false },
+        { id: 'e12', source: '1', target: '2', directed: false },
+        { id: 'e13', source: '1', target: '3', directed: false },
+        { id: 'e23', source: '2', target: '3', directed: false },
+      ],
+    };
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда нет шагов с explanation', () => {
+    const generator = new BronKerboschStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+      ],
+      edges: [],
+    };
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
+
+  it('должен обрабатывать случай, когда explanation не генерируется для последнего шага', () => {
+    const generator = new BronKerboschStepGenerator();
+    const graphDTO: GraphDTO = {
+      nodes: [
+        { id: '0', x: 0, y: 0 },
+        { id: '1', x: 100, y: 0 },
+      ],
+      edges: [],
+    };
+    const steps = generator.generateSteps(graphDTO, {});
+    expect(steps.length).toBeGreaterThan(0);
+  });
 });

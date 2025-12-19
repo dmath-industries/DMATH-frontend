@@ -13,7 +13,7 @@ export const store = configureStore({
     graph: graphReducer,
     ui: uiReducer,
   },
-  middleware: (getDefaultMiddleware) =>
+  middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
         // Entity adapters already handle serialization correctly
@@ -25,4 +25,3 @@ export const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-

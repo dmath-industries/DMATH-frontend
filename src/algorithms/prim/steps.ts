@@ -1,10 +1,5 @@
-/**
- * Prim Algorithm — Step-based версия
- * Генерирует поток шагов для построения минимального остовного дерева
- */
-
 import Graph from 'graphology';
-// eslint-disable-next-line boundaries/element-types
+
 import { GraphModel } from '@/services/graph';
 import type {
   AlgorithmParams,
@@ -14,6 +9,8 @@ import type {
   HighlightNodeStep,
   Step,
 } from '@/types';
+import { explanationGeneratorRegistry, type AlgorithmContext } from '@/services/explanations';
+import '@/services/explanations/registry';
 
 type CandidateEdge = {
   edgeId: string;
@@ -41,13 +38,12 @@ export class PrimStepGenerator {
   private stepCounter = 0;
   private graphModel!: GraphModel;
   private graph!: Graph;
+  private mstEdges: Array<{ from: string; to: string; weight: number }> = [];
 
-  /**
-   * Генерация шагов алгоритма Прима
-   */
   generateSteps(graphDTO: GraphDTO, params: AlgorithmParams): Step[] {
     this.steps = [];
     this.stepCounter = 0;
+    this.mstEdges = [];
 
     this.graphModel = new GraphModel(false);
     this.graphModel.fromDTO(graphDTO);
@@ -90,7 +86,8 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edgeId,
         'active',
-        `Выбрано ребро ${this.formatEdgeLabel(from, to)} с весом ${this.formatWeight(weight)}`
+        `Выбрано ребро ${this.formatEdgeLabel(from, to)} с весом ${this.formatWeight(weight)}`,
+        { from, to, weight }
       );
 
       this.addHighlightNodeStep(
@@ -101,10 +98,13 @@ export class PrimStepGenerator {
 
       visited.add(nextNode);
 
+      this.mstEdges.push({ from, to, weight });
+
       this.addHighlightEdgeStep(
         edgeId,
         'path',
-        `Ребро ${this.formatEdgeLabel(from, to)} зафиксировано в MST`
+        `Ребро ${this.formatEdgeLabel(from, to)} зафиксировано в MST`,
+        { from, to, weight }
       );
       this.addHighlightNodeStep(nextNode, 'path');
 
@@ -119,12 +119,11 @@ export class PrimStepGenerator {
       );
     }
 
+    this.addFinalResultStep();
+
     return this.steps;
   }
 
-  /**
-   * Добавить ребра-кандидаты, ведущие к непосещённым вершинам
-   */
   private enqueueCandidateEdges(
     nodeId: string,
     visited: Set<string>,
@@ -147,14 +146,12 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edgeId,
         'candidate',
-        `Ребро ${this.formatEdgeLabel(nodeId, neighborId)} кандидат с весом ${this.formatWeight(weight)}`
+        `Ребро ${this.formatEdgeLabel(nodeId, neighborId)} кандидат с весом ${this.formatWeight(weight)}`,
+        { from: nodeId, to: neighborId, weight }
       );
     }
   }
 
-  /**
-   * Выбрать следующее минимальное ребро, соединяющее остов с новой вершиной
-   */
   private pickNextEdge(edgeQueue: CandidateEdge[], visited: Set<string>): CandidateEdge | null {
     edgeQueue.sort((a, b) => a.weight - b.weight);
 
@@ -174,16 +171,14 @@ export class PrimStepGenerator {
       this.addHighlightEdgeStep(
         edge.edgeId,
         'rejected',
-        'Ребро больше не расширяет остов и пропускается'
+        'Ребро больше не расширяет остов и пропускается',
+        { from: edge.from, to: edge.to, weight: edge.weight }
       );
     }
 
     return null;
   }
 
-  /**
-   * Получить вес ребра
-   */
   private getEdgeWeight(edgeId: string): number {
     const attrs = this.graph.getEdgeAttributes(edgeId) ?? {};
     const rawWeight = (attrs as { weight?: unknown }).weight;
@@ -191,17 +186,11 @@ export class PrimStepGenerator {
     return Number.isFinite(weight) ? weight : Infinity;
   }
 
-  /**
-   * Получить ID ребра между двумя вершинами
-   */
   private getEdgeId(from: string, to: string): string | null {
     const edgeKey = this.graph.edge(from, to);
     return typeof edgeKey === 'string' ? edgeKey : null;
   }
 
-  /**
-   * Добавить шаг подсветки узла
-   */
   private addHighlightNodeStep(nodeId: string, state: ElementState, description?: string): void {
     const step: HighlightNodeStep = {
       id: `step_${this.stepCounter++}`,
@@ -211,13 +200,21 @@ export class PrimStepGenerator {
       state,
       description,
     };
+
+    const explanation = explanationGeneratorRegistry.generate(step, 'prim');
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     this.steps.push(step);
   }
 
-  /**
-   * Добавить шаг подсветки ребра
-   */
-  private addHighlightEdgeStep(edgeId: string, state: ElementState, description?: string): void {
+  private addHighlightEdgeStep(
+    edgeId: string,
+    state: ElementState,
+    description?: string,
+    context?: { from?: string; to?: string; weight?: number }
+  ): void {
     const step: HighlightEdgeStep = {
       id: `step_${this.stepCounter++}`,
       timestamp: Date.now(),
@@ -226,6 +223,17 @@ export class PrimStepGenerator {
       state,
       description,
     };
+
+    const algorithmContext: AlgorithmContext = {
+      edgeFrom: context?.from,
+      edgeTo: context?.to,
+      edgeWeight: context?.weight,
+    };
+    const explanation = explanationGeneratorRegistry.generate(step, 'prim', algorithmContext);
+    if (explanation) {
+      step.explanation = explanation;
+    }
+
     this.steps.push(step);
   }
 
@@ -235,5 +243,31 @@ export class PrimStepGenerator {
 
   private formatWeight(weight: number): string {
     return Number.isFinite(weight) ? weight.toString() : '∞';
+  }
+
+  private addFinalResultStep(): void {
+    const items: Array<{ label: string; value: string }> = [];
+    let totalWeight = 0;
+
+    this.mstEdges.forEach((edge, index) => {
+      const edgeLabel = `${this.formatEdgeLabel(edge.from, edge.to)}`;
+      items.push({
+        label: `Ребро ${index + 1}`,
+        value: `${edgeLabel} (вес: ${this.formatWeight(edge.weight)})`,
+      });
+      totalWeight += edge.weight;
+    });
+
+    for (let i = this.steps.length - 1; i >= 0; i--) {
+      const step = this.steps[i];
+      if (step && step.explanation) {
+        step.explanation.finalResult = {
+          title: 'Итоговый результат: минимальное остовное дерево',
+          items,
+          summary: `Общий вес MST: ${this.formatWeight(totalWeight)}`,
+        };
+        break;
+      }
+    }
   }
 }

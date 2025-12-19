@@ -41,16 +41,15 @@ export class WorkerClient {
     }
 
     // Создаём Worker из src/workers/ (правильный подход для Next.js)
-    this.worker = new Worker(
-      new URL('../workers/algorithm.worker.ts', import.meta.url),
-      { type: 'module' }
-    );
+    this.worker = new Worker(new URL('../workers/algorithm.worker.ts', import.meta.url), {
+      type: 'module',
+    });
 
     this.worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
       this.handleMessage(event.data);
     };
 
-    this.worker.onerror = (error) => {
+    this.worker.onerror = error => {
       console.error('Worker error:', error);
       this.handlers.onError?.(`Worker error: ${error.message}`, this.currentRequestId || undefined);
       this.reset();
@@ -67,11 +66,7 @@ export class WorkerClient {
   /**
    * Запустить алгоритм
    */
-  runAlgorithm(
-    name: string,
-    graphDTO: GraphDTO,
-    params: AlgorithmParams = {}
-  ): string {
+  runAlgorithm(name: string, graphDTO: GraphDTO, params: AlgorithmParams = {}): string {
     if (!this.worker) {
       this.init();
     }
@@ -152,18 +147,14 @@ export class WorkerClient {
     switch (message.type) {
       case 'STEP_CHUNK': {
         const stepMessage = message as StepChunkMessage;
-        
+
         // Проверяем, что это сообщение для текущего запроса
         if (this.currentRequestId && stepMessage.chunkId) {
           this.pendingChunks.add(stepMessage.chunkId);
-          
+
           // Вызываем обработчик
-          this.handlers.onStepChunk?.(
-            stepMessage.payload,
-            stepMessage.chunkId,
-            stepMessage.isLast
-          );
-          
+          this.handlers.onStepChunk?.(stepMessage.payload, stepMessage.chunkId, stepMessage.isLast);
+
           // Отправляем ACK после обработки
           this.sendChunkAck(stepMessage.chunkId);
         }
@@ -244,13 +235,12 @@ export class WorkerClient {
     if (this.currentRequestId) {
       this.cancel();
     }
-    
+
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;
     }
-    
+
     this.reset();
   }
 }
-
