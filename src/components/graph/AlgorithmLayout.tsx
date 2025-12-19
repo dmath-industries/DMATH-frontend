@@ -782,9 +782,9 @@ export function AlgorithmLayout({
   // Синхронизация currentStep при инициализации или изменении индекса извне
   useEffect(() => {
     if (!controllerRef.current) return;
-    const step = getStepWithExplanation(controllerRef.current, currentIndex);
+    const step = getStepWithExplanation(controllerRef.current, currentIndex, totalSteps);
     setCurrentStep(step);
-  }, [currentIndex, getStepWithExplanation]);
+  }, [currentIndex, totalSteps, getStepWithExplanation]);
 
   const contextValue: AlgorithmLayoutContextType = {
     loadGraph,
