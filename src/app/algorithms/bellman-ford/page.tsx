@@ -163,33 +163,6 @@ function BellmanFordContent() {
         </Box>
       </Paper>
 
-      <Paper
-        sx={{
-          p: { xs: 2, sm: 3 },
-          background:
-            'linear-gradient(to bottom right, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1))',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'info.light' }}>
-          Как использовать
-        </Typography>
-        <Box component="ol" sx={{ pl: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography component="li" variant="body2">
-            Введите квадратную матрицу весов (числа — веса рёбер, 0 или 'inf' — отсутствие ребра)
-          </Typography>
-          <Typography component="li" variant="body2">
-            Нажмите "Отправить" чтобы построить граф
-          </Typography>
-          <Typography component="li" variant="body2">
-            Нажмите "Запустить" чтобы выполнить алгоритм (начнётся с первой вершины)
-          </Typography>
-          <Typography component="li" variant="body2">
-            Просмотрите результаты: кратчайшие расстояния и пути от стартовой вершины
-          </Typography>
-        </Box>
-      </Paper>
-
       <Alert
         open={alertState.open}
         onClose={closeAlert}
