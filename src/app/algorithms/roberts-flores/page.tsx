@@ -11,7 +11,7 @@ import { GraphMatrixInput } from '@/components/input';
 import { getAlgorithmConfig } from '@/algorithms';
 import { Alert } from '@/components/elements';
 import type { GraphDTO, NodeDTO, EdgeDTO } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const algorithmConfig = getAlgorithmConfig('roberts-flores');
 
@@ -19,7 +19,7 @@ const algorithmConfig = getAlgorithmConfig('roberts-flores');
  * Контент страницы алгоритма Робертса-Флореса
  */
 function RobertsFloresContent() {
-  const { loadGraph } = useAlgorithmLayout();
+  const { loadGraph, registerMatrixHandler } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
     title: string;
@@ -134,19 +134,16 @@ function RobertsFloresContent() {
     }
   };
 
+  // Регистрируем обработчик матрицы для панели управления
+  useEffect(() => {
+    registerMatrixHandler(handleMatrixSubmit, {
+      placeholder: algorithmConfig?.placeholder,
+      exampleMatrix: algorithmConfig?.defaultMatrix,
+    });
+  }, [registerMatrixHandler]);
+
   return (
     <>
-      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы смежности
-        </Typography>
-        <GraphMatrixInput
-          onSubmit={handleMatrixSubmit}
-          placeholder={algorithmConfig?.placeholder}
-          exampleMatrix={algorithmConfig?.defaultMatrix}
-        />
-      </Paper>
-
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           О алгоритме
@@ -166,6 +163,17 @@ function RobertsFloresContent() {
             </Typography>
           </MuiAlert>
         </Box>
+      </Paper>
+
+      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          Ввод матрицы смежности
+        </Typography>
+        <GraphMatrixInput
+          onSubmit={handleMatrixSubmit}
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
+        />
       </Paper>
 
       <Alert
