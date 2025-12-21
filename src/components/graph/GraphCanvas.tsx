@@ -375,7 +375,14 @@ export function GraphCanvas({
               }}
             />
 
-            <div className="absolute top-4 left-0 right-0 flex justify-between items-center px-4 z-[100] pointer-events-none">
+            <div
+              className="absolute left-0 right-0 flex justify-between items-center z-[100] pointer-events-none"
+              style={{
+                top: 'clamp(8px, 1.5vw, 24px)',
+                paddingLeft: 'clamp(8px, 1.5vw, 24px)',
+                paddingRight: 'clamp(8px, 1.5vw, 24px)',
+              }}
+            >
               {isExpandedReady && model.nodeCount > 0 && (
                 <button
                   onClick={handleFitToGraph}
