@@ -364,6 +364,14 @@ export function GraphCanvas({
             }}
             onClick={e => e.stopPropagation()}
           >
+            <button
+              onClick={handleCloseExpanded}
+              className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-[100]"
+              title="Закрыть"
+            >
+              <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+            </button>
+
             {!isExpandedReady && (
               <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
                 <div className="flex flex-col items-center gap-3">
@@ -382,14 +390,6 @@ export function GraphCanvas({
                 pointerEvents: 'auto',
               }}
             />
-
-            <button
-              onClick={handleCloseExpanded}
-              className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-20"
-              title="Закрыть"
-            >
-              <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
-            </button>
 
             {isExpandedReady && model.nodeCount > 0 && (
               <button
