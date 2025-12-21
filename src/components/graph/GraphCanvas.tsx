@@ -31,10 +31,7 @@ export function GraphCanvas({
   const [isExpandedReady, setIsExpandedReady] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [expandedDimensions, setExpandedDimensions] = useState({
-    width: width * 1.5,
-    height: height * 1.5,
-  });
+  const [expandedDimensions, setExpandedDimensions] = useState({ width: 0, height: 0 });
   const initRef = useRef(false);
   const expandedInitRef = useRef(false);
 
@@ -225,6 +222,8 @@ export function GraphCanvas({
   }, [width, height, isReady, isExpanded, isExpandedReady, model, onRendererReady]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const calculateDimensions = () => {
       const isMobile = window.innerWidth < mobileConfig.breakpoint;
       const scale = 1.5;
@@ -348,7 +347,7 @@ export function GraphCanvas({
         )}
       </div>
 
-      {isExpanded && (
+      {isExpanded && expandedDimensions.width > 0 && expandedDimensions.height > 0 && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
           onClick={handleCloseExpanded}
