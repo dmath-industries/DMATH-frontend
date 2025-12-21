@@ -6,7 +6,6 @@ import { GraphModel } from '@/services';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CloseIcon from '@mui/icons-material/Close';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import { mobileConfig } from '@/shared/lib';
 
 interface GraphCanvasProps {
   model: GraphModel;
@@ -119,23 +118,20 @@ export function GraphCanvas({
           throw new Error('Expanded canvas element not found');
         }
 
-        const isMobile = window.innerWidth < mobileConfig.breakpoint;
         const scale = 1.5;
         let expandedWidth = width * scale;
         let expandedHeight = height * scale;
 
-        if (isMobile) {
-          const maxWidth = window.innerWidth - 32;
-          const maxHeight = window.innerHeight - 100;
+        const maxWidth = window.innerWidth - 32;
+        const maxHeight = window.innerHeight - 100;
 
-          if (expandedWidth > maxWidth || expandedHeight > maxHeight) {
-            const widthRatio = maxWidth / expandedWidth;
-            const heightRatio = maxHeight / expandedHeight;
-            const ratio = Math.min(widthRatio, heightRatio);
+        if (expandedWidth > maxWidth || expandedHeight > maxHeight) {
+          const widthRatio = maxWidth / expandedWidth;
+          const heightRatio = maxHeight / expandedHeight;
+          const ratio = Math.min(widthRatio, heightRatio);
 
-            expandedWidth = Math.floor(expandedWidth * ratio);
-            expandedHeight = Math.floor(expandedHeight * ratio);
-          }
+          expandedWidth = Math.floor(expandedWidth * ratio);
+          expandedHeight = Math.floor(expandedHeight * ratio);
         }
 
         console.log('🎨 Initializing expanded renderer...', { expandedWidth, expandedHeight });
@@ -225,23 +221,20 @@ export function GraphCanvas({
     if (typeof window === 'undefined') return;
 
     const calculateDimensions = () => {
-      const isMobile = window.innerWidth < mobileConfig.breakpoint;
       const scale = 1.5;
       let expandedWidth = width * scale;
       let expandedHeight = height * scale;
 
-      if (isMobile) {
-        const maxWidth = window.innerWidth - 32;
-        const maxHeight = window.innerHeight - 100;
+      const maxWidth = window.innerWidth - 32;
+      const maxHeight = window.innerHeight - 100;
 
-        if (expandedWidth > maxWidth || expandedHeight > maxHeight) {
-          const widthRatio = maxWidth / expandedWidth;
-          const heightRatio = maxHeight / expandedHeight;
-          const ratio = Math.min(widthRatio, heightRatio);
+      if (expandedWidth > maxWidth || expandedHeight > maxHeight) {
+        const widthRatio = maxWidth / expandedWidth;
+        const heightRatio = maxHeight / expandedHeight;
+        const ratio = Math.min(widthRatio, heightRatio);
 
-          expandedWidth = Math.floor(expandedWidth * ratio);
-          expandedHeight = Math.floor(expandedHeight * ratio);
-        }
+        expandedWidth = Math.floor(expandedWidth * ratio);
+        expandedHeight = Math.floor(expandedHeight * ratio);
       }
 
       setExpandedDimensions({ width: expandedWidth, height: expandedHeight });
