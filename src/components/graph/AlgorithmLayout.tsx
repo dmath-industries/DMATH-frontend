@@ -71,6 +71,10 @@ interface AlgorithmLayoutContextType {
   hasGraph: boolean;
   hasRunAlgorithm: boolean;
   graphModel: GraphModel;
+  registerMatrixHandler: (
+    handler: (matrixText: string) => void,
+    config?: { placeholder?: string; exampleMatrix?: string }
+  ) => void;
 }
 
 const AlgorithmLayoutContext = createContext<AlgorithmLayoutContextType | null>(null);
@@ -133,10 +137,17 @@ export function AlgorithmLayout({
   );
   const [showNodeDialog, setShowNodeDialog] = useState(false);
   const [showEdgeDialog, setShowEdgeDialog] = useState(false);
+  const [showMatrixDialog, setShowMatrixDialog] = useState(false);
   const [nodeId, setNodeId] = useState('');
   const [edgeSource, setEdgeSource] = useState('');
   const [edgeTarget, setEdgeTarget] = useState('');
   const [edgeWeight, setEdgeWeight] = useState('1');
+  const [matrixText, setMatrixText] = useState('');
+  const [matrixHandler, setMatrixHandler] = useState<{
+    handler: (matrixText: string) => void;
+    placeholder?: string;
+    exampleMatrix?: string;
+  } | null>(null);
 
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
@@ -791,14 +802,41 @@ export function AlgorithmLayout({
     sessionStorage.setItem(STORAGE_KEYS.LAST_ALGORITHM, algorithmName);
   }, [algorithmName, graphModel, dispatch]);
 
+  const registerMatrixHandler = useCallback(
+    (
+      handler: (matrixText: string) => void,
+      config?: { placeholder?: string; exampleMatrix?: string }
+    ) => {
+      setMatrixHandler({ handler, ...config });
+      if (config?.exampleMatrix) {
+        setMatrixText(config.exampleMatrix);
+      }
+    },
+    []
+  );
+
+  const handleMatrixSubmit = () => {
+    if (matrixHandler) {
+      matrixHandler.handler(matrixText);
+      setShowMatrixDialog(false);
+    }
+  };
+
+  const handleLoadExample = () => {
+    if (matrixHandler?.exampleMatrix) {
+      setMatrixText(matrixHandler.exampleMatrix);
+    }
+  };
+
   const contextValue: AlgorithmLayoutContextType = useMemo(
     () => ({
       loadGraph,
       hasGraph,
       hasRunAlgorithm,
       graphModel,
+      registerMatrixHandler,
     }),
-    [loadGraph, hasGraph, hasRunAlgorithm, graphModel]
+    [loadGraph, hasGraph, hasRunAlgorithm, graphModel, registerMatrixHandler]
   );
 
   return (
@@ -922,6 +960,8 @@ export function AlgorithmLayout({
                   </MuiAlert>
                 )}
 
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</Box>
+
                 <Paper
                   ref={canvasContainerRef}
                   sx={{
@@ -1008,10 +1048,20 @@ export function AlgorithmLayout({
                     sx={{
                       p: 2,
                       display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
                       justifyContent: 'center',
                       position: 'relative',
                     }}
                   >
+                    <Box>
+                      <GraphEditor
+                        onAddNode={handleAddNode}
+                        onAddEdge={handleAddEdge}
+                        onClear={handleClear}
+                        useWeights={algorithmConfig?.useWeights ?? true}
+                      />
+                    </Box>
                     <GraphCanvas
                       model={graphModel}
                       onRendererReady={handleRendererReady}
@@ -1019,12 +1069,26 @@ export function AlgorithmLayout({
                       height={canvasSize.height}
                     />
 
+                    {hasRunAlgorithm && totalSteps > 0 && (
+                      <Paper
+                        sx={{
+                          display: { xs: 'none', lg: 'block' },
+                          backgroundColor: 'rgba(42, 42, 42, 0.5)',
+                          backdropFilter: 'blur(8px)',
+                          border: '1px solid rgba(115, 115, 115, 0.5)',
+                          p: 4,
+                        }}
+                      >
+                        <ControlPanel />
+                      </Paper>
+                    )}
+
                     {/* Компактные кнопки редактирования графа для экранов < 1200px */}
                     <Box
                       sx={{
                         display: { xs: 'flex', lg: 'none' },
                         position: 'absolute',
-                        top: 16,
+                        top: 290,
                         right: 16,
                         gap: 1,
                         backgroundColor: 'rgba(42, 42, 42, 0.95)',
@@ -1127,35 +1191,6 @@ export function AlgorithmLayout({
                     </Box>
                   )}
                 </Paper>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</Box>
-              </Box>
-            </Grid>
-            <Grid item xs={12} lg="auto" sx={{ width: { lg: 320, xl: 380 } }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {/* Плеер справа для экранов >= 1200px */}
-                {hasRunAlgorithm && totalSteps > 0 && (
-                  <Paper
-                    sx={{
-                      display: { xs: 'none', lg: 'block' },
-                      backgroundColor: 'rgba(42, 42, 42, 0.5)',
-                      backdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(115, 115, 115, 0.5)',
-                      p: 4,
-                    }}
-                  >
-                    <ControlPanel />
-                  </Paper>
-                )}
-
-                <Box>
-                  <GraphEditor
-                    onAddNode={handleAddNode}
-                    onAddEdge={handleAddEdge}
-                    onClear={handleClear}
-                    useWeights={algorithmConfig?.useWeights ?? true}
-                  />
-                </Box>
               </Box>
             </Grid>
           </Grid>
