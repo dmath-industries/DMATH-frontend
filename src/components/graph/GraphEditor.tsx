@@ -66,6 +66,7 @@ export function GraphEditor({
           maxWidth: 250,
           mx: 'auto',
         }}
+        data-hint="graph-editor-buttons"
       >
         <Button
           variant="contained"
