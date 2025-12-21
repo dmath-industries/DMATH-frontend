@@ -139,7 +139,7 @@ export function GraphCanvas({
 
   return (
     <div
-      className="relative rounded-lg overflow-hidden"
+      className="relative m-auto rounded-lg overflow-hidden"
       style={{
         width: `${width}px`,
         height: `${height}px`,
