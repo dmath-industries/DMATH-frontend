@@ -110,20 +110,6 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
         </>
       )}
 
-      {compact && (
-        <Typography
-          variant="caption"
-          sx={{
-            color: 'text.secondary',
-            textAlign: 'center',
-            fontSize: '0.7rem',
-            mb: 0.5,
-          }}
-        >
-          {currentIndex === -1 ? 'Начало' : `Шаг ${currentIndex + 1} / ${totalSteps}`}
-        </Typography>
-      )}
-
       <Box
         sx={{
           display: 'flex',
@@ -132,6 +118,19 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
           gap: compact ? 0.5 : 1,
         }}
       >
+        {compact && (
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.75rem',
+              mr: 1,
+              minWidth: '80px',
+            }}
+          >
+            {currentIndex === -1 ? 'Начало' : `${currentIndex + 1}/${totalSteps}`}
+          </Typography>
+        )}
         <IconButton
           onClick={handleReset}
           disabled={currentIndex === -1}
