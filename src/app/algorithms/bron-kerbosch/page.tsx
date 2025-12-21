@@ -139,17 +139,6 @@ function BronKerboschContent() {
     <>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы смежности
-        </Typography>
-        <GraphMatrixInput
-          onSubmit={handleMatrixSubmit}
-          placeholder={algorithmConfig?.placeholder}
-          exampleMatrix={algorithmConfig?.defaultMatrix}
-        />
-      </Paper>
-
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           О алгоритме
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -174,6 +163,17 @@ function BronKerboschContent() {
             </Typography>
           </MuiAlert>
         </Box>
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          Ввод матрицы смежности
+        </Typography>
+        <GraphMatrixInput
+          onSubmit={handleMatrixSubmit}
+          placeholder={algorithmConfig?.placeholder}
+          exampleMatrix={algorithmConfig?.defaultMatrix}
+        />
       </Paper>
 
       <Alert
