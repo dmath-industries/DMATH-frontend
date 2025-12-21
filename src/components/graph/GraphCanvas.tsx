@@ -353,7 +353,7 @@ export function GraphCanvas({
           onClick={handleCloseExpanded}
         >
           <div
-            className="relative rounded-lg overflow-hidden shadow-2xl"
+            className="relative rounded-lg shadow-2xl overflow-hidden"
             style={{
               width: `${expandedDimensions.width}px`,
               height: `${expandedDimensions.height}px`,
@@ -365,7 +365,7 @@ export function GraphCanvas({
           >
             <button
               onClick={handleCloseExpanded}
-              className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-[100]"
+              className="absolute top-2 right-2 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-[100]"
               title="Закрыть"
             >
               <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
