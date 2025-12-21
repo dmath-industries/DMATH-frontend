@@ -60,10 +60,11 @@ export function GraphEditor({
   return (
     <Box sx={{ p: 3 }}>
       <Stack
-        direction="column"
-        spacing={2}
         sx={{
-          maxWidth: 250,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+          width: '100%',
           mx: 'auto',
         }}
         data-hint="graph-editor-buttons"
