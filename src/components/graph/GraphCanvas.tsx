@@ -291,6 +291,7 @@ export function GraphCanvas({
   }
 
   return (
+<<<<<<< HEAD
     <>
       <div
         className="relative rounded-lg overflow-hidden"
