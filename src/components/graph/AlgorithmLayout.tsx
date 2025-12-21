@@ -48,6 +48,8 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Alert } from '@/components/elements';
+import { HintSystem } from '@/components/hints';
+import type { Hint } from '@/components/hints';
 import '@/services/explanations/registry';
 
 const STORAGE_KEYS = {
@@ -981,6 +983,7 @@ export function AlgorithmLayout({
                         onClick={handleRunAlgorithm}
                         disabled={!hasGraph || isRunning || playing || hasRunAlgorithm}
                         variant="contained"
+                        data-hint="run-algorithm-button"
                         sx={{
                           background: 'linear-gradient(to right, #2563eb, #3b82f6)',
                           '&:hover': {
@@ -1012,12 +1015,14 @@ export function AlgorithmLayout({
                       position: 'relative',
                     }}
                   >
-                    <GraphCanvas
-                      model={graphModel}
-                      onRendererReady={handleRendererReady}
-                      width={canvasSize.width}
-                      height={canvasSize.height}
-                    />
+                    <Box data-hint="graph-canvas">
+                      <GraphCanvas
+                        model={graphModel}
+                        onRendererReady={handleRendererReady}
+                        width={canvasSize.width}
+                        height={canvasSize.height}
+                      />
+                    </Box>
 
                     {/* Компактные кнопки редактирования графа для экранов < 1200px */}
                     <Box
@@ -1136,6 +1141,7 @@ export function AlgorithmLayout({
                 {/* Плеер справа для экранов >= 1200px */}
                 {hasRunAlgorithm && totalSteps > 0 && (
                   <Paper
+                    data-hint="control-panel"
                     sx={{
                       display: { xs: 'none', lg: 'block' },
                       backgroundColor: 'rgba(42, 42, 42, 0.5)',
@@ -1148,7 +1154,7 @@ export function AlgorithmLayout({
                   </Paper>
                 )}
 
-                <Box>
+                <Box data-hint="graph-editor">
                   <GraphEditor
                     onAddNode={handleAddNode}
                     onAddEdge={handleAddEdge}
@@ -1335,6 +1341,48 @@ export function AlgorithmLayout({
           </DialogActions>
         </Dialog>
       </Box>
+
+      {/* Система подсказок */}
+      <HintSystem
+        hints={useMemo<Hint[]>(() => {
+          const baseHints: Hint[] = [
+            {
+              id: 'graph-editor',
+              selector: '[data-hint="graph-editor"]',
+              title: 'Редактор графа',
+              description:
+                'Используйте эту панель для создания графа. Нажмите "Вершина" для добавления вершин и "Ребро" для создания связей между ними. Кнопка "Очистить" удалит весь граф.',
+            },
+            {
+              id: 'graph-canvas',
+              selector: '[data-hint="graph-canvas"]',
+              title: 'Холст графа',
+              description:
+                'Здесь отображается визуализация вашего графа. После запуска алгоритма здесь будут показаны шаги его выполнения. Вы можете масштабировать и перемещать граф с помощью мыши.',
+            },
+            {
+              id: 'run-algorithm-button',
+              selector: '[data-hint="run-algorithm-button"]',
+              title: 'Запуск алгоритма',
+              description:
+                'После создания графа нажмите эту кнопку, чтобы запустить алгоритм. Убедитесь, что граф содержит хотя бы одну вершину.',
+            },
+          ];
+
+          if (hasRunAlgorithm && totalSteps > 0) {
+            baseHints.push({
+              id: 'control-panel',
+              selector: '[data-hint="control-panel"]',
+              title: 'Панель управления',
+              description:
+                'Здесь находится панель управления воспроизведением. Вы можете воспроизводить шаги автоматически или переходить по ним вручную, изменять скорость и просматривать объяснения каждого шага.',
+            });
+          }
+
+          return baseHints;
+        }, [hasRunAlgorithm, totalSteps])}
+        storageKey={`dmath-hints-${algorithmName}`}
+      />
     </AlgorithmLayoutContext.Provider>
   );
 }
