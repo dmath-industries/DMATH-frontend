@@ -21,32 +21,32 @@ export default function Home() {
   const algorithms: IAlgorithmsItem[] = [
     {
       title: 'Алгоритм Робертса-Флореса',
-      img: '',
+      img: '/algorithms/1.jpg',
       href: '/algorithms/roberts-flores',
     },
     {
       title: 'Алгоритм Прима',
-      img: '',
+      img: '/algorithms/2.jpg',
       href: '/algorithms/prim',
     },
     {
       title: 'Алгоритм раскраски графа',
-      img: '',
+      img: '/algorithms/4.jpg',
       href: '/algorithms/graph-coloring',
     },
     {
       title: 'Алгоритм Форда-Беллмана',
-      img: '',
+      img: '/algorithms/3.jpg',
       href: '/algorithms/bellman-ford',
     },
     {
       title: 'Венгерский алгоритм',
-      img: '',
+      img: '/algorithms/5.jpg',
       href: '/algorithms/hungarian',
     },
     {
       title: 'Алгоритм Брона-Кербоша',
-      img: '',
+      img: '/algorithms/6.jpg',
       href: '/algorithms/bron-kerbosch',
     },
   ];
