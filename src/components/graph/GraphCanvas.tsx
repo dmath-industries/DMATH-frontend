@@ -356,14 +356,6 @@ export function GraphCanvas({
             }}
             onClick={e => e.stopPropagation()}
           >
-            <button
-              onClick={handleCloseExpanded}
-              className="absolute top-2 right-2 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-[100]"
-              title="Закрыть"
-            >
-              <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
-            </button>
-
             {!isExpandedReady && (
               <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
                 <div className="flex flex-col items-center gap-3">
@@ -383,15 +375,25 @@ export function GraphCanvas({
               }}
             />
 
-            {isExpandedReady && model.nodeCount > 0 && (
+            <div className="absolute bottom-4 left-0 right-0 flex justify-between items-center px-4 z-[100] pointer-events-none">
+              {isExpandedReady && model.nodeCount > 0 && (
+                <button
+                  onClick={handleFitToGraph}
+                  className="p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 pointer-events-auto"
+                  title="Найти граф (центрировать)"
+                >
+                  <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+                </button>
+              )}
+
               <button
-                onClick={handleFitToGraph}
-                className="absolute top-4 left-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-20"
-                title="Найти граф (центрировать)"
+                onClick={handleCloseExpanded}
+                className="p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 pointer-events-auto"
+                title="Закрыть"
               >
-                <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+                <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
               </button>
-            )}
+            </div>
           </div>
         </div>
       )}
