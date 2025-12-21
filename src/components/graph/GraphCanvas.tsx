@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Renderer, ViewportAdapter } from '@/services';
 import { GraphModel } from '@/services';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import CloseIcon from '@mui/icons-material/Close';
+import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import { mobileConfig } from '@/shared/lib';
 
 interface GraphCanvasProps {
   model: GraphModel;
@@ -19,11 +22,17 @@ export function GraphCanvas({
   height = 800,
 }: GraphCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const expandedCanvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
+  const expandedRendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
+  const expandedViewportRef = useRef<ViewportAdapter | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isExpandedReady, setIsExpandedReady] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initRef = useRef(false);
+  const expandedInitRef = useRef(false);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -68,8 +77,8 @@ export function GraphCanvas({
         rendererRef.current = renderer;
         viewportRef.current = viewport;
 
-        // Устанавливаем viewport adapter в renderer для управления перетаскиванием
         renderer.setViewportAdapter(viewport);
+        viewport.pauseDrag();
 
         if (model.nodeCount > 0) {
           console.log('📊 Drawing initial graph with', model.nodeCount, 'nodes');
@@ -97,8 +106,100 @@ export function GraphCanvas({
       rendererRef.current = null;
       viewportRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isExpanded || expandedInitRef.current || !expandedCanvasRef.current) return;
+    expandedInitRef.current = true;
+
+    const initExpandedRenderer = async () => {
+      try {
+        if (!expandedCanvasRef.current) {
+          throw new Error('Expanded canvas element not found');
+        }
+
+        const isMobile = window.innerWidth < mobileConfig.breakpoint;
+        const scale = 1.5;
+        let expandedWidth = width * scale;
+        let expandedHeight = height * scale;
+
+        if (isMobile) {
+          const maxWidth = window.innerWidth - 32;
+          const maxHeight = window.innerHeight - 100;
+
+          if (expandedWidth > maxWidth || expandedHeight > maxHeight) {
+            const widthRatio = maxWidth / expandedWidth;
+            const heightRatio = maxHeight / expandedHeight;
+            const ratio = Math.min(widthRatio, heightRatio);
+
+            expandedWidth = Math.floor(expandedWidth * ratio);
+            expandedHeight = Math.floor(expandedHeight * ratio);
+          }
+        }
+
+        console.log('🎨 Initializing expanded renderer...', { expandedWidth, expandedHeight });
+
+        const renderer = new Renderer();
+        await renderer.init(expandedCanvasRef.current, {
+          width: expandedWidth,
+          height: expandedHeight,
+          backgroundColor: 0x1f2937,
+        });
+
+        const viewport = new ViewportAdapter();
+        const app = renderer.getApp();
+
+        if (!app) {
+          throw new Error('Failed to get Pixi.js application');
+        }
+
+        const containers = renderer.getContainers();
+        viewport.create(
+          app,
+          {
+            screenWidth: expandedWidth,
+            screenHeight: expandedHeight,
+          },
+          containers
+        );
+
+        expandedRendererRef.current = renderer;
+        expandedViewportRef.current = viewport;
+
+        renderer.setViewportAdapter(viewport);
+        viewport.resumeDrag();
+
+        if (model.nodeCount > 0) {
+          renderer.drawAll(model);
+          if (viewportRef.current) {
+            const state = viewportRef.current.getState();
+            viewport.setState(state);
+          }
+        }
+
+        setIsExpandedReady(true);
+        console.log('✅ Expanded renderer initialized');
+      } catch (err) {
+        console.error('❌ Failed to initialize expanded renderer:', err);
+        setIsExpandedReady(false);
+      }
+    };
+
+    initExpandedRenderer();
+
+    return () => {
+      if (expandedRendererRef.current) {
+        expandedRendererRef.current.destroy();
+        expandedRendererRef.current = null;
+      }
+      if (expandedViewportRef.current) {
+        expandedViewportRef.current.destroy();
+        expandedViewportRef.current = null;
+      }
+      setIsExpandedReady(false);
+      expandedInitRef.current = false;
+    };
+  }, [isExpanded, width, height, model]);
 
   useEffect(() => {
     if (!isReady || !rendererRef.current || !viewportRef.current) return;
@@ -106,15 +207,42 @@ export function GraphCanvas({
     rendererRef.current.resize(width, height);
     viewportRef.current.resize(width, height);
 
-    if (model.nodeCount > 0) {
+    if (isExpanded && isExpandedReady && expandedViewportRef.current) {
+      const state = viewportRef.current.getState();
+      expandedViewportRef.current.setState(state);
+
+      if (expandedRendererRef.current) {
+        expandedRendererRef.current.resize(
+          expandedViewportRef.current.getViewport()?.screenWidth || width * 1.5,
+          expandedViewportRef.current.getViewport()?.screenHeight || height * 1.5
+        );
+      }
     }
-  }, [width, height, isReady, model, onRendererReady]);
+  }, [width, height, isReady, isExpanded, isExpandedReady, model, onRendererReady]);
 
   const handleFitToGraph = () => {
     if (!viewportRef.current || model.nodeCount === 0) {
       return;
     }
     viewportRef.current.fitToGraph(model);
+    if (isExpanded && expandedViewportRef.current) {
+      expandedViewportRef.current.fitToGraph(model);
+    }
+  };
+
+  const handleOpenExpanded = () => {
+    setIsExpanded(true);
+  };
+
+  const handleCloseExpanded = () => {
+    if (expandedViewportRef.current && viewportRef.current) {
+      const state = expandedViewportRef.current.getState();
+      viewportRef.current.setState(state);
+      if (rendererRef.current) {
+        rendererRef.current.drawAll(model);
+      }
+    }
+    setIsExpanded(false);
   };
 
   if (error) {
@@ -137,39 +265,138 @@ export function GraphCanvas({
     );
   }
 
+  const getExpandedDimensions = () => {
+    if (typeof window === 'undefined') return { width: width * 1.5, height: height * 1.5 };
+
+    const isMobile = window.innerWidth < mobileConfig.breakpoint;
+    const scale = 1.5;
+    let expandedWidth = width * scale;
+    let expandedHeight = height * scale;
+
+    if (isMobile) {
+      const maxWidth = window.innerWidth - 32;
+      const maxHeight = window.innerHeight - 100;
+
+      if (expandedWidth > maxWidth || expandedHeight > maxHeight) {
+        const widthRatio = maxWidth / expandedWidth;
+        const heightRatio = maxHeight / expandedHeight;
+        const ratio = Math.min(widthRatio, heightRatio);
+
+        expandedWidth = Math.floor(expandedWidth * ratio);
+        expandedHeight = Math.floor(expandedHeight * ratio);
+      }
+    }
+
+    return { width: expandedWidth, height: expandedHeight };
+  };
+
+  const expandedDimensions = getExpandedDimensions();
+
   return (
-    <div
-      className="relative rounded-lg overflow-hidden"
-      style={{
-        width: `${width}px`,
-        height: `${height}px`,
-        backgroundColor: '#1f2937',
-      }}
-    >
-      {!isReady && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-            <p className="text-neutral-400 text-sm">Инициализация Canvas...</p>
+    <>
+      <div
+        className="relative rounded-lg overflow-hidden"
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+          backgroundColor: '#1f2937',
+        }}
+      >
+        {!isReady && (
+          <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <p className="text-neutral-400 text-sm">Инициализация Canvas...</p>
+            </div>
+          </div>
+        )}
+
+        <canvas
+          ref={canvasRef}
+          className="block w-full h-full"
+          style={{
+            width: `${width}px`,
+            height: `${height}px`,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {isReady && model.nodeCount > 0 && (
+          <>
+            <button
+              onClick={handleFitToGraph}
+              className="absolute top-4 left-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10 pointer-events-auto"
+              title="Найти граф (центрировать)"
+            >
+              <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+            </button>
+
+            <button
+              onClick={handleOpenExpanded}
+              className="absolute bottom-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10 pointer-events-auto"
+              title="Открыть в увеличенном режиме"
+            >
+              <OpenInFullIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {isExpanded && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={handleCloseExpanded}
+        >
+          <div
+            className="relative rounded-lg overflow-hidden shadow-2xl"
+            style={{
+              width: `${expandedDimensions.width}px`,
+              height: `${expandedDimensions.height}px`,
+              backgroundColor: '#1f2937',
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {!isExpandedReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+                  <p className="text-neutral-400 text-sm">Инициализация Canvas...</p>
+                </div>
+              </div>
+            )}
+
+            <canvas
+              ref={expandedCanvasRef}
+              className="block w-full h-full"
+              style={{
+                width: `${expandedDimensions.width}px`,
+                height: `${expandedDimensions.height}px`,
+                pointerEvents: 'auto',
+              }}
+            />
+
+            <button
+              onClick={handleCloseExpanded}
+              className="absolute top-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-20"
+              title="Закрыть"
+            >
+              <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+            </button>
+
+            {isExpandedReady && model.nodeCount > 0 && (
+              <button
+                onClick={handleFitToGraph}
+                className="absolute top-4 left-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-20"
+                title="Найти граф (центрировать)"
+              >
+                <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
+              </button>
+            )}
           </div>
         </div>
       )}
-
-      <canvas
-        ref={canvasRef}
-        className="block w-full h-full"
-        style={{ width: `${width}px`, height: `${height}px` }}
-      />
-
-      {isReady && model.nodeCount > 0 && (
-        <button
-          onClick={handleFitToGraph}
-          className="absolute top-4 left-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10"
-          title="Найти граф (центрировать)"
-        >
-          <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
-        </button>
-      )}
-    </div>
+    </>
   );
 }
