@@ -375,7 +375,7 @@ export function GraphCanvas({
               }}
             />
 
-            <div className="absolute bottom-4 left-0 right-0 flex justify-between items-center px-4 z-[100] pointer-events-none">
+            <div className="absolute top-4 left-0 right-0 flex justify-between items-center px-4 z-[100] pointer-events-none">
               {isExpandedReady && model.nodeCount > 0 && (
                 <button
                   onClick={handleFitToGraph}
