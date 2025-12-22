@@ -26,7 +26,6 @@ interface HintSystemProps {
 export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: HintSystemProps) {
   const [isActive, setIsActive] = useState(false);
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
-  const [hintsCompleted, setHintsCompleted] = useState(false);
   const [highlightPosition, setHighlightPosition] = useState<{
     top: number;
     left: number;
@@ -37,13 +36,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     top: number;
     left: number;
   } | null>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const completed = localStorage.getItem(storageKey) === 'true';
-    setHintsCompleted(completed);
-  }, [storageKey]);
 
   const getElementPosition = useCallback((selector: string) => {
     const element = document.querySelector(selector);
@@ -64,6 +57,8 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     if (!isActive || currentHintIndex >= hints.length) return;
 
     const currentHint = hints[currentHintIndex];
+    if (!currentHint) return;
+
     const position = getElementPosition(currentHint.selector);
 
     if (!position) {
@@ -151,32 +146,32 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
   }, [isActive, currentHintIndex, hints, getElementPosition]);
 
   useEffect(() => {
-    if (isActive) {
-      const timer = setTimeout(() => {
+    if (!isActive) return;
+
+    const timer = setTimeout(() => {
+      updatePositions();
+    }, 100);
+
+    const handleScroll = () => {
+      updatePositions();
+    };
+
+    const handleResize = () => {
+      requestAnimationFrame(() => {
         updatePositions();
-      }, 100);
+      });
+    };
 
-      const handleScroll = () => {
-        updatePositions();
-      };
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    window.addEventListener('resize', handleResize);
 
-      const handleResize = () => {
-        requestAnimationFrame(() => {
-          updatePositions();
-        });
-      };
-
-      window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-      document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('scroll', handleScroll, { capture: true });
-        document.removeEventListener('scroll', handleScroll, { capture: true });
-        window.removeEventListener('resize', handleResize);
-      };
-    }
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+      document.removeEventListener('scroll', handleScroll, { capture: true });
+      window.removeEventListener('resize', handleResize);
+    };
   }, [isActive, updatePositions]);
 
   useEffect(() => {
@@ -213,7 +208,6 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
 
   const handleComplete = () => {
     localStorage.setItem(storageKey, 'true');
-    setHintsCompleted(true);
     setIsActive(false);
     setCurrentHintIndex(0);
     setHighlightPosition(null);
