@@ -23,10 +23,6 @@ interface HintSystemProps {
   onComplete?: () => void;
 }
 
-/**
- * Система подсказок для первого использования приложения
- * Показывает кнопку с восклицательным знаком, при нажатии выделяет элементы и затемняет остальное
- */
 export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: HintSystemProps) {
   const [isActive, setIsActive] = useState(false);
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
@@ -37,11 +33,14 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     width: number;
     height: number;
   } | null>(null);
+  const [dialogPosition, setDialogPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Проверяем, были ли подсказки уже показаны
     const completed = localStorage.getItem(storageKey) === 'true';
     setHintsCompleted(completed);
   }, [storageKey]);
@@ -61,7 +60,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     };
   }, []);
 
-  const updateHighlight = useCallback(() => {
+  const updatePositions = useCallback(() => {
     if (!isActive || currentHintIndex >= hints.length) return;
 
     const currentHint = hints[currentHintIndex];
@@ -69,6 +68,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
 
     if (!position) {
       setHighlightPosition(null);
+      setDialogPosition(null);
       return;
     }
 
@@ -78,38 +78,112 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
       width: position.width,
       height: position.height,
     });
+
+    const dialogWidth = 400;
+    const dialogHeight = 250;
+    const padding = 16;
+
+    let dialogTop: number;
+    let dialogLeft: number;
+
+    if (currentHint.position === 'right') {
+      dialogLeft = position.left + position.width + padding;
+      dialogTop = position.top;
+
+      if (dialogLeft + dialogWidth > window.innerWidth - padding) {
+        dialogLeft = position.left - dialogWidth - padding;
+      }
+
+      if (dialogLeft < padding) {
+        dialogLeft = window.innerWidth - dialogWidth - padding;
+      }
+
+      if (dialogTop + dialogHeight > window.innerHeight - padding) {
+        dialogTop = window.innerHeight - dialogHeight - padding;
+      }
+
+      if (dialogTop < padding) {
+        dialogTop = padding;
+      }
+    } else if (currentHint.position === 'left') {
+      dialogLeft = position.left - dialogWidth - padding;
+      dialogTop = position.top;
+
+      if (dialogLeft < padding) {
+        dialogLeft = position.left + position.width + padding;
+      }
+
+      if (dialogLeft + dialogWidth > window.innerWidth - padding) {
+        dialogLeft = padding;
+      }
+
+      if (dialogTop + dialogHeight > window.innerHeight - padding) {
+        dialogTop = window.innerHeight - dialogHeight - padding;
+      }
+
+      if (dialogTop < padding) {
+        dialogTop = padding;
+      }
+    } else {
+      dialogTop = position.top + position.height + padding;
+      dialogLeft = Math.max(
+        padding,
+        Math.min(position.left, window.innerWidth - dialogWidth - padding)
+      );
+
+      if (dialogTop + dialogHeight > window.innerHeight - padding) {
+        dialogTop = Math.max(padding, position.top - dialogHeight - padding);
+      }
+
+      if (dialogLeft + dialogWidth > window.innerWidth - padding) {
+        dialogLeft = window.innerWidth - dialogWidth - padding;
+      }
+
+      if (dialogLeft < padding) {
+        dialogLeft = padding;
+      }
+    }
+
+    setDialogPosition({
+      top: dialogTop,
+      left: dialogLeft,
+    });
   }, [isActive, currentHintIndex, hints, getElementPosition]);
 
   useEffect(() => {
     if (isActive) {
-      // Небольшая задержка для рендеринга
       const timer = setTimeout(() => {
-        updateHighlight();
+        updatePositions();
       }, 100);
 
-      const handleResize = () => {
-        setTimeout(() => updateHighlight(), 50);
-      };
       const handleScroll = () => {
-        setTimeout(() => updateHighlight(), 50);
+        updatePositions();
       };
 
+      const handleResize = () => {
+        requestAnimationFrame(() => {
+          updatePositions();
+        });
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+      document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
       window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', handleScroll, true);
 
       return () => {
         clearTimeout(timer);
+        window.removeEventListener('scroll', handleScroll, { capture: true });
+        document.removeEventListener('scroll', handleScroll, { capture: true });
         window.removeEventListener('resize', handleResize);
-        window.removeEventListener('scroll', handleScroll, true);
       };
     }
-  }, [isActive, updateHighlight]);
+  }, [isActive, updatePositions]);
 
   useEffect(() => {
     if (isActive) {
-      updateHighlight();
+      updatePositions();
     }
-  }, [currentHintIndex, isActive, updateHighlight]);
+  }, [currentHintIndex, isActive, updatePositions]);
 
   const handleStart = () => {
     setIsActive(true);
@@ -120,6 +194,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     setIsActive(false);
     setCurrentHintIndex(0);
     setHighlightPosition(null);
+    setDialogPosition(null);
   };
 
   const handleNext = () => {
@@ -142,6 +217,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     setIsActive(false);
     setCurrentHintIndex(0);
     setHighlightPosition(null);
+    setDialogPosition(null);
     onComplete?.();
   };
 
@@ -153,20 +229,8 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
 
   const currentHint = hints[currentHintIndex];
 
-  // Вычисляем позицию для диалога
-  const dialogPosition = highlightPosition
-    ? {
-        top: Math.min(
-          highlightPosition.top + highlightPosition.height + 16,
-          window.innerHeight - 200
-        ),
-        left: Math.max(16, Math.min(highlightPosition.left, window.innerWidth - 400)),
-      }
-    : null;
-
   return (
     <>
-      {/* Кнопка подсказок */}
       <IconButton
         onClick={handleStart}
         disabled={isActive}
@@ -196,10 +260,8 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
         <HelpOutlineIcon />
       </IconButton>
 
-      {/* Оверлей с затемнением */}
       {isActive && highlightPosition && (
         <>
-          {/* Затемнение сверху */}
           {highlightPosition.top > 0 && (
             <Box
               sx={{
@@ -215,7 +277,6 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
             />
           )}
 
-          {/* Затемнение слева */}
           {highlightPosition.left > 0 && (
             <Box
               sx={{
@@ -231,7 +292,6 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
             />
           )}
 
-          {/* Затемнение справа */}
           {highlightPosition.left + highlightPosition.width < window.innerWidth && (
             <Box
               sx={{
@@ -247,7 +307,6 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
             />
           )}
 
-          {/* Затемнение снизу */}
           {highlightPosition.top + highlightPosition.height < window.innerHeight && (
             <Box
               sx={{
@@ -263,7 +322,6 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
             />
           )}
 
-          {/* Рамка подсветки */}
           <Box
             ref={highlightRef}
             sx={{
@@ -277,11 +335,10 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
               boxShadow: '0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(59, 130, 246, 0.2)',
               pointerEvents: 'none',
               zIndex: 1001,
-              transition: 'all 0.3s ease',
+              willChange: 'top, left, width, height',
             }}
           />
 
-          {/* Панель с описанием */}
           {currentHint && (
             <Dialog
               open={isActive}
@@ -298,18 +355,23 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
                   transform: dialogPosition ? 'none' : 'translate(-50%, -50%)',
                   margin: 0,
                   maxWidth: 400,
+                  maxHeight: '90vh',
+                  overflowY: 'auto',
                   backgroundColor: 'rgba(42, 42, 42, 0.95)',
                   backdropFilter: 'blur(12px)',
                   border: '1px solid rgba(59, 130, 246, 0.3)',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
                   zIndex: 1002,
+                  transition: 'none',
                 },
               }}
               sx={{
                 '& .MuiBackdrop-root': {
                   backgroundColor: 'transparent',
+                  pointerEvents: 'none',
                 },
               }}
+              disableScrollLock
             >
               <DialogContent sx={{ p: 3 }}>
                 <Stack spacing={2}>
