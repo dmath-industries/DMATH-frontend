@@ -36,12 +36,12 @@ export default function Home() {
     },
     {
       title: 'Алгоритм Форда-Беллмана',
-      img: '/algorithms/3.jpg',
+      img: '/algorithms/5.jpg',
       href: '/algorithms/bellman-ford',
     },
     {
       title: 'Венгерский алгоритм',
-      img: '/algorithms/5.jpg',
+      img: '/algorithms/3.jpg',
       href: '/algorithms/hungarian',
     },
     {
