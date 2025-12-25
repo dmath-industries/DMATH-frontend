@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { IHistory } from '@/types';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { Paper, Box, Typography, Button, Stack } from '@mui/material';
@@ -8,6 +9,7 @@ interface HistoryItemProps extends IHistory {
 }
 
 const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
+  const { t } = useTranslation();
   return (
     <Paper
       sx={{
@@ -79,7 +81,7 @@ const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
             color="primary"
             startIcon={<ExternalLink size={16} />}
             onClick={onOpen}
-            title="Открыть"
+            title={t('common.open')}
             sx={{
               '& .MuiButton-startIcon': {
                 marginRight: { xs: 0.5, sm: 1 },
@@ -87,7 +89,7 @@ const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
             }}
           >
             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              Открыть
+              {t('common.open')}
             </Box>
           </Button>
         )}
@@ -98,7 +100,7 @@ const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
             color="error"
             startIcon={<Trash2 size={16} />}
             onClick={onDelete}
-            title="Удалить"
+            title={t('common.delete')}
             sx={{
               '& .MuiButton-startIcon': {
                 marginRight: { xs: 0.5, sm: 1 },
@@ -106,7 +108,7 @@ const HistoryItem = ({ title, date, onOpen, onDelete }: HistoryItemProps) => {
             }}
           >
             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              Удалить
+              {t('common.delete')}
             </Box>
           </Button>
         )}

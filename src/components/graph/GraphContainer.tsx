@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphEditor } from './GraphEditor';
 import { GraphModel, Renderer, ViewportAdapter } from '@/services';
@@ -9,6 +10,7 @@ import { GraphModel, Renderer, ViewportAdapter } from '@/services';
  * Главный контейнер для графа и управления алгоритмами
  */
 export function GraphContainer() {
+  const { t } = useTranslation();
   const [model] = useState(() => new GraphModel(true));
 
   const rendererRef = useRef<Renderer | null>(null);
@@ -48,7 +50,7 @@ export function GraphContainer() {
 
     // Проверяем, существует ли уже вершина с таким ID
     if (model.hasNode(id)) {
-      alert(`Вершина с ID "${id}" уже существует!`);
+      alert(t('errors.vertexExists', { id }));
       return;
     }
 
@@ -70,15 +72,15 @@ export function GraphContainer() {
   const handleAddEdge = (source: string, target: string, weight?: number) => {
     // Проверяем существование вершин
     if (!model.hasNode(source)) {
-      alert(`Вершина "${source}" не существует!`);
+      alert(t('errors.vertexNotFound', { vertex: source }));
       return;
     }
     if (!model.hasNode(target)) {
-      alert(`Вершина "${target}" не существует!`);
+      alert(t('errors.vertexNotFound', { vertex: target }));
       return;
     }
     if (source === target) {
-      alert('Нельзя создать ребро из вершины в саму себя!');
+      alert(t('errors.cannotCreateSelfLoop'));
       return;
     }
 
@@ -86,7 +88,7 @@ export function GraphContainer() {
 
     // Проверяем, существует ли уже такое ребро
     if (model.hasEdge(edgeId)) {
-      alert(`Ребро между "${source}" и "${target}" уже существует!`);
+      alert(t('errors.edgeExists', { source, target }));
       return;
     }
 
@@ -107,7 +109,7 @@ export function GraphContainer() {
    * Обработчик очистки графа
    */
   const handleClear = () => {
-    if (confirm('Вы уверены, что хотите очистить граф?')) {
+    if (confirm(t('alerts.clearGraphMessage'))) {
       model.clear();
       if (rendererRef.current) {
         rendererRef.current.drawAll(model);

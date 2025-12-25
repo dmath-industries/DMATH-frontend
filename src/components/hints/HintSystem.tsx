@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, IconButton, Dialog, DialogContent, Typography, Button, Stack } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,6 +25,7 @@ interface HintSystemProps {
 }
 
 export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: HintSystemProps) {
+  const { t } = useTranslation();
   const [isActive, setIsActive] = useState(false);
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
   const [highlightPosition, setHighlightPosition] = useState<{
@@ -53,6 +55,14 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     };
   }, []);
 
+  const scrollToElement = useCallback((element: Element) => {
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest',
+    });
+  }, []);
+
   const updatePositions = useCallback(() => {
     if (!isActive || currentHintIndex >= hints.length) return;
 
@@ -65,6 +75,20 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
       setHighlightPosition(null);
       setDialogPosition(null);
       return;
+    }
+
+    const element = position.element as Element;
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const isVisible =
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= window.innerHeight &&
+        rect.right <= window.innerWidth;
+
+      if (!isVisible) {
+        scrollToElement(element);
+      }
     }
 
     setHighlightPosition({
@@ -143,7 +167,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
       top: dialogTop,
       left: dialogLeft,
     });
-  }, [isActive, currentHintIndex, hints, getElementPosition]);
+  }, [isActive, currentHintIndex, hints, getElementPosition, scrollToElement]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -175,9 +199,13 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
   }, [isActive, updatePositions]);
 
   useEffect(() => {
-    if (isActive) {
+    if (!isActive) return;
+
+    const timer = setTimeout(() => {
       updatePositions();
-    }
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [currentHintIndex, isActive, updatePositions]);
 
   const handleStart = () => {
@@ -249,7 +277,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
           },
           transition: 'all 0.2s ease',
         }}
-        title="Показать подсказки"
+        title={t('hints.showHints')}
       >
         <HelpOutlineIcon />
       </IconButton>
@@ -393,7 +421,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
                     }}
                   >
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      {currentHintIndex + 1} из {hints.length}
+                      {currentHintIndex + 1} {t('common.of')} {hints.length}
                     </Typography>
 
                     <Stack direction="row" spacing={1}>
@@ -404,7 +432,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
                         startIcon={<ArrowBackIcon />}
                         sx={{ textTransform: 'none' }}
                       >
-                        Назад
+                        {t('common.back')}
                       </Button>
                       {currentHintIndex < hints.length - 1 ? (
                         <Button
@@ -414,7 +442,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
                           endIcon={<ArrowForwardIcon />}
                           sx={{ textTransform: 'none' }}
                         >
-                          Далее
+                          {t('common.nextButton')}
                         </Button>
                       ) : (
                         <Button
@@ -423,7 +451,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
                           onClick={handleComplete}
                           sx={{ textTransform: 'none' }}
                         >
-                          Завершить
+                          {t('common.complete')}
                         </Button>
                       )}
                     </Stack>
@@ -438,7 +466,7 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
                       alignSelf: 'flex-start',
                     }}
                   >
-                    Пропустить все
+                    {t('common.skipAll')}
                   </Button>
                 </Stack>
               </DialogContent>
@@ -449,4 +477,3 @@ export function HintSystem({ hints, storageKey = STORAGE_KEY, onComplete }: Hint
     </>
   );
 }
-

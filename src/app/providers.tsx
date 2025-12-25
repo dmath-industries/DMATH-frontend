@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { store } from '@/shared/store';
 import { DatabaseProvider } from '@/shared/persistence';
 import { theme } from '@/shared/theme';
+import { I18nProvider } from '@/providers';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -17,7 +18,9 @@ export function Providers({ children }: ProvidersProps) {
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <DatabaseProvider>{children}</DatabaseProvider>
+        <I18nProvider>
+          <DatabaseProvider>{children}</DatabaseProvider>
+        </I18nProvider>
       </ThemeProvider>
     </Provider>
   );
