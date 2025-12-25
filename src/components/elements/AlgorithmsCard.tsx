@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { IAlgorithmsItem } from '@/types';
@@ -206,6 +208,7 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
             width={120}
             height={120}
             style={{ objectFit: 'contain' }}
+            suppressHydrationWarning
           />
         </Box>
       </Box>
@@ -235,6 +238,7 @@ const AlgorithmsItem = ({ title, img, href }: IAlgorithmsItem) => {
             transition: 'all 0.5s',
             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
           }}
+          suppressHydrationWarning
         >
           {title}
         </Typography>

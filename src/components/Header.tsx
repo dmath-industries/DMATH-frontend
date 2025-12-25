@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, IconButton, Menu, MenuItem, Box } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -12,7 +12,12 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 const Header = () => {
   const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
   const isMenuOpen = Boolean(anchorEl);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -22,10 +27,14 @@ const Header = () => {
     setAnchorEl(null);
   };
 
+  if (!mounted) {
+    // Return a placeholder with the same height to prevent layout shift
+    return <Box sx={{ height: { xs: 56, sm: 64 } }} />;
+  }
+
   return (
     <AppBar
       position="fixed"
-      suppressHydrationWarning
       sx={{
         top: 0,
         left: 0,
@@ -122,7 +131,6 @@ const Header = () => {
                     color: 'rgba(196, 181, 253, 1)',
                   },
                 }}
-                suppressHydrationWarning
               >
                 {t('header.algorithms')}
               </MenuItem>
@@ -140,7 +148,6 @@ const Header = () => {
                     color: 'rgba(196, 181, 253, 1)',
                   },
                 }}
-                suppressHydrationWarning
               >
                 {t('header.history')}
               </MenuItem>

@@ -7,19 +7,19 @@ import ru from './ru.json';
 
 export const LANGUAGE_STORAGE_KEY = 'dmath-language';
 
-function getInitialLanguage(): string {
-  if (typeof window === 'undefined') {
-    return 'en';
-  }
-  try {
-    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'en';
-    return savedLanguage === 'en' || savedLanguage === 'ru' ? savedLanguage : 'en';
-  } catch {
-    return 'en';
-  }
-}
-
 if (!i18n.isInitialized) {
+  let initialLng = 'en';
+  if (typeof window !== 'undefined') {
+    try {
+      const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (savedLanguage === 'en' || savedLanguage === 'ru') {
+        initialLng = savedLanguage;
+      }
+    } catch {
+      initialLng = 'en';
+    }
+  }
+
   i18n.use(initReactI18next).init({
     resources: {
       en: {
@@ -29,7 +29,7 @@ if (!i18n.isInitialized) {
         translation: ru,
       },
     },
-    lng: getInitialLanguage(),
+    lng: initialLng,
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false,
