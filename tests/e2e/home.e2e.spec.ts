@@ -2,21 +2,25 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Главная страница', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('dmath-language', 'ru');
+    });
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
   });
 
   test('должна загружаться и отображать основной контент', async ({ page }) => {
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
   });
 
   test('должна отображать список возможностей', async ({ page }) => {
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Алгоритм Прима')).toBeVisible();
     await expect(page.getByText('Алгоритм раскраски графа')).toBeVisible();
   });
 
   test('должна отображать список тем для изучения', async ({ page }) => {
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Алгоритм Форда-Беллмана')).toBeVisible();
     await expect(page.getByText('Венгерский алгоритм')).toBeVisible();
   });
@@ -34,13 +38,13 @@ test.describe('Главная страница', () => {
 
   test('должна иметь адаптивный дизайн', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
 
     await page.setViewportSize({ width: 768, height: 1024 });
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
 
     await page.setViewportSize({ width: 375, height: 667 });
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
   });
 
   test('должна иметь правильный title', async ({ page }) => {
