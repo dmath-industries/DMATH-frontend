@@ -1,8 +1,3 @@
-/**
- * Algorithm Web Worker
- * Web Worker для выполнения алгоритмов на графа
- */
-
 import type {
   WorkerMessage,
   RunAlgoMessage,
@@ -33,9 +28,6 @@ let currentExecution: ExecutionState | null = null;
 
 const pendingAcks: Set<string> = new Set();
 
-/**
- * Обработчик сообщений от UI
- */
 self.onmessage = (event: MessageEvent<WorkerMessage>): void => {
   const message = event.data;
 
@@ -57,10 +49,6 @@ self.onmessage = (event: MessageEvent<WorkerMessage>): void => {
   }
 };
 
-/**
- * Обработчик запуска алгоритма
- * Генерирует шаги алгоритма и отправляет их батчами
- */
 async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
   if (!message.payload) {
     const errorMessage: ErrorMessage = {
@@ -194,14 +182,6 @@ async function handleRunAlgorithm(message: RunAlgoMessage): Promise<void> {
   }
 }
 
-/**
- * Отправка шагов батчами с поддержкой backpressure
- *
- * @param steps - Массив шагов алгоритма
- * @param chunkSize - Размер одного чанка
- * @param requestId - ID запроса для отслеживания
- * @param signal - AbortSignal для отмены операции
- */
 async function sendStepsInChunks(
   steps: Step[],
   chunkSize: number,
@@ -259,9 +239,6 @@ async function sendStepsInChunks(
   }
 }
 
-/**
- * Обработчик отмены выполнения алгоритма
- */
 function handleCancel(message: CancelMessage): void {
   if (
     currentExecution &&
@@ -274,9 +251,6 @@ function handleCancel(message: CancelMessage): void {
   }
 }
 
-/**
- * Обработчик подтверждения получения чанка (ACK)
- */
 function handleChunkAck(message: ChunkAckMessage): void {
   pendingAcks.delete(message.chunkId);
 

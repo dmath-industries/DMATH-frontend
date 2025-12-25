@@ -1,8 +1,3 @@
-/**
- * Applier — сервис для применения и отката шагов алгоритма
- * Детерминированно мутирует GraphModel и возвращает dirty IDs
- */
-
 import { GraphModel } from '@/services/graph/GraphModel';
 import {
   Step,
@@ -29,17 +24,10 @@ type PrevState =
 export class Applier {
   private prevStates = new WeakMap<Step, PrevState>();
 
-  /**
-   * Очистить сохранённые состояния
-   */
   clear(): void {
     this.prevStates = new WeakMap<Step, PrevState>();
   }
 
-  /**
-   * Применить шаг к модели графа
-   * @returns список "грязных" ID элементов, которые изменились
-   */
   apply(step: Step, model: GraphModel): string[] {
     switch (step.type) {
       case 'ADD_NODE':
@@ -78,10 +66,6 @@ export class Applier {
     }
   }
 
-  /**
-   * Откатить шаг
-   * @returns список "грязных" ID элементов, которые изменились
-   */
   revert(step: Step, model: GraphModel): string[] {
     switch (step.type) {
       case 'ADD_NODE':
@@ -120,7 +104,6 @@ export class Applier {
     }
   }
 
-  // ===== ADD_NODE =====
   private applyAddNode(step: AddNodeStep, model: GraphModel): string[] {
     if (!model.hasNode(step.node.id)) {
       model.addNode(step.node);
@@ -137,7 +120,6 @@ export class Applier {
     return [];
   }
 
-  // ===== REMOVE_NODE =====
   private applyRemoveNode(step: RemoveNodeStep, model: GraphModel): string[] {
     if (model.hasNode(step.nodeId)) {
       if (!this.prevStates.has(step)) {
@@ -216,7 +198,6 @@ export class Applier {
     return [];
   }
 
-  // ===== REMOVE_EDGE =====
   private applyRemoveEdge(step: RemoveEdgeStep, model: GraphModel): string[] {
     if (model.hasEdge(step.edgeId)) {
       if (!this.prevStates.has(step)) {
@@ -283,7 +264,6 @@ export class Applier {
     return [];
   }
 
-  // ===== SET_COORDS =====
   private applySetCoords(step: SetCoordsStep, model: GraphModel): string[] {
     if (model.hasNode(step.nodeId)) {
       if (!this.prevStates.has(step)) {
@@ -314,7 +294,6 @@ export class Applier {
     return [];
   }
 
-  // ===== BATCH =====
   private applyBatch(step: BatchStep, model: GraphModel): string[] {
     const dirtyIds: string[] = [];
 
@@ -340,7 +319,6 @@ export class Applier {
     return [...new Set(dirtyIds)];
   }
 
-  // ===== HIGHLIGHT_NODE =====
   private applyHighlightNode(step: HighlightNodeStep, model: GraphModel): string[] {
     if (model.hasNode(step.nodeId)) {
       if (!this.prevStates.has(step)) {
@@ -367,7 +345,6 @@ export class Applier {
     return [];
   }
 
-  // ===== HIGHLIGHT_EDGE =====
   private applyHighlightEdge(step: HighlightEdgeStep, model: GraphModel): string[] {
     if (model.hasEdge(step.edgeId)) {
       if (!this.prevStates.has(step)) {

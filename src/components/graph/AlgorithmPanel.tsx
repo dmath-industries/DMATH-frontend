@@ -23,9 +23,6 @@ interface AlgorithmPanelProps {
   disabled?: boolean;
 }
 
-/**
- * Компонент панели выбора и запуска алгоритма
- */
 export function AlgorithmPanel({ onRun, disabled }: AlgorithmPanelProps) {
   const { t } = useTranslation();
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('roberts-flores');

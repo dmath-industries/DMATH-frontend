@@ -1,19 +1,9 @@
-/**
- * Шаблоны текстов для пояснений
- */
-
 import type { ExplanationType } from '@/types';
 
-/**
- * Интерфейс для контекста шаблона
- */
 export interface TemplateContext {
   [key: string]: string | number | undefined;
 }
 
-/**
- * Функция для подстановки значений в шаблон
- */
 function interpolate(template: string, context: TemplateContext): string {
   return template.replace(/\{(\w+)\}/g, (match, key) => {
     const value = context[key];
@@ -21,9 +11,6 @@ function interpolate(template: string, context: TemplateContext): string {
   });
 }
 
-/**
- * Создание пояснения с подстановкой значений
- */
 export function createExplanation(
   type: ExplanationType,
   template: string,
@@ -35,9 +22,6 @@ export function createExplanation(
   };
 }
 
-/**
- * Общие шаблоны
- */
 export const GeneralTemplates = {
   initialization: 'Инициализация: {message}',
   iteration: 'Итерация {n}/{total}: {action}',

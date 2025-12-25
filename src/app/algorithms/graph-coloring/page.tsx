@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Graph Coloring Algorithm Page
- * Страница визуализации алгоритма раскраски графа
- */
-
 import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
@@ -16,9 +11,6 @@ import { useState } from 'react';
 
 const algorithmConfig = getAlgorithmConfig('graph-coloring');
 
-/**
- * Контент страницы алгоритма раскраски графа
- */
 function GraphColoringContent() {
   const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
@@ -202,9 +194,6 @@ function GraphColoringContent() {
   );
 }
 
-/**
- * Страница алгоритма раскраски графа
- */
 export default function GraphColoringPage() {
   const { t } = useTranslation();
   return (

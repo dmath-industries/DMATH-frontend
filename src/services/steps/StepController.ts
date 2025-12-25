@@ -1,8 +1,3 @@
-/**
- * StepController — плеер для воспроизведения шагов алгоритма
- * Связывает Applier ↔ GraphModel ↔ Renderer
- */
-
 import { GraphModel } from '@/services/graph/GraphModel';
 import { Applier } from './Applier';
 import { Renderer } from '@/services/renderer/Renderer';
@@ -38,9 +33,6 @@ export class StepController {
     this.onComplete = config.onComplete;
   }
 
-  /**
-   * Установить шаги
-   */
   setSteps(steps: Step[]): void {
     this.steps = steps;
     this.currentIndex = -1;
@@ -48,23 +40,14 @@ export class StepController {
     this.stopPlayback();
   }
 
-  /**
-   * Добавить шаги
-   */
   addSteps(steps: Step[]): void {
     this.steps.push(...steps);
   }
 
-  /**
-   * Получить текущий индекс
-   */
   getCurrentIndex(): number {
     return this.currentIndex;
   }
 
-  /**
-   * Получить шаг по индексу
-   */
   getStepByIndex(index: number): Step | null {
     if (index < 0 || index >= this.steps.length) {
       return null;
@@ -72,23 +55,14 @@ export class StepController {
     return this.steps[index] || null;
   }
 
-  /**
-   * Получить общее количество шагов
-   */
   getTotalSteps(): number {
     return this.steps.length;
   }
 
-  /**
-   * Проверить, проигрывается ли
-   */
   isPlaying(): boolean {
     return this.playing;
   }
 
-  /**
-   * Установить скорость (мс между шагами)
-   */
   setSpeed(speedMs: number): void {
     this.speedMs = speedMs;
 
@@ -98,9 +72,6 @@ export class StepController {
     }
   }
 
-  /**
-   * Перейти к конкретному индексу
-   */
   goToIndex(targetIndex: number): void {
     if (targetIndex < -1 || targetIndex >= this.steps.length) {
       return;
@@ -121,9 +92,6 @@ export class StepController {
     }
   }
 
-  /**
-   * Следующий шаг
-   */
   forward(): void {
     if (this.currentIndex >= this.steps.length - 1) {
       this.pause();
@@ -145,9 +113,6 @@ export class StepController {
     this.onIndexChange?.(this.currentIndex);
   }
 
-  /**
-   * Предыдущий шаг
-   */
   backward(): void {
     if (this.currentIndex < 0) {
       return;
@@ -165,9 +130,6 @@ export class StepController {
     this.onIndexChange?.(this.currentIndex);
   }
 
-  /**
-   * Начать воспроизведение
-   */
   play(): void {
     if (this.playing) return;
 
@@ -179,17 +141,11 @@ export class StepController {
     this.startPlayback();
   }
 
-  /**
-   * Пауза
-   */
   pause(): void {
     this.playing = false;
     this.stopPlayback();
   }
 
-  /**
-   * Переключить play/pause
-   */
   toggle(): void {
     if (this.playing) {
       this.pause();
@@ -198,34 +154,22 @@ export class StepController {
     }
   }
 
-  /**
-   * Сброс к начальному состоянию
-   */
   reset(): void {
     this.pause();
     this.goToIndex(-1);
   }
 
-  /**
-   * Перейти в конец
-   */
   goToEnd(): void {
     this.pause();
     this.goToIndex(this.steps.length - 1);
   }
 
-  /**
-   * Начать автоматическое воспроизведение
-   */
   private startPlayback(): void {
     this.intervalId = setInterval(() => {
       this.tick();
     }, this.speedMs);
   }
 
-  /**
-   * Остановить автоматическое воспроизведение
-   */
   private stopPlayback(): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
@@ -233,9 +177,6 @@ export class StepController {
     }
   }
 
-  /**
-   * Тик плеера
-   */
   private tick(): void {
     if (!this.playing) {
       this.stopPlayback();
@@ -251,9 +192,6 @@ export class StepController {
     this.forward();
   }
 
-  /**
-   * Очистка
-   */
   destroy(): void {
     this.stopPlayback();
     this.applier.clear();

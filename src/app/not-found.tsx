@@ -1,12 +1,5 @@
-/**
- * 404 Error Page
- */
-
 import Link from 'next/link';
 
-/**
- * Страница 404 - страница не найдена
- */
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center">

@@ -6,9 +6,6 @@ import { GraphCanvas } from './GraphCanvas';
 import { GraphEditor } from './GraphEditor';
 import { GraphModel, Renderer, ViewportAdapter } from '@/services';
 
-/**
- * Главный контейнер для графа и управления алгоритмами
- */
 export function GraphContainer() {
   const { t } = useTranslation();
   const [model] = useState(() => new GraphModel(true));
@@ -16,39 +13,26 @@ export function GraphContainer() {
   const rendererRef = useRef<Renderer | null>(null);
   const viewportRef = useRef<ViewportAdapter | null>(null);
 
-  /**
-   * Обработчик готовности renderer и viewport
-   */
   const handleRendererReady = (renderer: Renderer, viewport: ViewportAdapter) => {
     rendererRef.current = renderer;
     viewportRef.current = viewport;
   };
 
-  /**
-   * Получить позицию в центре видимой области viewport
-   */
   const getCenterPosition = (): { x: number; y: number } => {
     if (viewportRef.current) {
       const viewport = viewportRef.current.getViewport();
       if (viewport) {
-        // Получаем центр экрана в мировых координатах
         const centerX = viewport.center.x;
         const centerY = viewport.center.y;
         return { x: centerX, y: centerY };
       }
     }
-    // Если viewport не готов, используем центр по умолчанию
     return { x: 5000, y: 5000 };
   };
 
-  /**
-   * Обработчик добавления вершины
-   */
   const handleAddNode = (id: string, x?: number, y?: number) => {
-    // Если координаты не указаны, размещаем в центре viewport
     const position = x !== undefined && y !== undefined ? { x, y } : getCenterPosition();
 
-    // Проверяем, существует ли уже вершина с таким ID
     if (model.hasNode(id)) {
       alert(t('errors.vertexExists', { id }));
       return;
@@ -66,11 +50,7 @@ export function GraphContainer() {
     }
   };
 
-  /**
-   * Обработчик добавления ребра
-   */
   const handleAddEdge = (source: string, target: string, weight?: number) => {
-    // Проверяем существование вершин
     if (!model.hasNode(source)) {
       alert(t('errors.vertexNotFound', { vertex: source }));
       return;
@@ -86,7 +66,6 @@ export function GraphContainer() {
 
     const edgeId = `${source}-${target}`;
 
-    // Проверяем, существует ли уже такое ребро
     if (model.hasEdge(edgeId)) {
       alert(t('errors.edgeExists', { source, target }));
       return;
@@ -105,9 +84,6 @@ export function GraphContainer() {
     }
   };
 
-  /**
-   * Обработчик очистки графа
-   */
   const handleClear = () => {
     if (confirm(t('alerts.clearGraphMessage'))) {
       model.clear();
