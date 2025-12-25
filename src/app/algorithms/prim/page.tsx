@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Prim Algorithm Page
- * Страница визуализации алгоритма Прима
- */
-
 import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
@@ -44,11 +39,6 @@ function PrimContent() {
     setAlertState(prev => ({ ...prev, open: false }));
   };
 
-  /**
-   * Построить граф из матрицы весов.
-   * 0 или пустая ячейка означает отсутствие ребра.
-   * Матрица должна быть симметричной для неориентированного графа.
-   */
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {

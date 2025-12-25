@@ -1,7 +1,3 @@
-/**
- * Регистрация всех генераторов пояснений
- */
-
 import { explanationGeneratorRegistry } from './ExplanationGenerator';
 import {
   BellmanFordExplanationGenerator,
@@ -12,7 +8,6 @@ import {
   GraphColoringExplanationGenerator,
 } from './algorithm-specific';
 
-// Регистрация генераторов
 explanationGeneratorRegistry.register('bellman-ford', new BellmanFordExplanationGenerator());
 explanationGeneratorRegistry.register('prim', new PrimExplanationGenerator());
 explanationGeneratorRegistry.register('hungarian', new HungarianExplanationGenerator());

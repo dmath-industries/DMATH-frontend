@@ -1,7 +1,3 @@
-/**
- * Google Analytics Event Tracking
- */
-
 import { getAlgorithmConfig } from '@/algorithms';
 
 declare global {

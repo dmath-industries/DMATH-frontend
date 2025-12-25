@@ -9,9 +9,6 @@ interface ViewportControlsProps {
   onFit: () => void;
 }
 
-/**
- * Компонент кнопок управления viewport (зум, вписать в экран)
- */
 export function ViewportControls({ onZoomIn, onZoomOut, onFit }: ViewportControlsProps) {
   const { t } = useTranslation();
   return (

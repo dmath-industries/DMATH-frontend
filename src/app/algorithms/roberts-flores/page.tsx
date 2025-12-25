@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Roberts-Flores Algorithm Page
- * Страница визуализации алгоритма Робертса-Флореса
- */
-
 import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
@@ -16,9 +11,6 @@ import { useState, useEffect } from 'react';
 
 const algorithmConfig = getAlgorithmConfig('roberts-flores');
 
-/**
- * Контент страницы алгоритма Робертса-Флореса
- */
 function RobertsFloresContent() {
   const { t } = useTranslation();
   const { loadGraph, registerMatrixHandler } = useAlgorithmLayout();
@@ -46,9 +38,6 @@ function RobertsFloresContent() {
     setAlertState(prev => ({ ...prev, open: false }));
   };
 
-  /**
-   * Обработать ввод матрицы смежности и создать граф
-   */
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
@@ -80,8 +69,8 @@ function RobertsFloresContent() {
       const centerX = 0;
       const centerY = 0;
 
-      const nodeColor = '#3b82f6'; // blue-500
-      const edgeColor = '#60a5fa'; // blue-400
+      const nodeColor = '#3b82f6';
+      const edgeColor = '#60a5fa';
 
       for (let i = 0; i < nodeCount; i++) {
         const angle = (i / nodeCount) * 2 * Math.PI - Math.PI / 2;
@@ -136,7 +125,6 @@ function RobertsFloresContent() {
     }
   };
 
-  // Регистрируем обработчик матрицы для панели управления
   useEffect(() => {
     registerMatrixHandler(handleMatrixSubmit, {
       placeholder: algorithmConfig?.placeholder,
@@ -207,9 +195,6 @@ function RobertsFloresContent() {
   );
 }
 
-/**
- * Страница алгоритма Робертса-Флореса
- */
 export default function RobertsFloresPage() {
   const { t } = useTranslation();
   return (

@@ -1,8 +1,3 @@
-/**
- * ViewportAdapter — управление камерой и viewport
- * Полностью переписанный с нуля для правильного центрирования графа
- */
-
 import { Application, Container } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import { GraphModel } from '@/services/graph/GraphModel';
@@ -103,10 +98,6 @@ export class ViewportAdapter {
     return this.viewport;
   }
 
-  /**
-   * Вписать граф в видимую область и центрировать
-   * Это основной метод для правильного отображения графа
-   */
   fitToGraph(model: GraphModel): void {
     if (!this.viewport) {
       console.warn('Viewport not initialized');
@@ -146,9 +137,6 @@ export class ViewportAdapter {
     this.viewport.moveCenter(graphCenterX, graphCenterY);
   }
 
-  /**
-   * Вычислить границы графа с учётом радиусов узлов
-   */
   private calculateGraphBounds(model: GraphModel): {
     minX: number;
     maxX: number;
@@ -185,9 +173,6 @@ export class ViewportAdapter {
     return { minX, maxX, minY, maxY };
   }
 
-  /**
-   * Сбросить вид к начальному состоянию
-   */
   resetView(): void {
     if (!this.viewport) return;
 
@@ -196,9 +181,6 @@ export class ViewportAdapter {
     this.viewport.moveCenter(worldSize / 2, worldSize / 2);
   }
 
-  /**
-   * Приблизить камеру
-   */
   zoomIn(factor: number = 1.3): void {
     if (!this.viewport) return;
 
@@ -211,9 +193,6 @@ export class ViewportAdapter {
     });
   }
 
-  /**
-   * Отдалить камеру
-   */
   zoomOut(factor: number = 1.3): void {
     if (!this.viewport) return;
 
@@ -226,9 +205,6 @@ export class ViewportAdapter {
     });
   }
 
-  /**
-   * Установить зум напрямую
-   */
   setZoom(zoom: number): void {
     if (!this.viewport) return;
 
@@ -237,17 +213,11 @@ export class ViewportAdapter {
     this.viewport.setZoom(clampedZoom, true);
   }
 
-  /**
-   * Переместить центр камеры
-   */
   moveCenter(x: number, y: number): void {
     if (!this.viewport) return;
     this.viewport.moveCenter(x, y);
   }
 
-  /**
-   * Получить текущее состояние viewport
-   */
   getState(): ViewportState {
     if (!this.viewport) {
       return { x: 0, y: 0, zoom: 1 };
@@ -260,9 +230,6 @@ export class ViewportAdapter {
     };
   }
 
-  /**
-   * Установить состояние viewport
-   */
   setState(state: ViewportState): void {
     if (!this.viewport) return;
 
@@ -270,9 +237,6 @@ export class ViewportAdapter {
     this.viewport.moveCenter(state.x, state.y);
   }
 
-  /**
-   * Обновить размер экрана при изменении размера окна
-   */
   resize(width: number, height: number): void {
     if (!this.viewport) return;
 
@@ -289,36 +253,24 @@ export class ViewportAdapter {
     this.viewport.screenHeight = height;
   }
 
-  /**
-   * Эмитировать событие изменения
-   */
   private emitChange(): void {
     if (this.onViewportChange) {
       this.onViewportChange(this.getState());
     }
   }
 
-  /**
-   * Приостановить перетаскивание viewport (например, при перетаскивании узла)
-   */
   pauseDrag(): void {
     if (this.viewport) {
       this.viewport.plugins.pause('drag');
     }
   }
 
-  /**
-   * Возобновить перетаскивание viewport
-   */
   resumeDrag(): void {
     if (this.viewport) {
       this.viewport.plugins.resume('drag');
     }
   }
 
-  /**
-   * Уничтожить viewport
-   */
   destroy(): void {
     if (this.viewport) {
       this.viewport.destroy({ children: true });

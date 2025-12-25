@@ -23,9 +23,6 @@ interface GraphEditorProps {
   useWeights?: boolean;
 }
 
-/**
- * Компонент панели редактирования графа
- */
 export function GraphEditor({
   onAddNode,
   onAddEdge,

@@ -26,9 +26,6 @@ interface ControlPanelProps {
   compact?: boolean;
 }
 
-/**
- * Компонент панели управления воспроизведением алгоритма
- */
 export function ControlPanel({ compact = false }: ControlPanelProps) {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();

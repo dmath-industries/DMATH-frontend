@@ -1,7 +1,3 @@
-/**
- * LayoutService — обёртка над ForceAtlas2 для автоматической раскладки графа
- */
-
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { GraphModel } from './GraphModel';
 
@@ -22,20 +18,14 @@ export interface LayoutOptions {
 }
 
 export class LayoutService {
-  /**
-   * Запустить ForceAtlas2 раскладку
-   * Обновляет координаты узлов непосредственно в GraphModel
-   */
   async runFA2(model: GraphModel, options: LayoutOptions = {}): Promise<void> {
     const graph = model.getGraph();
 
-    // Проверяем, есть ли узлы
     if (graph.order === 0) {
       console.warn('Graph is empty, nothing to layout');
       return;
     }
 
-    // Инициализируем случайные позиции для узлов без координат
     graph.forEachNode((node, attrs) => {
       if (attrs.x === undefined || attrs.y === undefined) {
         graph.mergeNodeAttributes(node, {
@@ -61,16 +51,12 @@ export class LayoutService {
     const settings = { ...defaultSettings, ...options.settings };
     const iterations = options.iterations ?? 100;
 
-    // Синхронное выполнение ForceAtlas2
     forceAtlas2.assign(graph, {
       iterations,
       settings,
     });
   }
 
-  /**
-   * Применить простую круговую раскладку
-   */
   circularLayout(model: GraphModel, radius: number = 200): void {
     const graph = model.getGraph();
     const nodes = graph.nodes();
@@ -87,9 +73,6 @@ export class LayoutService {
     });
   }
 
-  /**
-   * Применить случайную раскладку
-   */
   randomLayout(model: GraphModel, width: number = 3000, height: number = 3000): void {
     const graph = model.getGraph();
 
@@ -101,9 +84,6 @@ export class LayoutService {
     });
   }
 
-  /**
-   * Применить сеточную раскладку
-   */
   gridLayout(model: GraphModel, spacing: number = 100): void {
     const graph = model.getGraph();
     const nodes = graph.nodes();

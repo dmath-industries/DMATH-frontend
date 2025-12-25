@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Bron-Kerbosch Algorithm Page
- * Страница визуализации алгоритма Брона-Кербоша
- */
-
 import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
@@ -16,9 +11,6 @@ import { useState } from 'react';
 
 const algorithmConfig = getAlgorithmConfig('bron-kerbosch');
 
-/**
- * Контент страницы алгоритма Брона-Кербоша
- */
 function BronKerboschContent() {
   const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
@@ -46,9 +38,6 @@ function BronKerboschContent() {
     setAlertState(prev => ({ ...prev, open: false }));
   };
 
-  /**
-   * Обработать ввод матрицы смежности и создать граф
-   */
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
@@ -202,9 +191,6 @@ function BronKerboschContent() {
   );
 }
 
-/**
- * Страница алгоритма Брона-Кербоша
- */
 export default function BronKerboschPage() {
   const { t } = useTranslation();
   return (
