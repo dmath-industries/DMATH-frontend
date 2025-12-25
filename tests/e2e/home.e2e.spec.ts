@@ -7,6 +7,7 @@ test.describe('Главная страница', () => {
     });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
   });
 
   test('должна загружаться и отображать основной контент', async ({ page }) => {
