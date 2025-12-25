@@ -18,7 +18,7 @@ export function LanguageSwitcher() {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
   };
 
-  const currentLanguage = mounted ? i18n.language : 'en';
+  const currentLanguage = mounted ? i18n.language : 'ru';
 
   if (!mounted) {
     return <Box sx={{ width: 128, height: 32 }} />;
