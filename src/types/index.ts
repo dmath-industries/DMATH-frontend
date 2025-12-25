@@ -1,11 +1,5 @@
-/**
- * Центральная точка экспорта всех типов
- */
-
-// Element types
 export type { IBtn, IAlgorithmsItem, IHistory } from './elements.types';
 
-// DTO types
 export type { NodeDTO, EdgeDTO, GraphDTO, ElementState } from './dto.types';
 
 // Graph types

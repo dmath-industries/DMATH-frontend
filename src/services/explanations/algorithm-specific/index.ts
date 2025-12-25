@@ -1,7 +1,3 @@
-/**
- * Экспорт генераторов пояснений для алгоритмов
- */
-
 export { BellmanFordExplanationGenerator } from './BellmanFordExplanationGenerator';
 export { PrimExplanationGenerator } from './PrimExplanationGenerator';
 export { HungarianExplanationGenerator } from './HungarianExplanationGenerator';

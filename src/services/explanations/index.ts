@@ -1,7 +1,3 @@
-/**
- * Модуль генерации пояснений для шагов алгоритмов
- */
-
 export {
   ExplanationGenerator,
   ExplanationGeneratorRegistry,

@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * History Page
- * Страница истории выполненных алгоритмов
- */
-
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -25,9 +20,6 @@ import {
   Button,
 } from '@mui/material';
 
-/**
- * Маппинг имён алгоритмов на их URL маршруты
- */
 const ALGORITHM_ROUTES: Record<string, string> = {
   'roberts-flores': '/algorithms/roberts-flores',
   'bellman-ford': '/algorithms/bellman-ford',
@@ -37,9 +29,6 @@ const ALGORITHM_ROUTES: Record<string, string> = {
   'bron-kerbosch': '/algorithms/bron-kerbosch',
 };
 
-/**
- * Страница истории решений
- */
 export default function HistoryPage() {
   const { t, i18n } = useTranslation();
   const router = useRouter();

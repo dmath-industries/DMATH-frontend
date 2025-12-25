@@ -1,9 +1,3 @@
-/**
- * WorkerClient — gateway для взаимодействия с Web Worker
- * UI-side клиент для отправки задач и получения результатов
- * Поддерживает ACK, backpressure, отмену через AbortController
- */
-
 import {
   WorkerMessage,
   RunAlgoMessage,
@@ -32,15 +26,11 @@ export class WorkerClient {
   private abortController: AbortController | null = null;
   private pendingChunks: Set<string> = new Set();
 
-  /**
-   * Инициализировать Worker
-   */
   init(): void {
     if (this.worker) {
       return;
     }
 
-    // Создаём Worker из src/workers/ (правильный подход для Next.js)
     this.worker = new Worker(new URL('../workers/algorithm.worker.ts', import.meta.url), {
       type: 'module',
     });
@@ -56,27 +46,19 @@ export class WorkerClient {
     };
   }
 
-  /**
-   * Установить обработчики событий
-   */
   setHandlers(handlers: WorkerEventHandler): void {
     this.handlers = handlers;
   }
 
-  /**
-   * Запустить алгоритм
-   */
   runAlgorithm(name: string, graphDTO: GraphDTO, params: AlgorithmParams = {}): string {
     if (!this.worker) {
       this.init();
     }
 
-    // Отменяем предыдущий запрос, если есть
     if (this.currentRequestId) {
       this.cancel();
     }
 
-    // Создаём новый AbortController
     this.abortController = new AbortController();
     const requestId = `${name}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.currentRequestId = requestId;
@@ -88,7 +70,7 @@ export class WorkerClient {
         name,
         graphDTO,
         params: {
-          chunkSize: 50, // размер чанка по умолчанию
+          chunkSize: 50,
           ...params,
         },
         requestId,
@@ -99,15 +81,11 @@ export class WorkerClient {
     return requestId;
   }
 
-  /**
-   * Отменить выполнение алгоритма
-   */
   cancel(requestId?: string): void {
     if (!this.worker) {
       return;
     }
 
-    // Отменяем только текущий запрос или указанный
     if (!requestId || requestId === this.currentRequestId) {
       if (this.abortController) {
         this.abortController.abort();
@@ -123,9 +101,6 @@ export class WorkerClient {
     }
   }
 
-  /**
-   * Отправить ACK для чанка
-   */
   private sendChunkAck(chunkId: string): void {
     if (!this.worker) {
       return;
@@ -140,22 +115,14 @@ export class WorkerClient {
     this.pendingChunks.delete(chunkId);
   }
 
-  /**
-   * Обработка сообщений от Worker
-   */
   private handleMessage(message: WorkerMessage): void {
     switch (message.type) {
       case 'STEP_CHUNK': {
         const stepMessage = message as StepChunkMessage;
 
-        // Проверяем, что это сообщение для текущего запроса
         if (this.currentRequestId && stepMessage.chunkId) {
           this.pendingChunks.add(stepMessage.chunkId);
-
-          // Вызываем обработчик
           this.handlers.onStepChunk?.(stepMessage.payload, stepMessage.chunkId, stepMessage.isLast);
-
-          // Отправляем ACK после обработки
           this.sendChunkAck(stepMessage.chunkId);
         }
         break;
@@ -198,39 +165,24 @@ export class WorkerClient {
     }
   }
 
-  /**
-   * Сброс состояния
-   */
   private reset(): void {
     this.currentRequestId = null;
     this.abortController = null;
     this.pendingChunks.clear();
   }
 
-  /**
-   * Получить текущий request ID
-   */
   getCurrentRequestId(): string | null {
     return this.currentRequestId;
   }
 
-  /**
-   * Проверить, выполняется ли запрос
-   */
   isRunning(): boolean {
     return this.currentRequestId !== null;
   }
 
-  /**
-   * Получить количество неподтверждённых чанков
-   */
   getPendingChunksCount(): number {
     return this.pendingChunks.size;
   }
 
-  /**
-   * Уничтожить Worker
-   */
   terminate(): void {
     if (this.currentRequestId) {
       this.cancel();
