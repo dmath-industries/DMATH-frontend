@@ -2,13 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Страница списка алгоритмов', () => {
   test.beforeEach(async ({ page }) => {
-    // Set Russian language in localStorage before navigation
     await page.addInitScript(() => {
       localStorage.setItem('dmath-language', 'ru');
     });
     await page.goto('/');
-    // Wait for client-side hydration and content to render
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
   });
 
   test('должна загружаться и отображать список алгоритмов', async ({ page }) => {

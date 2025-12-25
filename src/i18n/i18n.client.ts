@@ -8,7 +8,7 @@ import ru from './ru.json';
 export const LANGUAGE_STORAGE_KEY = 'dmath-language';
 
 if (!i18n.isInitialized) {
-  let initialLng = 'en';
+  let initialLng = 'ru';
   if (typeof window !== 'undefined') {
     try {
       const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -16,7 +16,7 @@ if (!i18n.isInitialized) {
         initialLng = savedLanguage;
       }
     } catch {
-      initialLng = 'en';
+      initialLng = 'ru';
     }
   }
 
@@ -45,8 +45,8 @@ export function initI18n() {
     return;
   }
 
-  const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'en';
-  const language = savedLanguage === 'en' || savedLanguage === 'ru' ? savedLanguage : 'en';
+  const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) || 'ru';
+  const language = savedLanguage === 'en' || savedLanguage === 'ru' ? savedLanguage : 'ru';
 
   if (i18n.language !== language) {
     i18n.changeLanguage(language);

@@ -7,6 +7,7 @@ test.describe('Страница истории', () => {
     });
     await page.goto('/history');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
   });
 
   test('должна загружаться и отображать заголовок', async ({ page }) => {
