@@ -5,6 +5,7 @@
  * Страница визуализации алгоритма Прима
  */
 
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
@@ -17,6 +18,7 @@ import { useState } from 'react';
 const algorithmConfig = getAlgorithmConfig('prim');
 
 function PrimContent() {
+  const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -51,7 +53,7 @@ function PrimContent() {
     try {
       if (!matrixText || !matrixText.trim()) {
         AnalyticsEvents.matrixParseError('prim', 'empty');
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -63,7 +65,7 @@ function PrimContent() {
       const size = rows.length;
       if (size === 0) {
         AnalyticsEvents.matrixParseError('prim', 'empty');
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -71,7 +73,7 @@ function PrimContent() {
         const row = rows[i];
         if (!row || row.length !== size) {
           AnalyticsEvents.matrixParseError('prim', 'not_square');
-          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
+          showAlert(t('common.error'), t('matrix.matrixMustBeSquare'), 'error');
           return;
         }
       }
@@ -129,7 +131,7 @@ function PrimContent() {
 
       if (edges.length === 0) {
         AnalyticsEvents.matrixParseError('prim', 'no_edges');
-        showAlert('Ошибка', 'Не найдено ни одного ребра. Заполните веса > 0.', 'error');
+        showAlert(t('common.error'), t('matrix.noEdgesFound'), 'error');
         return;
       }
 
@@ -138,7 +140,7 @@ function PrimContent() {
     } catch (error) {
       console.error('Error parsing matrix:', error);
       AnalyticsEvents.matrixParseError('prim', 'invalid_format');
-      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
+      showAlert(t('common.error'), t('matrix.matrixParseError'), 'error');
     }
   };
 
@@ -146,27 +148,29 @@ function PrimContent() {
     <>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          О алгоритме
+          {t('algorithms.descriptions.prim.title')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2">
-            <strong>Алгоритм Прима</strong> строит минимальное остовное дерево, постепенно расширяя
-            остов вершинами через ребро минимального веса.
-          </Typography>
-          <Typography variant="body2">
-            Работает с неориентированным взвешенным графом без отрицательных весов.
-          </Typography>
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.prim.paragraph1') }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.prim.paragraph2') }}
+          />
           <MuiAlert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="body2">
-              💡 Совет: используйте симметричную матрицу с весами &gt; 0. Диагональ — 0.
-            </Typography>
+            <Typography
+              variant="body2"
+              dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.prim.tip') }}
+            />
           </MuiAlert>
         </Box>
       </Paper>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы весов
+          {t('algorithms.weightMatrixInput')}
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
@@ -189,7 +193,7 @@ function PrimContent() {
               px: 4,
             }}
           >
-            ОК
+            {t('common.ok')}
           </Button>
         }
       >
@@ -200,8 +204,9 @@ function PrimContent() {
 }
 
 export default function PrimPage() {
+  const { t } = useTranslation();
   return (
-    <AlgorithmLayout algorithmName="prim" algorithmTitle="Алгоритм Прима">
+    <AlgorithmLayout algorithmName="prim" algorithmTitle={t('algorithms.prim')}>
       <PrimContent />
     </AlgorithmLayout>
   );

@@ -3,11 +3,13 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Box, Container, GridLegacy as Grid } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { AlgorithmsItem } from '@/components/elements';
 import { AnalyticsEvents } from '@/shared/lib';
 import type { IAlgorithmsItem } from '@/types';
 
 export default function Home() {
+  const { t } = useTranslation();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -20,32 +22,32 @@ export default function Home() {
 
   const algorithms: IAlgorithmsItem[] = [
     {
-      title: 'Алгоритм Робертса-Флореса',
+      title: t('algorithms.robertsFlores'),
       img: '/algorithms/1.jpg',
       href: '/algorithms/roberts-flores',
     },
     {
-      title: 'Алгоритм Прима',
+      title: t('algorithms.prim'),
       img: '/algorithms/2.jpg',
       href: '/algorithms/prim',
     },
     {
-      title: 'Алгоритм раскраски графа',
+      title: t('algorithms.graphColoring'),
       img: '/algorithms/4.jpg',
       href: '/algorithms/graph-coloring',
     },
     {
-      title: 'Алгоритм Форда-Беллмана',
+      title: t('algorithms.bellmanFord'),
       img: '/algorithms/5.jpg',
       href: '/algorithms/bellman-ford',
     },
     {
-      title: 'Венгерский алгоритм',
+      title: t('algorithms.hungarian'),
       img: '/algorithms/3.jpg',
       href: '/algorithms/hungarian',
     },
     {
-      title: 'Алгоритм Брона-Кербоша',
+      title: t('algorithms.bronKerbosch'),
       img: '/algorithms/6.jpg',
       href: '/algorithms/bron-kerbosch',
     },

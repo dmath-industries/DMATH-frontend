@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { HistoryItem, Alert } from '@/components/elements';
@@ -37,24 +38,25 @@ const ALGORITHM_ROUTES: Record<string, string> = {
 };
 
 /**
- * Маппинг имён алгоритмов на их отображаемые названия
- */
-const ALGORITHM_TITLES: Record<string, string> = {
-  'roberts-flores': 'Алгоритм Робертса-Флореса',
-  'bellman-ford': 'Алгоритм Форда-Беллмана',
-  prim: 'Алгоритм Прима',
-  'graph-coloring': 'Алгоритм раскраски графа',
-  hungarian: 'Венгерский алгоритм',
-  'bron-kerbosch': 'Алгоритм Брона-Кербоша',
-};
-
-/**
  * Страница истории решений
  */
 export default function HistoryPage() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getAlgorithmTitle = (algorithmName: string): string => {
+    const keyMap: Record<string, string> = {
+      'roberts-flores': 'algorithms.robertsFlores',
+      'bellman-ford': 'algorithms.bellmanFord',
+      prim: 'algorithms.prim',
+      'graph-coloring': 'algorithms.graphColoring',
+      hungarian: 'algorithms.hungarian',
+      'bron-kerbosch': 'algorithms.bronKerbosch',
+    };
+    return t(keyMap[algorithmName] || algorithmName);
+  };
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     sessionId: string | null;
@@ -85,7 +87,8 @@ export default function HistoryPage() {
 
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
-    return date.toLocaleString('ru-RU', {
+    const locale = i18n.language === 'ru' ? 'ru-RU' : 'en-US';
+    return date.toLocaleString(locale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -105,7 +108,7 @@ export default function HistoryPage() {
 
       router.push(route);
     } else {
-      alert(`Не найден маршрут для алгоритма: ${session.algorithmName}`);
+      alert(t('errors.routeNotFound', { algorithm: session.algorithmName }));
     }
   };
 
@@ -113,8 +116,7 @@ export default function HistoryPage() {
     const sessionToDelete = sessions.find(s => s.id === sessionId);
     if (!sessionToDelete) return;
 
-    const algorithmTitle =
-      ALGORITHM_TITLES[sessionToDelete.algorithmName] || sessionToDelete.algorithmName;
+    const algorithmTitle = getAlgorithmTitle(sessionToDelete.algorithmName);
 
     setDeleteDialog({
       open: true,
@@ -181,7 +183,7 @@ export default function HistoryPage() {
         >
           <ChevronLeft size={18} style={{ transition: 'transform 0.2s' }} />
           <Typography variant="body2" sx={{ ml: 0.5 }}>
-            Назад на главную
+            {t('common.backToHome')}
           </Typography>
         </Box>
 
@@ -194,7 +196,7 @@ export default function HistoryPage() {
             ml: { xs: 0, sm: 4, md: 10 },
           }}
         >
-          История решений
+          {t('history.title')}
         </Typography>
 
         <Paper
@@ -224,7 +226,7 @@ export default function HistoryPage() {
               color: '#ffffff',
             }}
           >
-            История решений алгоритмов:
+            {t('history.historyOfSolutions')}
           </Typography>
 
           {loading ? (
@@ -238,7 +240,7 @@ export default function HistoryPage() {
             >
               <CircularProgress sx={{ mb: 2, color: 'rgba(255,255,255,0.3)' }} />
               <Typography variant="body1" sx={{ color: '#ffffff' }}>
-                Загрузка истории...
+                {t('history.loadingHistory')}
               </Typography>
             </Box>
           ) : sessions.length === 0 ? (
@@ -257,10 +259,10 @@ export default function HistoryPage() {
                 }}
               >
                 <Typography variant="body1" sx={{ color: '#ffffff', mb: 2 }}>
-                  История пуста
+                  {t('common.emptyHistory')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 3 }}>
-                  Запустите алгоритм, чтобы создать первую запись в истории решений.
+                  {t('common.emptyHistoryDescription')}
                 </Typography>
                 <Box
                   component={Link}
@@ -280,7 +282,7 @@ export default function HistoryPage() {
                     },
                   }}
                 >
-                  Перейти к алгоритмам
+                  {t('common.goToAlgorithms')}
                 </Box>
               </Paper>
             </Box>
@@ -294,7 +296,7 @@ export default function HistoryPage() {
                 return (
                   <Box key={session.id} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <HistoryItem
-                      title={ALGORITHM_TITLES[session.algorithmName] || session.algorithmName}
+                      title={getAlgorithmTitle(session.algorithmName)}
                       date={formatDate(session.updatedAt)}
                       onOpen={() => handleOpenSession(session)}
                       onDelete={() => handleDeleteSession(session.id)}
@@ -308,7 +310,7 @@ export default function HistoryPage() {
                       }}
                     >
                       <Chip
-                        label={`Вершин: ${nodeCount}`}
+                        label={`${t('common.vertices')}: ${nodeCount}`}
                         size="small"
                         sx={{
                           backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -317,7 +319,7 @@ export default function HistoryPage() {
                         }}
                       />
                       <Chip
-                        label={`Рёбер: ${edgeCount}`}
+                        label={`${t('common.edges')}: ${edgeCount}`}
                         size="small"
                         sx={{
                           backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -326,7 +328,7 @@ export default function HistoryPage() {
                         }}
                       />
                       <Chip
-                        label={`Шагов: ${stepCount}`}
+                        label={`${t('common.steps')}: ${stepCount}`}
                         size="small"
                         sx={{
                           backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -336,7 +338,7 @@ export default function HistoryPage() {
                       />
                       {session.metadata?.executionTime && (
                         <Chip
-                          label={`Время: ${Math.round(session.metadata.executionTime)}мс`}
+                          label={`${t('common.time')}: ${Math.round(session.metadata.executionTime)}${t('common.ms')}`}
                           size="small"
                           sx={{
                             backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -357,7 +359,7 @@ export default function HistoryPage() {
       <Alert
         open={deleteDialog.open}
         onClose={cancelDelete}
-        title="Удаление сессии"
+        title={t('history.deleteSession')}
         variant="warning"
         showIcon={false}
         showCloseButton={false}
@@ -377,7 +379,7 @@ export default function HistoryPage() {
                 },
               }}
             >
-              Отмена
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={confirmDelete}
@@ -392,16 +394,16 @@ export default function HistoryPage() {
                 },
               }}
             >
-              OK
+              {t('common.ok')}
             </Button>
           </>
         }
       >
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Вы уверены, что хотите удалить сессию "{deleteDialog.algorithmName}"?
+          {t('history.deleteSessionConfirm', { name: deleteDialog.algorithmName })}
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Дата: {deleteDialog.date}
+          {t('common.date')}: {deleteDialog.date}
         </Typography>
       </Alert>
     </Box>

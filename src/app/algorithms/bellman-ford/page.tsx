@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
@@ -12,6 +13,7 @@ import { useState } from 'react';
 const algorithmConfig = getAlgorithmConfig('bellman-ford');
 
 function BellmanFordContent() {
+  const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -40,7 +42,7 @@ function BellmanFordContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -57,14 +59,14 @@ function BellmanFordContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
+          showAlert(t('common.error'), t('matrix.matrixMustBeSquare'), 'error');
           return;
         }
       }
@@ -119,7 +121,7 @@ function BellmanFordContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
+      showAlert(t('common.error'), t('matrix.matrixParseError'), 'error');
     }
   };
 
@@ -127,34 +129,39 @@ function BellmanFordContent() {
     <>
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          О алгоритме
+          {t('algorithms.descriptions.bellmanFord.title')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2">
-            <strong>Алгоритм Форда-Беллмана</strong> — это алгоритм поиска кратчайших путей от одной
-            вершины до всех остальных в ориентированном взвешенном графе. В отличие от алгоритма
-            Дейкстры, он может работать с рёбрами отрицательного веса и обнаруживать отрицательные
-            циклы.
-          </Typography>
-          <Typography variant="body2">
-            Алгоритм выполняет V-1 итераций релаксации всех рёбер, где V — количество вершин. После
-            этого выполняется дополнительная проверка на наличие отрицательных циклов.
-          </Typography>
-          <Typography variant="body2">
-            Временная сложность: O(V × E), где V — количество вершин, E — количество рёбер.
-          </Typography>
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.bellmanFord.paragraph1'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.bellmanFord.paragraph2'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.bellmanFord.paragraph3'),
+            }}
+          />
           <MuiAlert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="body2">
-              💡 Совет: Используйте матрицу весов, где элемент [i][j] — вес ребра от вершины i к
-              вершине j. Используйте 0 для отсутствия ребра или 'inf' для бесконечности.
-            </Typography>
+            <Typography
+              variant="body2"
+              dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.bellmanFord.tip') }}
+            />
           </MuiAlert>
         </Box>
       </Paper>
 
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы весов
+          {t('algorithms.weightMatrixInput')}
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
@@ -188,8 +195,9 @@ function BellmanFordContent() {
 }
 
 export default function BellmanFordPage() {
+  const { t } = useTranslation();
   return (
-    <AlgorithmLayout algorithmName="bellman-ford" algorithmTitle="Алгоритм Форда-Беллмана">
+    <AlgorithmLayout algorithmName="bellman-ford" algorithmTitle={t('algorithms.bellmanFord')}>
       <BellmanFordContent />
     </AlgorithmLayout>
   );

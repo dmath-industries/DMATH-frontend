@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Renderer, ViewportAdapter } from '@/services';
 import { GraphModel } from '@/services';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -20,6 +21,7 @@ export function GraphCanvas({
   width = 1200,
   height = 800,
 }: GraphCanvasProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const expandedCanvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
@@ -277,13 +279,13 @@ export function GraphCanvas({
         style={{ width, height }}
       >
         <div className="text-red-400 text-center space-y-3">
-          <p className="font-bold mb-2 text-lg">Ошибка инициализации Canvas</p>
+          <p className="font-bold mb-2 text-lg">{t('graph.canvasInitError')}</p>
           <p className="text-sm text-red-300">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
           >
-            Перезагрузить страницу
+            {t('graph.reloadPage')}
           </button>
         </div>
       </div>
@@ -304,7 +306,7 @@ export function GraphCanvas({
           <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-              <p className="text-neutral-400 text-sm">Инициализация Canvas...</p>
+              <p className="text-neutral-400 text-sm">{t('graph.initializingCanvas')}</p>
             </div>
           </div>
         )}
@@ -324,7 +326,7 @@ export function GraphCanvas({
             <button
               onClick={handleFitToGraph}
               className="absolute top-4 left-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10 pointer-events-auto"
-              title="Найти граф (центрировать)"
+              title={t('graph.findGraph')}
             >
               <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
             </button>
@@ -332,7 +334,7 @@ export function GraphCanvas({
             <button
               onClick={handleOpenExpanded}
               className="absolute bottom-4 right-4 p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 z-10 pointer-events-auto"
-              title="Открыть в увеличенном режиме"
+              title={t('graph.openFullscreen')}
             >
               <OpenInFullIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
             </button>
@@ -360,7 +362,7 @@ export function GraphCanvas({
               <div className="absolute inset-0 flex items-center justify-center bg-neutral-800 z-10">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-                  <p className="text-neutral-400 text-sm">Инициализация Canvas...</p>
+                  <p className="text-neutral-400 text-sm">{t('graph.initializingCanvas')}</p>
                 </div>
               </div>
             )}
@@ -387,7 +389,7 @@ export function GraphCanvas({
                 <button
                   onClick={handleFitToGraph}
                   className="p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 pointer-events-auto"
-                  title="Найти граф (центрировать)"
+                  title={t('graph.findGraph')}
                 >
                   <RefreshIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
                 </button>
@@ -396,7 +398,7 @@ export function GraphCanvas({
               <button
                 onClick={handleCloseExpanded}
                 className="p-2.5 bg-neutral-700/90 hover:bg-neutral-600 backdrop-blur-sm rounded-lg shadow-lg transition-colors border border-neutral-600 pointer-events-auto"
-                title="Закрыть"
+                title={t('graph.close')}
               >
                 <CloseIcon sx={{ width: 20, height: 20, color: '#e5e7eb' }} />
               </button>

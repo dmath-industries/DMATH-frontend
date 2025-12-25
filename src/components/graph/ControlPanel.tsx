@@ -10,6 +10,7 @@ import {
   MenuItem,
   ListItemText,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
@@ -29,6 +30,7 @@ interface ControlPanelProps {
  * Компонент панели управления воспроизведением алгоритма
  */
 export function ControlPanel({ compact = false }: ControlPanelProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { currentIndex, totalSteps, playing, speedMs } = useAppSelector(state => state.steps);
   const [speedMenuAnchor, setSpeedMenuAnchor] = useState<null | HTMLElement>(null);
@@ -88,10 +90,12 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
         <>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Управление воспроизведением
+              {t('control.playbackControl')}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {currentIndex === -1 ? 'Начало' : `Шаг ${currentIndex + 1} / ${totalSteps}`}
+              {currentIndex === -1
+                ? t('control.beginning')
+                : `${t('control.step')} ${currentIndex + 1} ${t('common.of')} ${totalSteps}`}
             </Typography>
           </Box>
 
@@ -128,13 +132,13 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
               minWidth: '80px',
             }}
           >
-            {currentIndex === -1 ? 'Начало' : `${currentIndex + 1}/${totalSteps}`}
+            {currentIndex === -1 ? t('control.beginning') : `${currentIndex + 1}/${totalSteps}`}
           </Typography>
         )}
         <IconButton
           onClick={handleReset}
           disabled={currentIndex === -1}
-          title="В начало"
+          title={t('control.toBeginning')}
           sx={{
             '&:hover': {
               bgcolor: 'action.hover',
@@ -147,7 +151,7 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
         <IconButton
           onClick={handlePrev}
           disabled={currentIndex === -1}
-          title="Предыдущий шаг"
+          title={t('control.previousStep')}
           sx={{
             '&:hover': {
               bgcolor: 'action.hover',
@@ -160,7 +164,7 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
         {playing ? (
           <IconButton
             onClick={handlePause}
-            title="Пауза"
+            title={t('control.pause')}
             sx={{
               bgcolor: 'primary.main',
               color: 'white',
@@ -175,7 +179,7 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
           <IconButton
             onClick={handlePlay}
             disabled={totalSteps === 0}
-            title="Воспроизвести"
+            title={t('control.play')}
             sx={{
               bgcolor: 'primary.main',
               color: 'white',
@@ -195,7 +199,7 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
         <IconButton
           onClick={handleNext}
           disabled={currentIndex >= totalSteps - 1}
-          title="Следующий шаг"
+          title={t('control.nextStep')}
           sx={{
             '&:hover': {
               bgcolor: 'action.hover',
@@ -210,7 +214,7 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
             dispatch(setIndex(totalSteps - 1));
           }}
           disabled={currentIndex >= totalSteps - 1}
-          title="В конец"
+          title={t('control.toEnd')}
           sx={{
             '&:hover': {
               bgcolor: 'action.hover',
@@ -222,7 +226,7 @@ export function ControlPanel({ compact = false }: ControlPanelProps) {
 
         <IconButton
           onClick={handleSpeedMenuOpen}
-          title={`Скорость: ${currentSpeedLabel}`}
+          title={`${t('control.speed')} ${currentSpeedLabel}`}
           sx={{
             '&:hover': {
               bgcolor: 'action.hover',

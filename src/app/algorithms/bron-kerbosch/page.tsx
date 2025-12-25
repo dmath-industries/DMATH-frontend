@@ -5,6 +5,7 @@
  * Страница визуализации алгоритма Брона-Кербоша
  */
 
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
@@ -19,6 +20,7 @@ const algorithmConfig = getAlgorithmConfig('bron-kerbosch');
  * Контент страницы алгоритма Брона-Кербоша
  */
 function BronKerboschContent() {
+  const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -50,7 +52,7 @@ function BronKerboschContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -59,14 +61,14 @@ function BronKerboschContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
+          showAlert(t('common.error'), t('matrix.matrixMustBeSquare'), 'error');
           return;
         }
       }
@@ -105,11 +107,7 @@ function BronKerboschContent() {
           if (row[j] === 1) {
             // Проверяем симметричность (для неориентированного графа)
             if (matrix[j]?.[i] !== 1) {
-              showAlert(
-                'Ошибка',
-                `Граф должен быть неориентированным! Проверьте симметричность матрицы (элемент [${i}][${j}] и [${j}][${i}]).`,
-                'error'
-              );
+              showAlert(t('common.error'), t('errors.graphMustBeUndirected', { i, j }), 'error');
               return;
             }
 
@@ -131,7 +129,7 @@ function BronKerboschContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
+      showAlert(t('common.error'), t('matrix.matrixParseError'), 'error');
     }
   };
 
@@ -139,35 +137,39 @@ function BronKerboschContent() {
     <>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          О алгоритме
+          {t('algorithms.descriptions.bronKerbosch.title')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2">
-            <strong>Алгоритм Брона-Кербоша</strong> — это алгоритм для поиска всех максимальных клик
-            в неориентированном графе с использованием метода обхода с возвратом (backtracking).
-          </Typography>
-          <Typography variant="body2">
-            <strong>Клика</strong> — это подмножество вершин графа, в котором каждая пара вершин
-            соединена ребром. <strong>Максимальная клика</strong> — это клика, которую нельзя
-            расширить, добавив ещё одну вершину.
-          </Typography>
-          <Typography variant="body2">
-            Алгоритм использует три множества: <strong>R</strong> (текущая клика),{' '}
-            <strong>P</strong> (кандидаты для добавления), и <strong>X</strong> (исключённые
-            вершины).
-          </Typography>
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.bronKerbosch.paragraph1'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.bronKerbosch.paragraph2'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.bronKerbosch.paragraph3'),
+            }}
+          />
           <MuiAlert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="body2">
-              💡 Совет: Алгоритм работает только с неориентированными графами. Матрица должна быть
-              симметричной.
-            </Typography>
+            <Typography
+              variant="body2"
+              dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.bronKerbosch.tip') }}
+            />
           </MuiAlert>
         </Box>
       </Paper>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы смежности
+          {t('algorithms.adjacencyMatrixInput')}
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
@@ -190,7 +192,7 @@ function BronKerboschContent() {
               px: 4,
             }}
           >
-            ОК
+            {t('common.ok')}
           </Button>
         }
       >
@@ -204,8 +206,9 @@ function BronKerboschContent() {
  * Страница алгоритма Брона-Кербоша
  */
 export default function BronKerboschPage() {
+  const { t } = useTranslation();
   return (
-    <AlgorithmLayout algorithmName="bron-kerbosch" algorithmTitle="Алгоритм Брона-Кербоша">
+    <AlgorithmLayout algorithmName="bron-kerbosch" algorithmTitle={t('algorithms.bronKerbosch')}>
       <BronKerboschContent />
     </AlgorithmLayout>
   );
