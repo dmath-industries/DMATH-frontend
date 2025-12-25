@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, TextField, Button, Typography } from '@mui/material';
 
 interface GraphMatrixInputProps {
@@ -16,6 +17,7 @@ export function GraphMatrixInput({
   exampleMatrix,
   onLoadExample,
 }: GraphMatrixInputProps) {
+  const { t } = useTranslation();
   const [matrixText, setMatrixText] = useState(
     defaultValue || exampleMatrix || '0,1,0,1,0\n1,0,1,1,0\n0,1,0,0,1\n1,1,0,0,1\n0,0,1,1,0'
   );
@@ -36,7 +38,7 @@ export function GraphMatrixInput({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-        {placeholder || 'Задайте матрицу смежности. Используйте запятую в качестве разделителя'}
+        {placeholder || t('matrix.enterMatrix')}
       </Typography>
       <TextField
         multiline
@@ -66,7 +68,7 @@ export function GraphMatrixInput({
               },
             }}
           >
-            Загрузить пример
+            {t('common.loadExample')}
           </Button>
         )}
         <Button
@@ -80,7 +82,7 @@ export function GraphMatrixInput({
             },
           }}
         >
-          Отправить
+          {t('common.submit')}
         </Button>
       </Box>
     </Box>

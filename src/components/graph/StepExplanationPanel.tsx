@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@/shared/store';
 import type { Step, StepExplanation } from '@/types';
 import { Info, Calculator, CheckCircle2 } from 'lucide-react';
@@ -10,6 +11,7 @@ interface StepExplanationPanelProps {
 }
 
 export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps) {
+  const { t } = useTranslation();
   const { currentIndex, totalSteps } = useAppSelector(state => state.steps);
 
   const hasActiveStep = currentIndex >= 0 && currentStep;
@@ -57,7 +59,7 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
                         <Calculator className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-medium text-blue-300 mb-1">
-                            Математическая формула:
+                            {t('common.mathematicalFormula')}
                           </div>
                           <div className="text-sm text-blue-200 space-y-1">
                             {Array.isArray(displayExplanation.formula) ? (
@@ -113,9 +115,7 @@ export function StepExplanationPanel({ currentStep }: StepExplanationPanelProps)
             </div>
           ) : (
             <p className="text-sm text-neutral-400">
-              {currentIndex < 0
-                ? 'Используйте панель управления для просмотра шагов алгоритма'
-                : ''}
+              {currentIndex < 0 ? t('common.useControlPanel') : ''}
             </p>
           )}
         </div>

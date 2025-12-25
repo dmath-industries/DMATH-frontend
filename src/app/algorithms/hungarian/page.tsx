@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
@@ -12,6 +13,7 @@ import { useState } from 'react';
 const algorithmConfig = getAlgorithmConfig('hungarian');
 
 function HungarianContent() {
+  const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -40,7 +42,7 @@ function HungarianContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -54,7 +56,7 @@ function HungarianContent() {
           if (trimmed === '') return 0;
           const parsed = parseInt(trimmed, 10);
           if (isNaN(parsed)) {
-            throw new Error(`Некорректное значение в матрице: "${trimmed}"`);
+            throw new Error(t('errors.invalidMatrixValue', { value: trimmed }));
           }
           return parsed;
         })
@@ -62,14 +64,14 @@ function HungarianContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
+          showAlert(t('common.error'), t('matrix.matrixMustBeSquare'), 'error');
           return;
         }
       }
@@ -143,7 +145,7 @@ function HungarianContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
+      showAlert(t('common.error'), t('matrix.matrixParseError'), 'error');
     }
   };
 
@@ -151,34 +153,33 @@ function HungarianContent() {
     <>
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          О алгоритме
+          {t('algorithms.descriptions.hungarian.title')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2">
-            <strong>Венгерский алгоритм</strong> — это алгоритм решения задачи о назначениях
-            (assignment problem), которая заключается в нахождении оптимального назначения элементов
-            одного множества элементам другого множества с минимальной общей стоимостью.
-          </Typography>
-          <Typography variant="body2">
-            Алгоритм работает с квадратной матрицей стоимостей и находит такое назначение, при
-            котором каждый элемент первого множества назначается ровно одному элементу второго
-            множества, и общая стоимость минимальна.
-          </Typography>
-          <Typography variant="body2">
-            Временная сложность: O(n³), где n — размер матрицы.
-          </Typography>
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.hungarian.paragraph1') }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.hungarian.paragraph2') }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.hungarian.paragraph3') }}
+          />
           <MuiAlert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="body2">
-              💡 Совет: Используйте квадратную матрицу стоимостей. Граф будет представлен как
-              двудольный граф, где левая часть — источники, правая — цели.
-            </Typography>
+            <Typography
+              variant="body2"
+              dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.hungarian.tip') }}
+            />
           </MuiAlert>
         </Box>
       </Paper>
 
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы стоимостей
+          {t('algorithms.costMatrixInput')}
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
@@ -201,7 +202,7 @@ function HungarianContent() {
               px: 4,
             }}
           >
-            ОК
+            {t('common.ok')}
           </Button>
         }
       >
@@ -212,8 +213,9 @@ function HungarianContent() {
 }
 
 export default function HungarianPage() {
+  const { t } = useTranslation();
   return (
-    <AlgorithmLayout algorithmName="hungarian" algorithmTitle="Венгерский алгоритм">
+    <AlgorithmLayout algorithmName="hungarian" algorithmTitle={t('algorithms.hungarian')}>
       <HungarianContent />
     </AlgorithmLayout>
   );

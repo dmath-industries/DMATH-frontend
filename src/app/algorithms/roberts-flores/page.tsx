@@ -5,6 +5,7 @@
  * Страница визуализации алгоритма Робертса-Флореса
  */
 
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
@@ -19,6 +20,7 @@ const algorithmConfig = getAlgorithmConfig('roberts-flores');
  * Контент страницы алгоритма Робертса-Флореса
  */
 function RobertsFloresContent() {
+  const { t } = useTranslation();
   const { loadGraph, registerMatrixHandler } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -50,7 +52,7 @@ function RobertsFloresContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -59,14 +61,14 @@ function RobertsFloresContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
+          showAlert(t('common.error'), t('matrix.matrixMustBeSquare'), 'error');
           return;
         }
       }
@@ -130,7 +132,7 @@ function RobertsFloresContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
+      showAlert(t('common.error'), t('matrix.matrixParseError'), 'error');
     }
   };
 
@@ -146,28 +148,33 @@ function RobertsFloresContent() {
     <>
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          О алгоритме
+          {t('algorithms.descriptions.robertsFlores.title')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2">
-            <strong>Алгоритм Робертса-Флореса</strong> — это метод поиска всех гамильтоновых циклов
-            в графе с использованием обхода с возвратом (backtracking).
-          </Typography>
-          <Typography variant="body2">
-            Алгоритм систематически строит все возможные пути, начиная с начальной вершины, и
-            проверяет, образуют ли они гамильтонов цикл.
-          </Typography>
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.robertsFlores.paragraph1'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.robertsFlores.paragraph2'),
+            }}
+          />
           <MuiAlert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="body2">
-              💡 Совет: Для лучших результатов используйте связный граф с 4-7 вершинами.
-            </Typography>
+            <Typography
+              variant="body2"
+              dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.robertsFlores.tip') }}
+            />
           </MuiAlert>
         </Box>
       </Paper>
 
       <Paper sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы смежности
+          {t('algorithms.adjacencyMatrixInput')}
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
@@ -190,7 +197,7 @@ function RobertsFloresContent() {
               px: 4,
             }}
           >
-            ОК
+            {t('common.ok')}
           </Button>
         }
       >
@@ -204,11 +211,12 @@ function RobertsFloresContent() {
  * Страница алгоритма Робертса-Флореса
  */
 export default function RobertsFloresPage() {
+  const { t } = useTranslation();
   return (
     <AlgorithmLayout
       algorithmName="roberts-flores"
-      algorithmTitle="Алгоритм Робертса-Флореса"
-      graphDescription="Граф для поиска всех гамильтоновых циклов. Введите матрицу смежности для построения графа."
+      algorithmTitle={t('algorithms.robertsFlores')}
+      graphDescription={t('algorithms.graphForHamiltonian')}
     >
       <RobertsFloresContent />
     </AlgorithmLayout>

@@ -7,7 +7,7 @@ import { env } from '@/shared/lib';
 
 export const metadata: Metadata = {
   title: 'DMath - Graph Visualizer',
-  description: 'Учебный калькулятор и визуализатор алгоритмов дискретной математики',
+  description: 'Educational calculator and visualizer for discrete mathematics algorithms',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
         {/* Google tag (gtag.js) */}
         {env.ga4Id && (

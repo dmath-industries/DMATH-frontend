@@ -5,6 +5,7 @@
  * Страница визуализации алгоритма раскраски графа
  */
 
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Alert as MuiAlert, Button } from '@mui/material';
 import { AlgorithmLayout, useAlgorithmLayout } from '@/components/graph/AlgorithmLayout';
 import { GraphMatrixInput } from '@/components/input';
@@ -19,6 +20,7 @@ const algorithmConfig = getAlgorithmConfig('graph-coloring');
  * Контент страницы алгоритма раскраски графа
  */
 function GraphColoringContent() {
+  const { t } = useTranslation();
   const { loadGraph } = useAlgorithmLayout();
   const [alertState, setAlertState] = useState<{
     open: boolean;
@@ -50,7 +52,7 @@ function GraphColoringContent() {
   const handleMatrixSubmit = (matrixText: string) => {
     try {
       if (!matrixText || !matrixText.trim()) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
@@ -59,14 +61,14 @@ function GraphColoringContent() {
 
       const nodeCount = matrix.length;
       if (nodeCount === 0) {
-        showAlert('Ошибка', 'Матрица пуста!', 'error');
+        showAlert(t('common.error'), t('matrix.matrixEmpty'), 'error');
         return;
       }
 
       for (let i = 0; i < nodeCount; i++) {
         const row = matrix[i];
         if (!row || row.length !== nodeCount) {
-          showAlert('Ошибка', 'Матрица должна быть квадратной!', 'error');
+          showAlert(t('common.error'), t('matrix.matrixMustBeSquare'), 'error');
           return;
         }
       }
@@ -105,11 +107,7 @@ function GraphColoringContent() {
           if (row[j] === 1) {
             // Проверяем симметричность (для неориентированного графа)
             if (matrix[j]?.[i] !== 1) {
-              showAlert(
-                'Ошибка',
-                `Граф должен быть неориентированным! Проверьте симметричность матрицы (элемент [${i}][${j}] и [${j}][${i}]).`,
-                'error'
-              );
+              showAlert(t('common.error'), t('errors.graphMustBeUndirected', { i, j }), 'error');
               return;
             }
 
@@ -131,7 +129,7 @@ function GraphColoringContent() {
       loadGraph(graphDTO);
     } catch (error) {
       console.error('Error parsing matrix:', error);
-      showAlert('Ошибка', 'Ошибка при парсинге матрицы. Проверьте формат!', 'error');
+      showAlert(t('common.error'), t('matrix.matrixParseError'), 'error');
     }
   };
 
@@ -139,35 +137,39 @@ function GraphColoringContent() {
     <>
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          О алгоритме
+          {t('algorithms.descriptions.graphColoring.title')}
         </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="body2">
-            <strong>Алгоритм раскраски графа</strong> — это алгоритм для назначения цветов вершинам
-            графа таким образом, чтобы никакие две смежные вершины не имели одинаковый цвет.
-          </Typography>
-          <Typography variant="body2">
-            Реализован <strong>жадный алгоритм</strong> (Greedy Coloring), который проходит по
-            вершинам и назначает каждой вершине минимальный доступный цвет (не используемый её
-            соседями).
-          </Typography>
-          <Typography variant="body2">
-            <strong>Хроматическое число</strong> графа — это минимальное количество цветов,
-            необходимое для правильной раскраски. Жадный алгоритм не всегда находит оптимальное
-            решение, но работает быстро.
-          </Typography>
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.graphColoring.paragraph1'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.graphColoring.paragraph2'),
+            }}
+          />
+          <Typography
+            variant="body2"
+            dangerouslySetInnerHTML={{
+              __html: t('algorithms.descriptions.graphColoring.paragraph3'),
+            }}
+          />
           <MuiAlert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="body2">
-              💡 Совет: Алгоритм работает с неориентированными графами. Матрица должна быть
-              симметричной.
-            </Typography>
+            <Typography
+              variant="body2"
+              dangerouslySetInnerHTML={{ __html: t('algorithms.descriptions.graphColoring.tip') }}
+            />
           </MuiAlert>
         </Box>
       </Paper>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Ввод матрицы смежности
+          {t('algorithms.adjacencyMatrixInput')}
         </Typography>
         <GraphMatrixInput
           onSubmit={handleMatrixSubmit}
@@ -190,7 +192,7 @@ function GraphColoringContent() {
               px: 4,
             }}
           >
-            ОК
+            {t('common.ok')}
           </Button>
         }
       >
@@ -204,8 +206,9 @@ function GraphColoringContent() {
  * Страница алгоритма раскраски графа
  */
 export default function GraphColoringPage() {
+  const { t } = useTranslation();
   return (
-    <AlgorithmLayout algorithmName="graph-coloring" algorithmTitle="Алгоритм раскраски графа">
+    <AlgorithmLayout algorithmName="graph-coloring" algorithmTitle={t('algorithms.graphColoring')}>
       <GraphColoringContent />
     </AlgorithmLayout>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, Minus, Network } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Button,
@@ -31,6 +32,7 @@ export function GraphEditor({
   onClear,
   useWeights = true,
 }: GraphEditorProps) {
+  const { t } = useTranslation();
   const [showNodeDialog, setShowNodeDialog] = useState(false);
   const [showEdgeDialog, setShowEdgeDialog] = useState(false);
   const [nodeId, setNodeId] = useState('');
@@ -73,20 +75,20 @@ export function GraphEditor({
           variant="contained"
           startIcon={<Plus size={16} />}
           onClick={() => setShowNodeDialog(true)}
-          title="Добавить вершину"
+          title={t('graph.addVertex')}
           fullWidth
         >
-          Вершина
+          {t('common.vertex')}
         </Button>
 
         <Button
           variant="contained"
           startIcon={<Network size={16} />}
           onClick={() => setShowEdgeDialog(true)}
-          title="Добавить ребро"
+          title={t('graph.addEdge')}
           fullWidth
         >
-          Ребро
+          {t('common.edge')}
         </Button>
 
         <Button
@@ -94,10 +96,10 @@ export function GraphEditor({
           color="error"
           startIcon={<Minus size={16} />}
           onClick={onClear}
-          title="Очистить граф"
+          title={t('graph.clearGraph')}
           fullWidth
         >
-          Очистить
+          {t('common.clear')}
         </Button>
       </Stack>
 
@@ -115,7 +117,7 @@ export function GraphEditor({
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
-          Добавить вершину
+          {t('graph.addVertex')}
           <IconButton
             aria-label="close"
             onClick={() => setShowNodeDialog(false)}
@@ -128,8 +130,8 @@ export function GraphEditor({
           <TextField
             autoFocus
             fullWidth
-            label="ID вершины"
-            placeholder="0, 1, 2, ..."
+            label={t('graph.vertexId')}
+            placeholder={t('graph.vertexIdPlaceholder')}
             value={nodeId}
             onChange={e => setNodeId(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAddNode()}
@@ -137,9 +139,9 @@ export function GraphEditor({
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowNodeDialog(false)}>Отмена</Button>
+          <Button onClick={() => setShowNodeDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleAddNode} variant="contained">
-            Добавить
+            {t('common.add')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -158,7 +160,7 @@ export function GraphEditor({
         <DialogTitle
           sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
         >
-          Добавить ребро
+          {t('graph.addEdge')}
           <IconButton
             aria-label="close"
             onClick={() => setShowEdgeDialog(false)}
@@ -172,13 +174,13 @@ export function GraphEditor({
             <TextField
               autoFocus
               fullWidth
-              label="Из вершины"
+              label={t('graph.fromVertex')}
               value={edgeSource}
               onChange={e => setEdgeSource(e.target.value)}
             />
             <TextField
               fullWidth
-              label="В вершину"
+              label={t('graph.toVertex')}
               value={edgeTarget}
               onChange={e => setEdgeTarget(e.target.value)}
             />
@@ -186,7 +188,7 @@ export function GraphEditor({
               <TextField
                 fullWidth
                 type="number"
-                label="Вес (опционально)"
+                label={t('graph.weight')}
                 value={edgeWeight}
                 onChange={e => setEdgeWeight(e.target.value)}
               />
@@ -194,9 +196,9 @@ export function GraphEditor({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowEdgeDialog(false)}>Отмена</Button>
+          <Button onClick={() => setShowEdgeDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleAddEdge} variant="contained" color="success">
-            Добавить
+            {t('common.add')}
           </Button>
         </DialogActions>
       </Dialog>

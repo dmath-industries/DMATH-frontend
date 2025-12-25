@@ -50,6 +50,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Alert } from '@/components/elements';
 import { HintSystem } from '@/components/hints';
 import type { Hint } from '@/components/hints';
+import { useTranslation } from 'react-i18next';
 import '@/services/explanations/registry';
 
 const STORAGE_KEYS = {
@@ -102,6 +103,7 @@ export function AlgorithmLayout({
   children,
   graphDescription,
 }: AlgorithmLayoutProps) {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const { playing, currentIndex, speedMs, totalSteps, sessionId } = useAppSelector(
     state => state.steps
@@ -279,7 +281,7 @@ export function AlgorithmLayout({
     }
 
     if (graphModel.hasNode(id)) {
-      showAlert('Ошибка', `Вершина с ID "${id}" уже существует!`, 'error');
+      showAlert(t('common.error'), t('errors.vertexExists', { id }), 'error');
       return;
     }
 
@@ -319,21 +321,21 @@ export function AlgorithmLayout({
 
   const handleAddEdge = (source: string, target: string, weight?: number) => {
     if (!graphModel.hasNode(source)) {
-      showAlert('Ошибка', `Вершина "${source}" не существует!`, 'error');
+      showAlert(t('common.error'), t('errors.vertexNotFound', { vertex: source }), 'error');
       return;
     }
     if (!graphModel.hasNode(target)) {
-      showAlert('Ошибка', `Вершина "${target}" не существует!`, 'error');
+      showAlert(t('common.error'), t('errors.vertexNotFound', { vertex: target }), 'error');
       return;
     }
     if (source === target) {
-      showAlert('Ошибка', 'Нельзя создать ребро из вершины в саму себя!', 'error');
+      showAlert(t('common.error'), t('errors.cannotCreateSelfLoop'), 'error');
       return;
     }
 
     const edgeId = `${source}-${target}`;
     if (graphModel.hasEdge(edgeId)) {
-      showAlert('Ошибка', `Ребро между "${source}" и "${target}" уже существует!`, 'error');
+      showAlert(t('common.error'), t('errors.edgeExists', { source, target }), 'error');
       return;
     }
 
@@ -544,16 +546,12 @@ export function AlgorithmLayout({
 
   const handleRunAlgorithm = () => {
     if (!hasGraph) {
-      showAlert('Внимание', 'Сначала загрузите граф!', 'warning');
+      showAlert(t('common.warning'), t('errors.loadGraphFirst'), 'warning');
       return;
     }
 
     if (hasRunAlgorithm) {
-      showAlert(
-        'Внимание',
-        'Алгоритм уже был запущен для этого графа. Просмотрите результаты в панели управления или загрузите новый граф.',
-        'warning'
-      );
+      showAlert(t('common.warning'), t('errors.algorithmAlreadyRun'), 'warning');
       return;
     }
 
@@ -723,7 +721,7 @@ export function AlgorithmLayout({
       },
       onError: error => {
         console.error('Worker error:', error);
-        showAlert('Ошибка выполнения', String(error), 'error');
+        showAlert(t('errors.executionError'), String(error), 'error');
 
         const graphDTO = currentGraphDTORef.current;
         AnalyticsEvents.algorithmExecutionError(
@@ -894,7 +892,7 @@ export function AlgorithmLayout({
                   ml: 0.5,
                 }}
               >
-                Назад к списку алгоритмов
+                {t('common.backToAlgorithmsList')}
               </Typography>
               <Typography
                 component="span"
@@ -903,7 +901,7 @@ export function AlgorithmLayout({
                   ml: 0.5,
                 }}
               >
-                Назад
+                {t('common.back')}
               </Typography>
             </Box>
 
@@ -1038,11 +1036,13 @@ export function AlgorithmLayout({
                         }}
                         title={
                           hasRunAlgorithm
-                            ? 'Алгоритм уже выполнен для этого графа'
-                            : 'Запустить алгоритм'
+                            ? t('algorithms.algorithmAlreadyRun')
+                            : t('algorithms.runAlgorithm')
                         }
                       >
-                        {hasRunAlgorithm ? 'Алгоритм выполнен' : 'Запустить алгоритм'}
+                        {hasRunAlgorithm
+                          ? t('algorithms.algorithmCompleted')
+                          : t('algorithms.runAlgorithm')}
                       </Button>
                     </Box>
                   </Box>
@@ -1107,7 +1107,7 @@ export function AlgorithmLayout({
                     >
                       <IconButton
                         onClick={() => setShowNodeDialog(true)}
-                        title="Добавить вершину"
+                        title={t('graph.addVertex')}
                         sx={{
                           color: 'text.primary',
                           '&:hover': {
@@ -1119,7 +1119,7 @@ export function AlgorithmLayout({
                       </IconButton>
                       <IconButton
                         onClick={() => setShowEdgeDialog(true)}
-                        title="Добавить ребро"
+                        title={t('graph.addEdge')}
                         sx={{
                           color: 'text.primary',
                           '&:hover': {
@@ -1131,7 +1131,7 @@ export function AlgorithmLayout({
                       </IconButton>
                       <IconButton
                         onClick={handleClear}
-                        title="Очистить граф"
+                        title={t('graph.clearGraph')}
                         sx={{
                           color: 'error.main',
                           '&:hover': {
@@ -1182,11 +1182,10 @@ export function AlgorithmLayout({
                       }}
                     >
                       <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Алгоритм выполнен
+                        {t('algorithms.algorithmCompleted')}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'success.light' }}>
-                        Используйте панель управления для просмотра шагов. Чтобы запустить алгоритм
-                        снова, загрузите новую матрицу или нажмите кнопку "Очистить".
+                        {t('alerts.clearGraphMessage')}
                       </Typography>
                     </MuiAlert>
                   )}
@@ -1207,7 +1206,7 @@ export function AlgorithmLayout({
         <Alert
           open={showClearConfirm}
           onClose={cancelClear}
-          title="Очистка графа"
+          title={t('alerts.clearGraphTitle')}
           variant="warning"
           actions={
             <>
@@ -1225,7 +1224,7 @@ export function AlgorithmLayout({
                   },
                 }}
               >
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button
                 onClick={confirmClear}
@@ -1240,15 +1239,12 @@ export function AlgorithmLayout({
                   },
                 }}
               >
-                Очистить
+                {t('common.clear')}
               </Button>
             </>
           }
         >
-          <Typography variant="body1">
-            Вы уверены, что хотите очистить граф? Все вершины, рёбра и результаты алгоритма будут
-            удалены.
-          </Typography>
+          <Typography variant="body1">{t('alerts.clearGraphMessage')}</Typography>
         </Alert>
 
         <Alert
@@ -1265,7 +1261,7 @@ export function AlgorithmLayout({
                 px: 4,
               }}
             >
-              ОК
+              {t('common.ok')}
             </Button>
           }
         >
@@ -1289,7 +1285,7 @@ export function AlgorithmLayout({
           <DialogTitle
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
           >
-            Добавить вершину
+            {t('graph.addVertex')}
             <IconButton
               aria-label="close"
               onClick={() => setShowNodeDialog(false)}
@@ -1302,8 +1298,8 @@ export function AlgorithmLayout({
             <TextField
               autoFocus
               fullWidth
-              label="ID вершины"
-              placeholder="0, 1, 2, ..."
+              label={t('graph.vertexId')}
+              placeholder={t('graph.vertexIdPlaceholder')}
               value={nodeId}
               onChange={e => setNodeId(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddNodeFromDialog()}
@@ -1311,9 +1307,9 @@ export function AlgorithmLayout({
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowNodeDialog(false)}>Отмена</Button>
+            <Button onClick={() => setShowNodeDialog(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAddNodeFromDialog} variant="contained">
-              Добавить
+              {t('common.add')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1335,7 +1331,7 @@ export function AlgorithmLayout({
           <DialogTitle
             sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
           >
-            Добавить ребро
+            {t('graph.addEdge')}
             <IconButton
               aria-label="close"
               onClick={() => setShowEdgeDialog(false)}
@@ -1349,13 +1345,13 @@ export function AlgorithmLayout({
               <TextField
                 autoFocus
                 fullWidth
-                label="Из вершины"
+                label={t('graph.fromVertex')}
                 value={edgeSource}
                 onChange={e => setEdgeSource(e.target.value)}
               />
               <TextField
                 fullWidth
-                label="В вершину"
+                label={t('graph.toVertex')}
                 value={edgeTarget}
                 onChange={e => setEdgeTarget(e.target.value)}
               />
@@ -1363,7 +1359,7 @@ export function AlgorithmLayout({
                 <TextField
                   fullWidth
                   type="number"
-                  label="Вес (опционально)"
+                  label={t('graph.weight')}
                   value={edgeWeight}
                   onChange={e => setEdgeWeight(e.target.value)}
                 />
@@ -1371,9 +1367,9 @@ export function AlgorithmLayout({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowEdgeDialog(false)}>Отмена</Button>
+            <Button onClick={() => setShowEdgeDialog(false)}>{t('common.cancel')}</Button>
             <Button onClick={handleAddEdgeFromDialog} variant="contained" color="success">
-              Добавить
+              {t('common.add')}
             </Button>
           </DialogActions>
         </Dialog>
@@ -1386,25 +1382,22 @@ export function AlgorithmLayout({
             {
               id: 'graph-editor',
               selector: '[data-hint="graph-editor"]',
-              title: 'Редактор графа',
-              description:
-                'Используйте эту панель для создания графа. Нажмите "Вершина" для добавления вершин и "Ребро" для создания связей между ними. Кнопка "Очистить" удалит весь граф.',
+              title: t('graph.graphEditor'),
+              description: t('graph.graphEditorDescription'),
               position: 'left',
             },
             {
               id: 'graph-canvas',
               selector: '[data-hint="graph-canvas"]',
-              title: 'Холст графа',
-              description:
-                'Здесь отображается визуализация вашего графа. После запуска алгоритма здесь будут показаны шаги его выполнения. Вы можете масштабировать и перемещать граф с помощью мыши.',
+              title: t('graph.graphCanvas'),
+              description: t('graph.graphCanvasDescription'),
               position: 'right',
             },
             {
               id: 'run-algorithm-button',
               selector: '[data-hint="run-algorithm-button"]',
-              title: 'Запуск алгоритма',
-              description:
-                'После создания графа нажмите эту кнопку, чтобы запустить алгоритм. Убедитесь, что граф содержит хотя бы одну вершину.',
+              title: t('graph.runAlgorithm'),
+              description: t('graph.runAlgorithmDescription'),
             },
           ];
 
@@ -1412,14 +1405,13 @@ export function AlgorithmLayout({
             baseHints.push({
               id: 'control-panel',
               selector: '[data-hint="control-panel"]',
-              title: 'Панель управления',
-              description:
-                'Здесь находится панель управления воспроизведением. Вы можете воспроизводить шаги автоматически или переходить по ним вручную, изменять скорость и просматривать объяснения каждого шага.',
+              title: t('graph.controlPanel'),
+              description: t('graph.controlPanelDescription'),
             });
           }
 
           return baseHints;
-        }, [hasRunAlgorithm, totalSteps])}
+        }, [hasRunAlgorithm, totalSteps, t])}
         storageKey={`dmath-hints-${algorithmName}`}
       />
     </AlgorithmLayoutContext.Provider>
