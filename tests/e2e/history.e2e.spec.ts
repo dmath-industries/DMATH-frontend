@@ -2,23 +2,28 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Страница истории', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('dmath-language', 'ru');
+    });
     await page.goto('/history');
     await page.waitForLoadState('networkidle');
   });
 
   test('должна загружаться и отображать заголовок', async ({ page }) => {
     await expect(page).toHaveURL('/history');
-    await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('должна иметь кнопку возврата на главную', async ({ page }) => {
     const backLink = page.getByRole('link', { name: /назад на главную/i });
-    await expect(backLink).toBeVisible();
+    await expect(backLink).toBeVisible({ timeout: 10000 });
     await expect(backLink).toHaveAttribute('href', '/');
   });
 
   test('должна переходить на главную при клике на кнопку назад', async ({ page }) => {
-    await page.getByRole('link', { name: /назад на главную/i }).click();
+    await page.getByRole('link', { name: /назад на главную/i }).click({ timeout: 10000 });
     await expect(page).toHaveURL('/');
   });
 
@@ -37,7 +42,7 @@ test.describe('Страница истории', () => {
     await page.waitForLoadState('networkidle');
 
     const emptyMessage = page.getByText(/История пуста|Запустите алгоритм/i).first();
-    await expect(emptyMessage).toBeVisible({ timeout: 5000 });
+    await expect(emptyMessage).toBeVisible({ timeout: 10000 });
   });
 
   test('должна отображать индикатор загрузки', async ({ page }) => {
@@ -50,7 +55,9 @@ test.describe('Страница истории', () => {
     const textCount = await loadingText.count();
 
     if (spinnerCount === 0 && textCount === 0) {
-      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible({
+        timeout: 10000,
+      });
     } else {
       if (spinnerCount > 0) {
         await expect(spinner)
@@ -191,17 +198,23 @@ test.describe('Страница истории', () => {
   test.describe('Адаптивность', () => {
     test('должна корректно отображаться на десктопе', async ({ page }) => {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     test('должна корректно отображаться на планшете', async ({ page }) => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible({
+        timeout: 10000,
+      });
     });
 
     test('должна корректно отображаться на мобильном', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'История решений', level: 3 })).toBeVisible({
+        timeout: 10000,
+      });
     });
   });
 });

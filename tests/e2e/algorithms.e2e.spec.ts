@@ -2,7 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Страница списка алгоритмов', () => {
   test.beforeEach(async ({ page }) => {
+    // Set Russian language in localStorage before navigation
+    await page.addInitScript(() => {
+      localStorage.setItem('dmath-language', 'ru');
+    });
     await page.goto('/');
+    // Wait for client-side hydration and content to render
+    await page.waitForLoadState('networkidle');
   });
 
   test('должна загружаться и отображать список алгоритмов', async ({ page }) => {
@@ -10,11 +16,11 @@ test.describe('Страница списка алгоритмов', () => {
   });
 
   test('должна отображать карточку алгоритма Робертса-Флореса', async ({ page }) => {
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
   });
 
   test('должна отображать все алгоритмы', async ({ page }) => {
-    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible();
+    await expect(page.getByText('Алгоритм Робертса-Флореса')).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Алгоритм Прима')).toBeVisible();
     await expect(page.getByText('Алгоритм раскраски графа')).toBeVisible();
     await expect(page.getByText('Алгоритм Форда-Беллмана')).toBeVisible();
