@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { Box, Container, GridLegacy as Grid } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -20,38 +20,41 @@ export default function Home() {
     AnalyticsEvents.navigateToAlgorithms(from);
   }, [pathname]);
 
-  const algorithms: IAlgorithmsItem[] = [
-    {
-      title: t('algorithms.robertsFlores'),
-      img: '/algorithms/1.jpg',
-      href: '/algorithms/roberts-flores',
-    },
-    {
-      title: t('algorithms.prim'),
-      img: '/algorithms/2.jpg',
-      href: '/algorithms/prim',
-    },
-    {
-      title: t('algorithms.graphColoring'),
-      img: '/algorithms/4.jpg',
-      href: '/algorithms/graph-coloring',
-    },
-    {
-      title: t('algorithms.bellmanFord'),
-      img: '/algorithms/5.jpg',
-      href: '/algorithms/bellman-ford',
-    },
-    {
-      title: t('algorithms.hungarian'),
-      img: '/algorithms/3.jpg',
-      href: '/algorithms/hungarian',
-    },
-    {
-      title: t('algorithms.bronKerbosch'),
-      img: '/algorithms/6.jpg',
-      href: '/algorithms/bron-kerbosch',
-    },
-  ];
+  const algorithms: IAlgorithmsItem[] = useMemo(
+    () => [
+      {
+        title: t('algorithms.robertsFlores'),
+        img: '/algorithms/1.jpg',
+        href: '/algorithms/roberts-flores',
+      },
+      {
+        title: t('algorithms.prim'),
+        img: '/algorithms/2.jpg',
+        href: '/algorithms/prim',
+      },
+      {
+        title: t('algorithms.graphColoring'),
+        img: '/algorithms/4.jpg',
+        href: '/algorithms/graph-coloring',
+      },
+      {
+        title: t('algorithms.bellmanFord'),
+        img: '/algorithms/5.jpg',
+        href: '/algorithms/bellman-ford',
+      },
+      {
+        title: t('algorithms.hungarian'),
+        img: '/algorithms/3.jpg',
+        href: '/algorithms/hungarian',
+      },
+      {
+        title: t('algorithms.bronKerbosch'),
+        img: '/algorithms/6.jpg',
+        href: '/algorithms/bron-kerbosch',
+      },
+    ],
+    [t]
+  );
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
