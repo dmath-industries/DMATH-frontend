@@ -1196,6 +1196,8 @@ export function AlgorithmLayout({
                     </Box>
                   )}
                 </Paper>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</Box>
               </Box>
             </Grid>
           </Grid>
